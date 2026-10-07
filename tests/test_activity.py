@@ -119,7 +119,7 @@ class TelemetryAbsenceTests(unittest.TestCase):
 
     def test_an_old_s3_bucket_without_telemetry_is_unknown_not_stale(self):
         session = FakeSession({"s3": {
-            "list_buckets": {"Buckets": [{"Name": "archive", "CreationDate": ancient()}]},
+            "list_buckets": {"Buckets": [{"Name": "archive", "BucketRegion": "us-east-1", "CreationDate": ancient()}]},
             "get_bucket_notification_configuration": {},
             "get_bucket_tagging": client_error(code="NoSuchTagSet"),
         }})
@@ -131,7 +131,7 @@ class TelemetryAbsenceTests(unittest.TestCase):
 
     def test_the_creation_date_is_still_reported_as_its_own_evidence(self):
         session = FakeSession({"s3": {
-            "list_buckets": {"Buckets": [{"Name": "archive", "CreationDate": ancient()}]},
+            "list_buckets": {"Buckets": [{"Name": "archive", "BucketRegion": "us-east-1", "CreationDate": ancient()}]},
             "get_bucket_notification_configuration": {},
             "get_bucket_tagging": client_error(code="NoSuchTagSet"),
         }})

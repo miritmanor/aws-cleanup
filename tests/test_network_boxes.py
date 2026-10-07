@@ -8,6 +8,7 @@ from .fakes import audit, make_row
 from aws_resource_audit.analyze.architecture import architecture_graph, project_architecture
 from aws_resource_audit.analyze.network import network_placement
 from aws_resource_audit.present.graph.drawio import render_drawio
+from aws_resource_audit.present.graph.network_tree import network_tree
 
 
 def key(row):
@@ -88,6 +89,19 @@ class RenderTests(NetworkFixture):
     def test_the_account_view_keeps_project_boxes(self):
         whole = architecture_graph(self.scan, self.rows)
         self.assertNotIn("Region", audit.render_mermaid(whole, self.rows))
+
+
+class RegionBoxTests(unittest.TestCase):
+    def test_a_bucket_sits_in_its_region_and_cloudfront_in_the_global_box(self):
+        """Decision 0062: a bucket has a region, as AWS's own diagrams draw it."""
+        bucket = make_row("S3Bucket", "assets", region="eu-west-1")
+        cdn = make_row("CloudFrontDistribution", "E1", region="global")
+        graph = {"network": {"placement": {}, "vpcs": {}, "subnets": {}},
+                 "nodes": [{"id": key(r)} for r in (bucket, cdn)]}
+        tree = network_tree(graph, [bucket, cdn])
+        self.assertEqual([(b["title"], [n["id"] for n in b["nodes"]]) for b in tree],
+                         [("Region eu-west-1", [key(bucket)]),
+                          ("AWS global services", [key(cdn)])])
 
 
 if __name__ == "__main__":

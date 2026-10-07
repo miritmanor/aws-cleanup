@@ -3,7 +3,7 @@ ElastiCache, OpenSearch, Redshift, Backup."""
 
 import unittest
 
-from .fakes import NO_METRICS, FakeSession, ancient, metrics_all_zero, metrics_at, audit, recent
+from .fakes import NO_METRICS, FakeSession, ancient, client_error, metrics_all_zero, metrics_at, audit, recent
 from .collectors_base import ACCOUNT, REGION, only
 
 
@@ -236,15 +236,50 @@ class DataServiceCollectorTests(unittest.TestCase):
 
     def test_s3_bucket(self):
         session = FakeSession({"s3": {
-            "list_buckets": {"Buckets": [{"Name": "orders-assets", "CreationDate": recent()}]},
+            "list_buckets": {"Buckets": [{"Name": "orders-assets", "CreationDate": recent(),
+                                          "BucketRegion": "eu-west-1"}]},
             "get_bucket_notification_configuration": {},
             "get_bucket_tagging": {"TagSet": [{"Key": "Project", "Value": "orders"}]},
         }})
         row = only(audit.collect_s3_buckets(session))
         self.assertEqual(row["service"], "S3Bucket")
-        self.assertEqual(row["region"], "global")
+        self.assertEqual(row["region"], "eu-west-1", "ListBuckets' BucketRegion, no extra call")
         self.assertEqual(row["tags"]["Project"], "orders")
         self.assertIn("no usage signal for this resource type", row["notes"])
+
+
+class S3BucketRegionTests(unittest.TestCase):
+    """A bucket is recorded in its own region, so the per-region S3 bill can reach it."""
+
+    def _region_with(self, location):
+        session = FakeSession({"s3": {
+            "list_buckets": {"Buckets": [{"Name": "old-sdk", "CreationDate": recent()}]},
+            "get_bucket_location": location,
+            "get_bucket_notification_configuration": {},
+            "get_bucket_tagging": client_error(code="NoSuchTagSet"),
+        }})
+        return only(audit.collect_s3_buckets(session))["region"]
+
+    def test_without_bucket_region_the_location_is_asked_for(self):
+        self.assertEqual(self._region_with({"LocationConstraint": "ap-south-1"}), "ap-south-1")
+
+    def test_a_null_location_is_us_east_1(self):
+        self.assertEqual(self._region_with({"LocationConstraint": None}), "us-east-1")
+        self.assertEqual(self._region_with({}), "us-east-1")
+
+    def test_the_legacy_eu_location_is_eu_west_1(self):
+        self.assertEqual(self._region_with({"LocationConstraint": "EU"}), "eu-west-1")
+
+    def test_a_refused_location_stays_global_and_warns(self):
+        with self.assertLogs("aws_resource_audit.collect.resources.data", "WARNING") as logs:
+            region = self._region_with(client_error(operation="GetBucketLocation"))
+        self.assertEqual(region, "global")
+        self.assertIn("old-sdk", logs.output[0])
+
+    def test_a_failed_listing_is_still_one_global_error_row(self):
+        session = FakeSession({"s3": {"list_buckets": client_error(operation="ListBuckets")}})
+        row = only(audit.collect_s3_buckets(session))
+        self.assertEqual(row["region"], "global")
 
 
 if __name__ == "__main__":
