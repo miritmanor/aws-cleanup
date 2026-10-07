@@ -1,0 +1,38 @@
+# Scan output maps a real AWS account: keep it out of the build context, or it can end
+# up in an image layer that outlives the container.
+Output/
+aws_scan.json
+*.json.scan
+aws_inventory.csv
+aws_inventory.json
+aws_inventory.html
+aws_resource_graph.graphml
+aws_resource_graph.mmd
+grouping_audit.md
+aws_project_groups.json
+audit_config.json
+
+# Credentials never belong in a build context. They are mounted at runtime.
+.aws/
+.env
+*.pem
+
+# Build and tooling noise.
+.git
+**/__pycache__
+**/*.py[cod]
+.venv
+venv
+*.egg-info
+.pytest_cache
+.mypy_cache
+
+frontend/node_modules
+frontend/dist
+
+# tests/, tools/ and backend/apitests/ stay in the context for the test stage only.
+docs/
+help/
+# The test stage checks the CLI's pointer to this page resolves.
+!help/cli-messages.md
+*.md

@@ -1,0 +1,62 @@
+---
+title: AWS dependencies
+---
+flowchart LR
+    subgraph cluster0["orders"]
+        n42@{ icon: "aws:api-gateway", form: "rounded", label: "orders-api<br/>APIGatewayRestApi", pos: "b", h: 48 }
+        n43@{ icon: "aws:lambda", form: "rounded", label: "orders-worker<br/>LambdaFunction", pos: "b", h: 48 }
+        n44@{ icon: "aws:dynamodb", form: "rounded", label: "orders-live<br/>DynamoDBTable", pos: "b", h: 48 }
+        n45@{ icon: "aws:amplify", form: "rounded", label: "orders-portal<br/>AmplifyApp", pos: "b", h: 48 }
+        n46@{ icon: "aws:cognito", form: "rounded", label: "orders-directory<br/>CognitoUserPool", pos: "b", h: 48 }
+    end
+    subgraph cluster1["storefront"]
+        n48@{ icon: "aws:ec2", form: "rounded", label: "webtier<br/>EC2Instance", pos: "b", h: 48 }
+        n49@{ icon: "aws:rds", form: "rounded", label: "storefront-cache<br/>RDSInstance", pos: "b", h: 48 }
+    end
+    n0@{ icon: "aws:ec2", form: "rounded", label: "jenkins<br/>EC2Instance", pos: "b", h: 48 }
+    n1@{ icon: "aws:elb", form: "rounded", label: "frontdoor<br/>LoadBalancer", pos: "b", h: 48 }
+    n2@{ icon: "aws:rds", form: "rounded", label: "billing-postgres<br/>RDSInstance", pos: "b", h: 48 }
+    n3@{ icon: "aws:dynamodb", form: "rounded", label: "sessions<br/>DynamoDBTable", pos: "b", h: 48 }
+    n4@{ icon: "aws:s3", form: "rounded", label: "static-assets-archive<br/>S3Bucket", pos: "b", h: 48 }
+    n5@{ icon: "aws:lambda", form: "rounded", label: "scheduler<br/>LambdaFunction", pos: "b", h: 48 }
+    n6@{ icon: "aws:api-gateway", form: "rounded", label: "public-rest<br/>APIGatewayRestApi", pos: "b", h: 48 }
+    n7@{ icon: "aws:api-gateway", form: "rounded", label: "public-http<br/>APIGatewayV2Api", pos: "b", h: 48 }
+    n8@{ icon: "aws:amplify", form: "rounded", label: "marketing-site<br/>AmplifyApp", pos: "b", h: 48 }
+    n9@{ icon: "aws:cognito", form: "rounded", label: "customer-directory<br/>CognitoUserPool", pos: "b", h: 48 }
+    n10@{ icon: "aws:sqs", form: "rounded", label: "invoice-intake<br/>SQSQueue", pos: "b", h: 48 }
+    n11@{ icon: "aws:sns", form: "rounded", label: "pager-alerts<br/>SNSTopic", pos: "b", h: 48 }
+    n12@{ icon: "aws:elastic-beanstalk", form: "rounded", label: "legacy-app-env<br/>ElasticBeanstalkEnvironment", pos: "b", h: 48 }
+    n13@{ icon: "aws:eventbridge", form: "rounded", label: "nightly-report<br/>EventBridgeRule", pos: "b", h: 48 }
+    n14@{ icon: "aws:eventbridge", form: "rounded", label: "weekly-cleanup<br/>EventBridgeSchedule", pos: "b", h: 48 }
+    n15@{ icon: "aws:aurora", form: "rounded", label: "warehouse-db<br/>RDSCluster", pos: "b", h: 48 }
+    n16@{ icon: "aws:aws", form: "rounded", label: "shared-home<br/>EFSFileSystem", pos: "b", h: 48 }
+    n17@{ icon: "aws:elasticache", form: "rounded", label: "hot-keys<br/>ElastiCacheCluster", pos: "b", h: 48 }
+    n18@{ icon: "aws:open-search", form: "rounded", label: "catalogue-search<br/>OpenSearchDomain", pos: "b", h: 48 }
+    n19@{ icon: "aws:route53", form: "rounded", label: "example.org<br/>Route53HostedZone", pos: "b", h: 48 }
+    n20@{ icon: "aws:cloudfront", form: "rounded", label: "d111abcdef8.cloudfront.net<br/>CloudFrontDistribution", pos: "b", h: 48 }
+    n21@{ icon: "aws:step-functions", form: "rounded", label: "refund-flow<br/>StepFunctionsStateMachine", pos: "b", h: 48 }
+    n22@{ icon: "aws:ecs", form: "rounded", label: "checkout-svc<br/>ECSService", pos: "b", h: 48 }
+    n23@{ icon: "aws:documentdb", form: "rounded", label: "reviews<br/>DocumentDBCluster", pos: "b", h: 48 }
+    n24@{ icon: "aws:documentdb", form: "rounded", label: "paperwork<br/>DocumentDBInstance", pos: "b", h: 48 }
+    n25@{ icon: "aws:neptune", form: "rounded", label: "friendships<br/>NeptuneCluster", pos: "b", h: 48 }
+    n26@{ icon: "aws:neptune", form: "rounded", label: "lineage<br/>NeptuneInstance", pos: "b", h: 48 }
+    n27@{ icon: "aws:aws", form: "rounded", label: "churn-predictor<br/>SageMakerEndpoint", pos: "b", h: 48 }
+    n28@{ icon: "aws:eks", form: "rounded", label: "kube-prod<br/>EKSCluster", pos: "b", h: 48 }
+    n29@{ icon: "aws:redshift", form: "rounded", label: "dashboards-dw<br/>RedshiftCluster", pos: "b", h: 48 }
+    n30@{ icon: "aws:eventbridge", form: "rounded", label: "partner-events<br/>EventBridgeBus", pos: "b", h: 48 }
+    n31@{ icon: "aws:waf", form: "rounded", label: "edge-shield<br/>WAFWebACL", pos: "b", h: 48 }
+    n32@{ icon: "aws:aws", form: "rounded", label: "perimeter-fw<br/>NetworkFirewall", pos: "b", h: 48 }
+    n33@{ icon: "aws:redshift", form: "rounded", label: "adhoc-olap<br/>RedshiftServerlessWorkgroup", pos: "b", h: 48 }
+    n34@{ icon: "aws:kinesis", form: "rounded", label: "clickstream-raw<br/>KinesisStream", pos: "b", h: 48 }
+    n35@{ icon: "aws:kinesis", form: "rounded", label: "eventsink-firehose<br/>FirehoseStream", pos: "b", h: 48 }
+    n36@{ icon: "aws:msk", form: "rounded", label: "orderbus-msk<br/>MSKCluster", pos: "b", h: 48 }
+    n37@{ icon: "aws:aws", form: "rounded", label: "branch-interconnect<br/>TransitGateway", pos: "b", h: 48 }
+    n38@{ icon: "aws:aws", form: "rounded", label: "onprem-tunnel<br/>VPNConnection", pos: "b", h: 48 }
+    n39@{ icon: "aws:appsync", form: "rounded", label: "menu-graphql<br/>AppSyncApi", pos: "b", h: 48 }
+    n40@{ icon: "aws:open-search", form: "rounded", label: "vector-recall<br/>OpenSearchServerlessCollection", pos: "b", h: 48 }
+    n41@{ icon: "aws:route53", form: "rounded", label: "datacenter-dns<br/>Route53ResolverEndpoint", pos: "b", h: 48 }
+    n47@{ icon: "aws:ec2", form: "rounded", label: "reporting-box<br/>EC2Instance", pos: "b", h: 48 }
+    n50@{ icon: "aws:ec2", form: "rounded", label: "gpu-trainer<br/>EC2Instance", pos: "b", h: 48 }
+    n42 -->|invokes| n43
+    n43 -.->|uses| n44
+    n46 -->|triggers| n43

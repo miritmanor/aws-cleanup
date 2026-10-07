@@ -1,0 +1,18 @@
+# Packaging for the core library. The CLI scripts stay at the repo root, so there is
+# deliberately no console_scripts entry point. Code must stay Python 3.9 compatible.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aws-resource-audit"
+version = "0.1.0"
+description = "Inventory, staleness and dependency audit for a personal AWS account"
+requires-python = ">=3.9"
+dependencies = ["boto3>=1.26"]
+
+# Named scope: tests/ and tools/ sit beside the package and are not part of it.
+[tool.setuptools.packages.find]
+include = ["aws_resource_audit*"]
+namespaces = false

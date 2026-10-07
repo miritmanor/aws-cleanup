@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scan messages</title>
+<!-- The web app's version of help/cli-messages.md. -->
+<style>
+  :root { --bg: #f6f8fa; --panel: #fff; --ink: #24292f; --muted: #6b7683;
+          --line: #d8dee4; --accent: #1668c4; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 760px; margin: 24px auto; padding: 8px 28px 24px;
+         background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--line); }
+  dt { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+       font-size: 12.5px; margin-top: 16px; }
+  dd { margin: 4px 0 0 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  a { color: var(--accent); }
+  .intro { color: var(--muted); }
+  @media (max-width: 600px) { main { margin: 0; border: none; border-radius: 0; padding: 4px 16px 16px; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Scan messages: what they mean and what to do</h1>
+<p class="intro">The scan log reports what the scan found. This page says what
+to do about the lines that need it. Links to <code>/files/…</code> open the
+files the scan wrote.</p>
+
+<h2>Regions</h2>
+<dl>
+  <dt>No default region configured; defaulting to us-east-1.</dt>
+  <dd>The Regions box was empty and this account has no saved region list
+  yet. Type the regions to scan into the Regions box, or tick
+  <b>All regions</b>.</dd>
+
+  <dt>Regions: … - the saved list for this account, from DATE</dt>
+  <dd>The scan covered the regions where earlier scans of this account found
+  resources. Tick <b>All regions</b> to look everywhere.</dd>
+
+  <dt>Saved as this account's default regions: … (added to the saved list; none removed)</dt>
+  <dd>A scan of named regions only adds to the saved list. Only an
+  <b>All regions</b> scan replaces it, so a region you emptied stays on the
+  list until you run one.</dd>
+</dl>
+
+<h2>What the scan could not see</h2>
+<dl>
+  <dt>ERR next to a resource type · Coverage: N denied · N lookup(s) failed and are not in the report</dt>
+  <dd>The credential lacks a read permission, or AWS returned an error. The
+  resource type is left out of the report. The "Scan coverage" section of the
+  <a href="/files/grouping_audit.md" target="_blank" rel="noopener">grouping audit</a>
+  lists each failed call. To grant the permissions, update the IAM role or
+  user behind the credentials file the app was started with, as
+  <code>iam/README.md</code> in the repository describes.</dd>
+
+  <dt>Billing coverage: N unsupported, … - services the scan does not cover</dt>
+  <dd>The bill has charges for services this tool does not scan. The section
+  "What you are paying for that this report does not cover" in the
+  <a href="/files/grouping_audit.md" target="_blank" rel="noopener">grouping audit</a>
+  names them.</dd>
+</dl>
+
+<h2>Cost</h2>
+<dl>
+  <dt>Cost: Cost Explorer not queried (turned off for this scan)</dt>
+  <dd><b>Skip cost lookup</b> was ticked. Scan without it to get cost figures
+  (about $0.01 per request).</dd>
+
+  <dt>Cost: Cost Explorer unavailable (…)</dt>
+  <dd>Usually a missing <code>ce:GetCostAndUsage</code> permission; see
+  <code>iam/README.md</code>.</dd>
+</dl>
+
+<h2>Projects</h2>
+<dl>
+  <dt>N link(s) crossed a project boundary and were NOT merged</dt>
+  <dd>Two projects are linked, but each has its own tag or rule, so they stay
+  separate. "Links that crossed a project boundary" in the
+  <a href="/files/grouping_audit.md" target="_blank" rel="noopener">grouping audit</a>
+  lists them.</dd>
+
+  <dt>N name(s) could group resources that nothing else connects (…)</dt>
+  <dd>These words appear in several resource names that have no other link
+  between them. "Names that could group things" in the
+  <a href="/files/grouping_audit.md" target="_blank" rel="noopener">grouping audit</a>
+  lists which resources each word would join. The web app cannot create a
+  name rule yet; for now, select those resources in the
+  <b>Resources</b> tab and make them a project by hand.</dd>
+
+  <dt>N project(s) with a default name</dt>
+  <dd>These projects are named after a tag value, a rule or one of their
+  members. Give any of them a name in the <b>Projects</b> tab.</dd>
+
+  <dt>Saved name "…" not applied: no project holds 40% of its resources</dt>
+  <dd>The resources that name was saved for have changed too much to match a
+  project. The <b>Projects</b> tab marks it as not applied; rename it or
+  forget it there.</dd>
+</dl>
+
+<h2>Graph and audit</h2>
+<dl>
+  <dt>N supporting resource(s) contracted away</dt>
+  <dd>IAM roles, log groups, security groups and similar are hidden from the
+  graph and their links drawn through. Tick <b>Every resource</b> in the
+  <b>Graph</b> tab to draw them.</dd>
+
+  <dt>Audit: N oversized project(s), …</dt>
+  <dd>The grouping pass checking itself. Details are in the
+  <a href="/files/grouping_audit.md" target="_blank" rel="noopener">grouping audit</a>.</dd>
+</dl>
+</main>
+</body>
+</html>

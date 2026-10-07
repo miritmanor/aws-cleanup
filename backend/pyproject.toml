@@ -1,0 +1,45 @@
+# The web backend: a caller of aws_resource_audit, never the reverse, so the CLI keeps
+# running with only boto3 installed (tests/test_layers.py enforces this).
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aws-resource-audit-backend"
+version = "0.1.0"
+description = "HTTP API over the AWS resource audit core"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.6",
+    # The core is installed from the repo root by the Dockerfile, not declared here.
+
+    # The agent only. langchain 1.0+ for langchain.agents.create_agent.
+    "langchain>=1.0",
+    "langchain-core>=0.3",
+    "langchain-text-splitters>=0.3",
+    "langgraph>=0.2",
+    "langchain-chroma>=0.1",
+    "chromadb>=0.5",
+    "langchain-huggingface>=0.1",
+    "sentence-transformers>=3.0",
+    # Multipart document uploads; FastAPI fails at import without it.
+    "python-multipart>=0.0.9",
+    # Document parsers (see agent/loaders.py), all pure-Python wheels.
+    "pypdf>=4.0",
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    # Every provider is installed: agent_config.json picks one at runtime.
+    "langchain-openai>=0.2",
+    "langchain-anthropic>=0.2",
+    "langchain-aws>=0.2",
+]
+
+[project.optional-dependencies]
+dev = ["httpx>=0.27"]     # FastAPI's TestClient needs it
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+namespaces = false

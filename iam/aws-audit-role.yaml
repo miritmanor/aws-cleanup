@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Least-privilege, read-only role for aws_resource_audit scans
+  (github.com/miritmanor/aws-cleanup). The permissions statement below is the
+  single list of every action the collectors call, and nothing else. See
+  iam/README.md for how to deploy this and wire a profile up to assume it.
+
+Parameters:
+  RoleName:
+    Type: String
+    Default: AWS-audit-role
+    Description: >
+      Must match "role_name" in audit_config.json (or the AWS_AUDIT_ROLE_NAME
+      env var override), which default to "AWS-audit-role" too.
+
+  TrustedPrincipalArn:
+    Type: String
+    Description: >
+      ARN of the IAM user or role your --profile (CLI) or mounted/exported
+      base credentials (web app) resolve to. Only this identity will be able
+      to assume the role created here. No default - you must supply your own.
+    AllowedPattern: '^arn:aws:iam::\d{12}:(user|role)/.+$'
+    ConstraintDescription: >
+      Must be an IAM user or role ARN, e.g.
+      arn:aws:iam::123456789012:user/aws-audit or
+      arn:aws:iam::123456789012:role/SomeSSOPermissionSet
+
+Resources:
+  AuditRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: >
+        Read-only role for aws_resource_audit scans. No write permissions
+        beyond none - --tag-groups/--confirm need resourcegroupstaggingapi:
+        TagResources added separately if you want to use them through this
+        role; see iam/README.md.
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrustedPrincipalArn
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: aws-resource-audit-read-only
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # Every action the collectors call. ec2:Describe* alone covers every
+              # EC2-family type (instances, volumes, images, VPCs, ...).
+              - Sid: ReadOnlyInventory
+                Effect: Allow
+                Action:
+                  - ec2:Describe*
+                  - elasticloadbalancing:Describe*
+                  - rds:Describe*
+                  - rds:ListTagsForResource
+                  - elasticfilesystem:DescribeFileSystems
+                  - elasticfilesystem:DescribeMountTargets
+                  - elasticache:DescribeCacheClusters
+                  - elasticache:DescribeServerlessCaches
+                  - elasticache:DescribeCacheSubnetGroups
+                  - elasticache:ListTagsForResource
+                  - es:ListDomainNames
+                  - es:DescribeDomains
+                  - es:ListTags
+                  - kms:ListKeys
+                  - kms:DescribeKey
+                  - kms:ListAliases
+                  - kms:ListResourceTags
+                  - secretsmanager:ListSecrets
+                  - route53:ListHostedZones
+                  - route53:ListTagsForResource
+                  - route53:ListResourceRecordSets
+                  - cloudfront:ListDistributions
+                  - cloudfront:ListTagsForResource
+                  - ecr:DescribeRepositories
+                  - ecr:DescribeImages
+                  - ecr:ListTagsForResource
+                  - autoscaling:DescribeAutoScalingGroups
+                  - states:ListStateMachines
+                  - states:DescribeStateMachine
+                  - states:ListExecutions
+                  - states:ListTagsForResource
+                  - ecs:ListClusters
+                  - ecs:DescribeClusters
+                  - ecs:ListServices
+                  - ecs:DescribeServices
+                  - ecs:DescribeTaskDefinition
+                  - ecs:ListContainerInstances
+                  - ecs:DescribeContainerInstances
+                  - codebuild:ListProjects
+                  - codebuild:BatchGetProjects
+                  - codebuild:ListBuildsForProject
+                  - codebuild:BatchGetBuilds
+                  - codepipeline:ListPipelines
+                  - codepipeline:GetPipeline
+                  - codepipeline:ListPipelineExecutions
+                  - backup:ListBackupVaults
+                  - backup:ListRecoveryPointsByBackupVault
+                  - backup:ListBackupPlans
+                  - backup:GetBackupPlan
+                  - backup:ListTags
+                  - sagemaker:ListEndpoints
+                  - sagemaker:DescribeEndpoint
+                  - sagemaker:ListNotebookInstances
+                  - sagemaker:DescribeNotebookInstance
+                  - sagemaker:ListTags
+                  - sagemaker:ListApps
+                  - sagemaker:DescribeApp
+                  - sagemaker:ListTrainingJobs
+                  - kinesis:ListStreams
+                  - kinesis:DescribeStreamSummary
+                  - kinesis:ListTagsForStream
+                  - firehose:ListDeliveryStreams
+                  - firehose:DescribeDeliveryStream
+                  - firehose:ListTagsForDeliveryStream
+                  - kafka:ListClustersV2
+                  - glue:GetJobs
+                  - glue:GetJobRuns
+                  - glue:GetCrawlers
+                  - acm:ListCertificates
+                  - acm:DescribeCertificate
+                  - acm:ListTagsForCertificate
+                  - ssm:DescribeParameters
+                  - ssm:ListTagsForResource
+                  - appsync:ListGraphqlApis
+                  - appsync:ListDataSources
+                  - aoss:ListCollections
+                  - aoss:BatchGetCollection
+                  - aoss:ListTagsForResource
+                  - route53resolver:ListResolverEndpoints
+                  - route53resolver:ListResolverEndpointIpAddresses
+                  - route53resolver:ListTagsForResource
+                  - eks:ListClusters
+                  - eks:DescribeCluster
+                  - eks:ListNodegroups
+                  - eks:DescribeNodegroup
+                  - eks:ListFargateProfiles
+                  - redshift:DescribeClusters
+                  - redshift-serverless:ListWorkgroups
+                  - redshift-serverless:ListNamespaces
+                  - redshift-serverless:ListTagsForResource
+                  - wafv2:ListWebACLs
+                  - wafv2:ListResourcesForWebACL
+                  - network-firewall:ListFirewalls
+                  - network-firewall:DescribeFirewall
+                  - lambda:List*
+                  - lambda:Get*
+                  - s3:List*
+                  - s3:GetBucket*
+                  - iam:List*
+                  - iam:Get*
+                  - iam:GenerateCredentialReport
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:ListMetrics
+                  - cloudwatch:DescribeAlarms
+                  - dynamodb:List*
+                  - dynamodb:Describe*
+                  - sqs:ListQueues
+                  - sqs:GetQueueAttributes
+                  - sqs:ListQueueTags
+                  - sns:ListTopics
+                  - sns:GetTopicAttributes
+                  - sns:ListSubscriptionsByTopic
+                  - sns:ListTagsForResource
+                  - apigateway:GET
+                  - cloudtrail:DescribeTrails
+                  - cloudtrail:GetTrailStatus
+                  - cloudtrail:ListTrails
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:DescribeSubscriptionFilters
+                  - amplify:List*
+                  # GetApp: app-level env vars hold the execute-api URL naming an API.
+                  - amplify:GetApp
+                  - xray:GetGroups
+                  - xray:GetSamplingRules
+                  - cloudformation:ListStacks
+                  - cloudformation:ListStackResources
+                  # EventBridge: ListEventBuses, because rules on custom buses are
+                  # invisible to a default-bus-only listing.
+                  - events:ListEventBuses
+                  - events:ListRules
+                  - events:ListTargetsByRule
+                  # EventBridge Scheduler is a separate API; a schedule here
+                  # appears in no ListRules response.
+                  - scheduler:ListSchedules
+                  - scheduler:GetSchedule
+                  - elasticbeanstalk:DescribeApplications
+                  - elasticbeanstalk:DescribeEnvironments
+                  - elasticbeanstalk:DescribeEnvironmentResources
+                  - elasticbeanstalk:DescribeApplicationVersions
+                  - elasticbeanstalk:ListTagsForResource
+                  - cognito-idp:ListUserPools
+                  - cognito-idp:DescribeUserPool
+                  - access-analyzer:ListAnalyzers
+                  - access-analyzer:ListFindingsV2
+                  - sts:GetCallerIdentity
+                Resource: '*'
+              # Separate so the one chargeable call (~$0.01/scan; skipped with
+              # --no-cost) is easy to find and, if you want, remove.
+              - Sid: CostExplorer
+                Effect: Allow
+                Action: ce:GetCostAndUsage
+                Resource: '*'
+
+Outputs:
+  RoleArn:
+    Description: >
+      The assumable role's ARN. Use it (or just RoleName, if it matches
+      audit_config.json) when setting up the trusted profile - see
+      iam/README.md.
+    Value: !GetAtt AuditRole.Arn

@@ -1,0 +1,163 @@
+/* --- graph ------------------------------------------------------------- */
+.graph-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.graph-controls {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  padding: 12px; border-bottom: 1px solid var(--line);
+}
+.architecture-scope { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+.architecture-scope select { font: inherit; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; }
+.fullscreen-btn {
+  border: 1px solid var(--line); border-radius: 6px; background: var(--panel);
+  color: var(--muted); padding: 5px 10px; font-size: 13px; cursor: pointer;
+}
+/* Shown only while a node's neighbourhood restricts the canvas (like panel.py's
+   .focus-chip); margin-left avoids fighting .count's auto-margin. */
+.focus-chip {
+  margin-left: 0; display: inline-flex; align-items: center; gap: 8px;
+  background: #eef5ff; border: 1px solid #c3dbf7; color: #1b4f8a;
+  border-radius: 8px; padding: 5px 10px;
+}
+.focus-chip .fullscreen-btn { padding: 2px 8px; }
+/* The category-colour legend for the graph's nodes. */
+.graph-color-legend {
+  display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 12px;
+  border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px;
+}
+/* height, not min-height, bounds the canvas and inspector; min-height:0 on the canvas
+   removes the flex item's content-based floor. */
+.graph-body { display: flex; height: 72vh; }
+.graph-canvas { flex: 1; min-height: 0; }
+.graph-inspector {
+  width: 320px; border-left: 1px solid var(--line); padding: 12px;
+  overflow-y: auto;
+}
+/* Fullscreen is a fixed overlay; explicit vw/vh guard the same flex min-height trap. */
+.graph-panel.fullscreen {
+  position: fixed; inset: 0; top: 0; right: 0; bottom: 0; left: 0;
+  width: 100vw; height: 100vh; z-index: 1000; border-radius: 0;
+  display: flex; flex-direction: column;
+}
+.graph-panel.fullscreen .graph-body { height: auto; flex: 1 1 auto; min-height: 0; }
+.graph-panel.fullscreen .graph-controls,
+.graph-panel.fullscreen .graph-color-legend,
+.graph-panel.fullscreen .graph-legend { flex: 0 0 auto; }
+.ins-title { font-weight: 600; margin-bottom: 8px; word-break: break-all; }
+.graph-inspector dl { margin: 0; font-size: 13px; }
+.graph-inspector dt { color: var(--muted); font-size: 11px; text-transform: uppercase; margin-top: 8px; }
+.graph-inspector dd { margin: 2px 0 0; word-break: break-word; }
+/* --- architecture diagram ------------------------------------------------ */
+/* Wide diagrams scroll both ways rather than shrinking (like diagram.py's .diagram-scroll). */
+.diagram-scroll { overflow: auto; max-height: 72vh; padding: 18px; }
+.diagram-scroll svg { max-width: none !important; height: auto; }
+
+.graph-legend {
+  display: flex; gap: 18px; flex-wrap: wrap; padding: 10px 12px;
+  border-top: 1px solid var(--line); color: var(--muted); font-size: 12px;
+}
+.graph-legend i.ln { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 6px; }
+.ln.solid { border-top: 2px solid #5b6b7c; }
+.ln.dashed { border-top: 2px dashed #b07d2b; }
+.ln.dotted { border-top: 2px dotted #9aa7b4; }
+.ln.bridged { border-top: 1px solid #7b93b8; }
+.dot.ghost { background: #dfe4e9; border: 1px dashed #9aa7b4; }
+
+/* --- pages ------------------------------------------------------------- */
+.page { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+.page h2 { margin-top: 0; font-size: 16px; }
+.lede { color: var(--muted); max-width: 70ch; }
+.card { border: 1px solid var(--line); border-radius: 6px; padding: 12px; margin: 12px 0; }
+.card h3 { margin: 0 0 10px; font-size: 14px; }
+.card label.inline { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.card label.inline .hint { flex-basis: 100%; padding-left: 22px; }
+.form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.form-row label { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; }
+.form-row input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; }
+
+.projects .gid, .muted { color: var(--muted); }
+.projects .warn { color: var(--warn); }
+.projects td.actions { white-space: nowrap; }
+
+.first-run { padding: 48px 24px; text-align: center; }
+.first-run h2 { font-size: 18px; }
+.first-run p { max-width: 60ch; margin: 8px auto; color: var(--muted); }
+
+/* --- overview (bubble chart) ---------------------------------------------- */
+/* No layout arithmetic here either: the SVG's viewBox does the scaling, so the
+   chart is responsive without measuring anything. */
+.bubbles-panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--sh-2); overflow: hidden; margin-bottom: 16px;
+}
+.bubbles-head {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  background: var(--panel-2); font-size: 12.5px; color: var(--muted);
+}
+.bubbles-metrics { display: inline-flex; border: 1px solid var(--line); border-radius: 6px;
+  overflow: hidden; background: var(--panel); }
+.bubbles-metrics button {
+  border: 0; background: transparent; color: var(--muted); font: inherit;
+  padding: 6px 12px; font-size: 12.5px; cursor: pointer;
+}
+.bubbles-metrics button.on { background: var(--accent); color: #fff; }
+.bubbles-metrics button:disabled { opacity: .45; cursor: not-allowed; }
+.bubbles-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; }
+@media (max-width: 1000px) { .bubbles-body { grid-template-columns: minmax(0, 1fr); } }
+.bubbles-chart { padding: 12px; min-width: 0; }
+.bubbles-chart svg { display: block; width: 100%; height: auto; max-height: 66vh; }
+/* Geometry properties are CSS-animatable, which is what makes a metric change
+   read as the same circles resizing rather than as a different chart. */
+.bubbles-chart circle { transition: cx 320ms ease, cy 320ms ease, r 320ms ease; }
+.bubbles-chart text { transition: x 320ms ease, y 320ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  .bubbles-chart circle, .bubbles-chart text { transition: none; }
+}
+.bubbles-chart g.bubble { cursor: pointer; }
+.bubbles-chart g.bubble circle { stroke: rgba(255, 255, 255, .85); stroke-width: 1.5; }
+.bubbles-chart g.bubble:hover circle { stroke: var(--ink); }
+.bubbles-chart g.bubble.sel circle { stroke: var(--ink); stroke-width: 3; }
+.bubbles-chart g.bubble:focus { outline: none; }
+.bubbles-chart g.bubble:focus-visible circle { stroke: var(--accent); stroke-width: 3.5; }
+.bubbles-chart text {
+  pointer-events: none; text-anchor: middle; font-weight: 600; fill: #fff;
+}
+.bubbles-chart text.val { font-weight: 500; opacity: .92; }
+.bubbles-scale { margin: 6px 2px 0 2px; font-size: 11px; color: var(--muted); }
+.bubbles-side {
+  border-left: 1px solid var(--line); background: var(--panel-2);
+  display: flex; flex-direction: column; min-width: 0; padding: 10px;
+}
+@media (max-width: 1000px) {
+  .bubbles-side { border-left: 0; border-top: 1px solid var(--line); }
+}
+.bubbles-side > input[type="text"] {
+  width: 100%; padding: 6px 8px; border: 1px solid var(--line);
+  border-radius: 4px; font: inherit; font-size: 12.5px; margin-bottom: 6px;
+}
+.bubbles-list { overflow: auto; max-height: 44vh; }
+.bubbles-list button {
+  display: block; width: 100%; text-align: left; border: 0; background: transparent;
+  padding: 6px 7px; border-radius: 6px; cursor: pointer; font: inherit;
+  font-size: 12.5px; color: var(--ink); line-height: 1.45;
+}
+.bubbles-list button:hover { background: var(--row-hover); }
+.bubbles-list button.on { background: var(--accent-weak); }
+.bubbles-list .nm { font-weight: 600; }
+.bubbles-list .sub, .bubbles-detail .sub { color: var(--muted); font-size: 11.5px; }
+.bubbles-list .dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 6px; vertical-align: middle;
+}
+.bubbles-detail {
+  border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; font-size: 12.5px;
+}
+.bubbles-detail .dt-title { font-weight: 600; font-size: 13px; word-break: break-word; }
+.bubbles-detail dl {
+  display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 6px 0;
+}
+.bubbles-detail dt { color: var(--muted); }
+.bubbles-detail dd { margin: 0; font-variant-numeric: tabular-nums; }
+.bubbles-notes {
+  margin: 0; padding: 9px 12px 9px 30px; border-top: 1px solid var(--line);
+  background: var(--panel-2); font-size: 11.5px; color: var(--muted); line-height: 1.6;
+}

@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.log
+
+# Environments and local secrets
+.env
+.venv
+venv/
+env/
+.aws/
+credentials
+*.pem
+.pypirc
+
+# ---------------------------------------------------------------------------
+# Scan output: REAL ACCOUNT DATA (account ids, ARNs, resource names).
+# Every name in OUTPUT_FILENAMES and RUNTIME_FILENAMES (settings.py) must be listed here.
+# ---------------------------------------------------------------------------
+aws_inventory.csv
+aws_inventory.html
+aws_inventory.json
+inventory.csv
+grouping_audit.md
+aws_resource_graph.graphml
+aws_resource_graph.mmd
+aws_architecture.drawio
+aws_architecture-*.drawio
+*.graphml
+*.mmd
+aws_scan.json
+aws_raw_capture.jsonl
+aws_normalized_scan_results.json
+aws_project_groups.json
+aws_active_regions.json
+Output/
+out/
+reports/
+
+# The golden renders are synthetic test data (tests/corpus.py), not account data.
+!tests/golden/
+!tests/golden/**
+
+# The agent's local index and uploaded documents: as sensitive as scan output.
+agent_index/
+documents/
+
+# Web app
+node_modules/
+*.tsbuildinfo
+
+# Private notes and local assistant config, kept out of the public repo.
+/docs/
+CLAUDE.md
+.claude/
+
+# Editors and OS
+.DS_Store
+.AppleDouble
+.LSOverride
+.idea/
+.vscode/

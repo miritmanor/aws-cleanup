@@ -1,0 +1,254 @@
+category,service_name,service_slug,covered,covered_type_count,covered_types,free_tier,launch_date,product_url
+Analytics,Amazon Athena,athena,no,0,,,2016-11-30,https://aws.amazon.com/athena/
+Analytics,Amazon CloudSearch,cloudsearch,no,0,,,2012-04-11,https://aws.amazon.com/cloudsearch/
+Analytics,Amazon DataZone,datazone,no,0,,,2022-11-29,https://aws.amazon.com/datazone/
+Analytics,Amazon EMR,emr,no,0,,,2009-04-02,https://aws.amazon.com/emr/
+Analytics,Amazon FinSpace,finspace,no,0,,,2021-05-03,https://aws.amazon.com/finspace/
+Analytics,Amazon Kinesis,kinesis,yes,2,FirehoseStream;KinesisStream,,2013-12-16,https://aws.amazon.com/kinesis/
+Analytics,Amazon Managed Streaming for Apache Kafka (MSK),msk,yes,1,MSKCluster,,2019-05-30,https://aws.amazon.com/msk/
+Analytics,Amazon OpenSearch Service,opensearch-service,yes,2,OpenSearchDomain;OpenSearchServerlessCollection,Free Trial,2015-10-01,https://aws.amazon.com/opensearch-service/
+Analytics,Amazon QuickSight,quicksight,no,0,,Free Trial,2016-11-15,https://aws.amazon.com/quicksight/
+Analytics,AWS Clean Rooms,clean-rooms,no,0,,,2022-11-29,https://aws.amazon.com/clean-rooms/
+Analytics,AWS Data Exchange,data-exchange,no,0,,,2019-11-13,https://aws.amazon.com/data-exchange/
+Analytics,AWS Data Pipeline,datapipeline,no,0,,,2012-12-20,https://aws.amazon.com/datapipeline/
+Analytics,AWS Glue,glue,yes,2,GlueCrawler;GlueJob,Free Trial,2016-12-01,https://aws.amazon.com/glue/
+Analytics,AWS Lake Formation,lake-formation,no,0,,,2019-08-09,https://aws.amazon.com/lake-formation/
+Application Integration,Amazon AppFlow,appflow,no,0,,,2020-04-22,https://aws.amazon.com/appflow/
+Application Integration,Amazon EventBridge,eventbridge,yes,3,EventBridgeBus;EventBridgeRule;EventBridgeSchedule,,2019-07-11,https://aws.amazon.com/eventbridge/
+Application Integration,Amazon Managed Workflows for Apache Airflow (MWAA),managed-workflows-for-apache-airflow,no,0,,,2020-11-24,https://aws.amazon.com/managed-workflows-for-apache-airflow/
+Application Integration,Amazon MQ,amazon-mq,no,0,,,2017-11-28,https://aws.amazon.com/amazon-mq/
+Application Integration,Amazon Simple Notification Service (SNS),sns,yes,1,SNSTopic,,2010-04-07,https://aws.amazon.com/sns/
+Application Integration,Amazon Simple Queue Service (SQS),sqs,yes,1,SQSQueue,,2006-07-13,https://aws.amazon.com/sqs/
+Application Integration,AWS Step Functions,step-functions,yes,1,StepFunctionsStateMachine,,2016-12-01,https://aws.amazon.com/step-functions/
+Application Integration,B2B Data Interchange,b2b-data-interchange,no,0,,,2023-11-27,https://aws.amazon.com/b2b-data-interchange/
+Architecture Strategy,AWS Well-Architected Tool,well-architected-tool,no,0,,,2018-11-29,https://aws.amazon.com/well-architected-tool/
+Blockchain,Amazon Managed Blockchain,managed-blockchain,no,0,,,2018-11-28,https://aws.amazon.com/managed-blockchain/
+Blockchain,Amazon Quantum Ledger Database (QLDB),qldb,no,0,,,2018-11-28,https://aws.amazon.com/qldb/
+Business Applications,Alexa for Business,alexaforbusiness,no,0,,,2017-11-30,https://aws.amazon.com/alexaforbusiness/
+Business Applications,Amazon Chime,chime,no,0,,,2017-02-13,https://aws.amazon.com/chime/
+Business Applications,Amazon Chime SDK,chime/chime-sdk,no,0,,,2019-11-21,https://aws.amazon.com/chime/chime-sdk/
+Business Applications,Amazon Connect,connect,no,0,,,2017-03-28,https://aws.amazon.com/connect/
+Business Applications,Amazon Dash Cart,dash-cart,no,0,,,2023-09-19,https://aws.amazon.com/dash-cart/
+Business Applications,Amazon Honeycode,honeycode,no,0,,,2020-06-24,https://aws.amazon.com/honeycode/
+Business Applications,Amazon WorkDocs,workdocs,no,0,,Free Trial,2015-01-28,https://aws.amazon.com/workdocs/
+Business Applications,Amazon WorkMail,workmail,no,0,,,2016-01-04,https://aws.amazon.com/workmail/
+Business Applications,AWS AppFabric,appfabric,no,0,,,,https://aws.amazon.com/appfabric/
+Business Applications,AWS End User Messaging,end-user-messaging/pricing,no,0,,,2024-07-24,https://aws.amazon.com/end-user-messaging/pricing/
+Business Applications,AWS Supply Chain,aws-supply-chain,no,0,,,2022-11-29,https://aws.amazon.com/aws-supply-chain/
+Business Applications,AWS Wickr,wickr,no,0,,Free Trial,2022-11-28,https://aws.amazon.com/wickr/
+Cloud Financial Management,AWS Budgets,aws-cost-management/aws-budgets,no,0,,,2015-06-29,https://aws.amazon.com/aws-cost-management/aws-budgets/
+Cloud Financial Management,AWS Cost and Usage Report,aws-cost-management/aws-cost-and-usage-reporting,no,0,,,2015-12-16,https://aws.amazon.com/aws-cost-management/aws-cost-and-usage-reporting/
+Cloud Financial Management,AWS Cost Explorer,aws-cost-management/aws-cost-explorer,no,0,,,2014-04-08,https://aws.amazon.com/aws-cost-management/aws-cost-explorer/
+Cloud Financial Management,Reserved Instance (RI) Reporting,aws-cost-management/reserved-instance-reporting,no,0,,,2016-12-21,https://aws.amazon.com/aws-cost-management/reserved-instance-reporting/
+Cloud Financial Management,Savings Plans,savingsplans,no,0,,,2019-11-06,https://aws.amazon.com/savingsplans/
+Compute,Amazon EC2,ec2,yes,9,AMI;EC2Instance;ElasticIP;KeyPair;LaunchTemplate;NetworkInterface;ReservedInstance;SecurityGroup;SpotInstanceRequest,Free Trial,2008-10-23,https://aws.amazon.com/ec2/
+Compute,Amazon EC2 Auto Scaling,ec2/autoscaling,yes,1,AutoScalingGroup,,2009-05-17,https://aws.amazon.com/ec2/autoscaling/
+Compute,Amazon EC2 Spot Instances,ec2/spot,no,0,,,2009-12-14,https://aws.amazon.com/ec2/spot/
+Compute,Amazon Lightsail,lightsail,no,0,,Free Trial,2016-11-30,https://aws.amazon.com/lightsail/
+Compute,AWS App Runner,apprunner,no,0,,,2021-05-18,https://aws.amazon.com/apprunner/
+Compute,AWS Auto Scaling,autoscaling,no,0,,,2018-01-16,https://aws.amazon.com/autoscaling/
+Compute,AWS Batch,batch,no,0,,,2017-01-05,https://aws.amazon.com/batch/
+Compute,AWS Compute Optimizer,compute-optimizer,no,0,,,2019-12-03,https://aws.amazon.com/compute-optimizer/
+Compute,AWS Elastic Beanstalk,elasticbeanstalk,yes,2,ElasticBeanstalkApplication;ElasticBeanstalkEnvironment,,2020-04-09,https://aws.amazon.com/elasticbeanstalk/
+Compute,AWS Lambda,lambda,yes,1,LambdaFunction,Free Trial,2015-04-15,https://aws.amazon.com/lambda/
+Compute,AWS Local Zones,about-aws/global-infrastructure/localzones,no,0,,,2019-12-03,https://aws.amazon.com/about-aws/global-infrastructure/localzones/
+Compute,AWS Outposts,outposts,no,0,,,2019-12-03,https://aws.amazon.com/outposts/
+Compute,AWS Serverless Application Repository,serverless/serverlessrepo,no,0,,,2018-02-21,https://aws.amazon.com/serverless/serverlessrepo/
+Compute,AWS SimSpace Weaver,simspaceweaver,no,0,,,2022-11-29,https://aws.amazon.com/simspaceweaver/
+Compute,AWS Snow Family,snow,no,0,,,2015-10-07,https://aws.amazon.com/snow/
+Compute,AWS Wavelength,wavelength,no,0,,,2019-12-03,https://aws.amazon.com/wavelength/
+Compute,EC2 Image Builder,image-builder,no,0,,,,https://aws.amazon.com/image-builder/
+Compute,VMware Cloud on AWS,vmware,no,0,,,2017-08-28,https://aws.amazon.com/vmware/
+Containers,Amazon Elastic Container Registry (ECR),ecr,yes,1,ECRRepository,Free Trial,2015-12-21,https://aws.amazon.com/ecr/
+Containers,Amazon Elastic Container Service (ECS),ecs,yes,2,ECSCluster;ECSService,,2014-11-13,https://aws.amazon.com/ecs/
+Containers,Amazon Elastic Kubernetes Service (EKS),eks,yes,1,EKSCluster,,2018-06-05,https://aws.amazon.com/eks/
+Containers,AWS App2Container,app2container,no,0,,,2020-07-01,https://aws.amazon.com/app2container/
+Containers,AWS Copilot,containers/copilot,no,0,,,2020-11-23,https://aws.amazon.com/containers/copilot/
+Containers,AWS Fargate,fargate,no,0,,,2017-11-29,https://aws.amazon.com/fargate/
+Containers,Red Hat OpenShift Service on AWS,rosa,no,0,,,2021-03-24,https://aws.amazon.com/rosa/
+Databases,Amazon Aurora,rds/aurora,yes,1,RDSCluster,,2014-11-12,https://aws.amazon.com/rds/aurora/
+Databases,Amazon DocumentDB,documentdb,yes,2,DocumentDBCluster;DocumentDBInstance,Free Trial,2019-01-08,https://aws.amazon.com/documentdb/
+Databases,Amazon DynamoDB,dynamodb,yes,1,DynamoDBTable,Free Trial,2012-01-18,https://aws.amazon.com/dynamodb/
+Databases,Amazon ElastiCache,elasticache,yes,1,ElastiCacheCluster,Free Trial,2011-08-22,https://aws.amazon.com/elasticache/
+Databases,Amazon Keyspaces (for Apache Cassandra),keyspaces,no,0,,Free Trial,2020-04-23,https://aws.amazon.com/keyspaces/
+Databases,Amazon MemoryDB for Redis,memorydb,no,0,,Free Trial,2021-08-19,https://aws.amazon.com/memorydb/
+Databases,Amazon Neptune,neptune,yes,2,NeptuneCluster;NeptuneInstance,Free Trial,2018-05-30,https://aws.amazon.com/neptune/
+Databases,Amazon RDS,rds,yes,2,RDSInstance;RDSSnapshot,Free Trial,2009-10-27,https://aws.amazon.com/rds/
+Databases,Amazon Redshift,redshift,yes,2,RedshiftCluster;RedshiftServerlessWorkgroup,Free Trial,2013-02-14,https://aws.amazon.com/redshift/
+Databases,Amazon Timestream,timestream,no,0,,,2020-09-30,https://aws.amazon.com/timestream/
+Developer Tools,Amazon CodeCatalyst,codecatalyst,no,0,,,2022-12-01,https://aws.amazon.com/codecatalyst/
+Developer Tools,Amazon Corretto,corretto,no,0,,,2019-01-31,https://aws.amazon.com/corretto/
+Developer Tools,AWS Cloud Control API,cloudcontrolapi,no,0,,,2021-09-30,https://aws.amazon.com/cloudcontrolapi/
+Developer Tools,AWS Cloud Development Kit (CDK),cdk,no,0,,,2019-07-11,https://aws.amazon.com/cdk/
+Developer Tools,AWS Cloud9,cloud9,no,0,,,2017-11-30,https://aws.amazon.com/cloud9/
+Developer Tools,AWS CloudShell,cloudshell,no,0,,,2020-12-15,https://aws.amazon.com/cloudshell/
+Developer Tools,AWS CodeArtifact,codeartifact,no,0,,,2020-06-10,https://aws.amazon.com/codeartifact/
+Developer Tools,AWS CodeBuild,codebuild,yes,1,CodeBuildProject,,2016-12-01,https://aws.amazon.com/codebuild/
+Developer Tools,AWS CodeCommit,codecommit,no,0,,,2015-07-15,https://aws.amazon.com/codecommit/
+Developer Tools,AWS CodeDeploy,codedeploy,no,0,,,2014-11-12,https://aws.amazon.com/codedeploy/
+Developer Tools,AWS CodePipeline,codepipeline,yes,1,CodePipeline,,2015-07-15,https://aws.amazon.com/codepipeline/
+Developer Tools,AWS CodeStar,codestar,no,0,,,2017-04-19,https://aws.amazon.com/codestar/
+Developer Tools,AWS Command Line Interface (CLI),cli,no,0,,,2013-09-03,https://aws.amazon.com/cli/
+Developer Tools,AWS Fault Injection Service,fis,no,0,,,2021-03-16,https://aws.amazon.com/fis/
+Developer Tools,AWS Tools and SDKs,getting-started/tools-sdks,no,0,,,2009-11-11,https://aws.amazon.com/getting-started/tools-sdks/
+Developer Tools,AWS X-Ray,xray,yes,2,XRayGroup;XRaySamplingRule,,2017-04-19,https://aws.amazon.com/xray/
+End User Computing,Amazon AppStream 2.0,appstream2,no,0,,Free Trial,2016-12-01,https://aws.amazon.com/appstream2/
+End User Computing,Amazon WorkSpaces Family,workspaces,no,0,,,2014-03-26,https://aws.amazon.com/workspaces/
+End User Computing,Amazon WorkSpaces Thin Client,workspaces/thin-client,no,0,,,2023-11-26,https://aws.amazon.com/workspaces/thin-client/
+Front-End Web & Mobile,Amazon API Gateway,api-gateway,yes,3,APIGatewayDomainName;APIGatewayRestApi;APIGatewayV2Api,Free Trial,2015-07-09,https://aws.amazon.com/api-gateway/
+Front-End Web & Mobile,Amazon Location Service,location,no,0,,Free Trial,2021-06-01,https://aws.amazon.com/location/
+Front-End Web & Mobile,Amazon Pinpoint,pinpoint,no,0,,,2016-12-01,https://aws.amazon.com/pinpoint/
+Front-End Web & Mobile,Amazon Simple Email Service (SES),ses,no,0,,,2011-01-25,https://aws.amazon.com/ses/
+Front-End Web & Mobile,AWS Amplify,amplify,yes,1,AmplifyApp,Free Trial,2017-11-21,https://aws.amazon.com/amplify/
+Front-End Web & Mobile,AWS AppSync,appsync,yes,1,AppSyncApi,Free Trial,2017-11-28,https://aws.amazon.com/appsync/
+Front-End Web & Mobile,AWS Device Farm,device-farm,no,0,,Free Trial,2015-07-09,https://aws.amazon.com/device-farm/
+Game Tech,Amazon GameLift,gamelift,no,0,,,2016-02-09,https://aws.amazon.com/gamelift/
+Game Tech,Amazon Lumberyard,lumberyard,no,0,,,2016-03-16,https://aws.amazon.com/lumberyard/
+Generative AI,Amazon Nova,nova,no,0,,,2024-12-01,https://aws.amazon.com/nova/
+Generative AI,Amazon Q,q,no,0,,,2023-11-28,https://aws.amazon.com/q/
+Internet of Things,AWS IoT 1-Click,iot-1-click,no,0,,,2018-05-16,https://aws.amazon.com/iot-1-click/
+Internet of Things,AWS IoT Analytics,iot-analytics,no,0,,,2017-11-29,https://aws.amazon.com/iot-analytics/
+Internet of Things,AWS IoT Button,iotbutton,no,0,,,2015-10-08,https://aws.amazon.com/iotbutton/
+Internet of Things,AWS IoT Core,iot-core,no,0,,,2015-12-18,https://aws.amazon.com/iot-core/
+Internet of Things,AWS IoT Device Defender,iot-device-defender,no,0,,,2017-11-29,https://aws.amazon.com/iot-device-defender/
+Internet of Things,AWS IoT Device Management,iot-device-management,no,0,,12 Months Free,2017-11-29,https://aws.amazon.com/iot-device-management/
+Internet of Things,AWS IoT EduKit,iot/edukit,no,0,,,2020-12-15,https://aws.amazon.com/iot/edukit/
+Internet of Things,AWS IoT Events,iot-events,no,0,,,2019-05-30,https://aws.amazon.com/iot-events/
+Internet of Things,AWS IoT FleetWise,iot-fleetwise,no,0,,,2021-11-30,https://aws.amazon.com/iot-fleetwise/
+Internet of Things,AWS IoT Greengrass,greengrass,no,0,,12 Months Free,2017-06-07,https://aws.amazon.com/greengrass/
+Internet of Things,AWS IoT RoboRunner,roborunner,no,0,,,2022-11-23,https://aws.amazon.com/roborunner
+Internet of Things,AWS IoT SiteWise,iot-sitewise,no,0,,,2020-07-09,https://aws.amazon.com/iot-sitewise/
+Internet of Things,AWS IoT TwinMaker,iot-twinmaker,no,0,,,2021-11-30,https://aws.amazon.com/iot-twinmaker/
+Internet of Things,AWS Partner Device Catalog,,no,0,,,2018-11-27,https://devices.amazonaws.com/
+Internet of Things,FreeRTOS,freertos,no,0,,,2017-11-29,https://aws.amazon.com/freertos/
+Machine Learning,Amazon Augmented AI,augmented-ai,no,0,,Free Trial,2020-04-24,https://aws.amazon.com/augmented-ai/
+Machine Learning,Amazon Bedrock,bedrock,no,0,,,,https://aws.amazon.com/bedrock/
+Machine Learning,Amazon CodeGuru,codeguru,no,0,,,2019-12-03,https://aws.amazon.com/codeguru/
+Machine Learning,Amazon CodeWhisperer,codewhisperer,no,0,,,2023-04-13,https://aws.amazon.com/codewhisperer/
+Machine Learning,Amazon Comprehend,comprehend,no,0,,12 Months Free,2017-11-29,https://aws.amazon.com/comprehend/
+Machine Learning,Amazon DevOps Guru,devops-guru,no,0,,Free Trial,2021-05-04,https://aws.amazon.com/devops-guru/
+Machine Learning,Amazon Elastic Inference,machine-learning/elastic-inference,no,0,,,2018-11-28,https://aws.amazon.com/machine-learning/elastic-inference/
+Machine Learning,Amazon Forecast,forecast,no,0,,Free Trial,2019-08-22,https://aws.amazon.com/forecast/
+Machine Learning,Amazon Fraud Detector,fraud-detector,no,0,,Free Trial,2020-07-28,https://aws.amazon.com/fraud-detector/
+Machine Learning,Amazon HealthLake,healthlake,no,0,,,2020-12-08,https://aws.amazon.com/healthlake/
+Machine Learning,Amazon Kendra,kendra,no,0,,Free Trial,2020-05-11,https://aws.amazon.com/kendra/
+Machine Learning,Amazon Lex,lex,no,0,,,2017-04-19,https://aws.amazon.com/lex/
+Machine Learning,Amazon Lookout for Equipment,lookout-for-equipment,no,0,,Free Trial,2021-04-08,https://aws.amazon.com/lookout-for-equipment/
+Machine Learning,Amazon Lookout for Metrics,lookout-for-metrics,no,0,,Free Trial,2020-12-01,https://aws.amazon.com/lookout-for-metrics/
+Machine Learning,Amazon Lookout for Vision,lookout-for-vision,no,0,,Free Trial,2021-02-24,https://aws.amazon.com/lookout-for-vision/
+Machine Learning,Amazon Monitron,monitron,no,0,,,2020-12-01,https://aws.amazon.com/monitron/
+Machine Learning,Amazon Personalize,personalize,no,0,,Free Trial,2019-06-10,https://aws.amazon.com/personalize/
+Machine Learning,Amazon Polly,polly,no,0,,12 Months Free,2016-11-30,https://aws.amazon.com/polly/
+Machine Learning,Amazon Rekognition,rekognition,no,0,,12 Months Free,2016-11-30,https://aws.amazon.com/rekognition/
+Machine Learning,Amazon SageMaker,sagemaker,yes,4,SageMakerEndpoint;SageMakerNotebook;SageMakerStudioApp;SageMakerTrainingJob,Free Trial,2017-11-29,https://aws.amazon.com/sagemaker/
+Machine Learning,Amazon SageMaker AI,sagemaker,no,0,,,2017-11-29,https://aws.amazon.com/sagemaker/
+Machine Learning,Amazon SageMaker Ground Truth,sagemaker/groundtruth,no,0,,Free Trial,2018-11-27,https://aws.amazon.com/sagemaker/groundtruth/
+Machine Learning,Amazon Textract,textract,no,0,,Free Trial,2019-05-29,https://aws.amazon.com/textract/
+Machine Learning,Amazon Transcribe,transcribe,no,0,,,2018-04-04,https://aws.amazon.com/transcribe/
+Machine Learning,Amazon Translate,translate,no,0,,,2018-04-04,https://aws.amazon.com/translate/
+Machine Learning,Apache MXNet on AWS,mxnet,no,0,,,2017-06-06,https://aws.amazon.com/mxnet/
+Machine Learning,AWS App Studio,appstudio,no,0,,,2024-07-10,https://aws.amazon.com/appstudio/
+Machine Learning,AWS Deep Learning AMIs,machine-learning/amis,no,0,,,2017-02-10,https://aws.amazon.com/machine-learning/amis/
+Machine Learning,AWS Deep Learning Containers,machine-learning/containers,no,0,,,2019-03-27,https://aws.amazon.com/machine-learning/containers/
+Machine Learning,AWS DeepComposer,deepcomposer,no,0,,,2020-04-02,https://aws.amazon.com/deepcomposer/
+Machine Learning,AWS DeepLens,deeplens,no,0,,,2017-11-29,https://aws.amazon.com/deeplens/
+Machine Learning,AWS DeepRacer,deepracer,no,0,,Free Trial,2018-11-28,https://aws.amazon.com/deepracer/
+Machine Learning,AWS HealthOmics,omics,no,0,,,2022-11-29,https://aws.amazon.com/omics/
+Machine Learning,AWS Inferentia,machine-learning/inferentia,no,0,,,2018-11-28,https://aws.amazon.com/machine-learning/inferentia/
+Machine Learning,AWS Panorama,panorama,no,0,,,2020-12-01,https://aws.amazon.com/panorama/
+Machine Learning,PyTorch on AWS,pytorch,no,0,,,2018-06-20,https://aws.amazon.com/pytorch/
+Machine Learning,TensorFlow on AWS,tensorflow,no,0,,,2017-07-14,https://aws.amazon.com/tensorflow/
+Management & Governance,Amazon CloudWatch,cloudwatch,yes,2,CloudWatchAlarm;CloudWatchLogGroup,,2009-05-18,https://aws.amazon.com/cloudwatch/
+Management & Governance,Amazon Managed Grafana,grafana,no,0,,,2021-08-31,https://aws.amazon.com/grafana/
+Management & Governance,Amazon Managed Service for Prometheus,prometheus,no,0,,,2021-09-29,https://aws.amazon.com/prometheus/
+Management & Governance,AWS Chatbot,chatbot,no,0,,,2020-04-22,https://aws.amazon.com/chatbot/
+Management & Governance,AWS CloudFormation,cloudformation,yes,1,CloudFormationStack,,2011-02-25,https://aws.amazon.com/cloudformation/
+Management & Governance,AWS CloudTrail,cloudtrail,yes,1,CloudTrailTrail,,2013-11-13,https://aws.amazon.com/cloudtrail/
+Management & Governance,AWS Config,config,no,0,,,2015-04-06,https://aws.amazon.com/config/
+Management & Governance,AWS Control Tower,controltower,no,0,,,2019-06-24,https://aws.amazon.com/controltower/
+Management & Governance,AWS Distro for OpenTelemetry,otel,no,0,,,2020-10-21,https://aws.amazon.com/otel/
+Management & Governance,AWS Health,premiumsupport/technology/aws-health,no,0,,,2023-10-09,https://aws.amazon.com/premiumsupport/technology/aws-health/
+Management & Governance,AWS Launch Wizard,launchwizard,no,0,,,2019-11-13,https://aws.amazon.com/launchwizard/
+Management & Governance,AWS License Manager,license-manager,no,0,,,2018-11-28,https://aws.amazon.com/license-manager/
+Management & Governance,AWS Managed Services,managed-services,no,0,,,2016-12-12,https://aws.amazon.com/managed-services/
+Management & Governance,AWS Management Console,console,no,0,,,2009-01-08,https://aws.amazon.com/console/
+Management & Governance,AWS Management Console Mobile Application,console/mobile,no,0,,,2013-01-04,https://aws.amazon.com/console/mobile/
+Management & Governance,AWS OpsWorks,opsworks,no,0,,,2013-02-18,https://aws.amazon.com/opsworks/
+Management & Governance,AWS Organizations,organizations,no,0,,,2017-02-27,https://aws.amazon.com/organizations/
+Management & Governance,AWS Personal Health Dashboard,premiumsupport/technology/personal-health-dashboard,no,0,,,2016-12-01,https://aws.amazon.com/premiumsupport/technology/personal-health-dashboard/
+Management & Governance,AWS Proton,proton,no,0,,,2021-06-09,https://aws.amazon.com/proton/
+Management & Governance,AWS Resilience Hub,resilience-hub,no,0,,,2021-11-10,https://aws.amazon.com/resilience-hub/
+Management & Governance,AWS Service Catalog,servicecatalog,no,0,,,2015-07-09,https://aws.amazon.com/servicecatalog/
+Management & Governance,AWS Service Management Connector,service-management-connector,no,0,,,2022-09-14,https://aws.amazon.com/service-management-connector/
+Management & Governance,AWS Systems Manager,systems-manager,yes,1,SSMParameter,,2017-11-29,https://aws.amazon.com/systems-manager/
+Management & Governance,AWS Trusted Advisor,premiumsupport/technology/trusted-advisor,no,0,,,2012-01-30,https://aws.amazon.com/premiumsupport/technology/trusted-advisor/
+Management & Governance,AWS User Notifications,notifications,no,0,,,2023-03-29,https://aws.amazon.com/notifications/
+Media Services,Amazon Elastic Transcoder,elastictranscoder,no,0,,,2013-01-28,https://aws.amazon.com/elastictranscoder/
+Media Services,Amazon Interactive Video Service,ivs,no,0,,,2020-07-15,https://aws.amazon.com/ivs/
+Media Services,Amazon Kinesis Video Streams,kinesis/video-streams,no,0,,,2017-11-29,https://aws.amazon.com/kinesis/video-streams/
+Media Services,Amazon Nimble Studio,nimble-studio,no,0,,,2021-04-08,https://aws.amazon.com/nimble-studio/
+Media Services,AWS Deadline Cloud,deadline-cloud,no,0,,,2024-04-02,https://aws.amazon.com/deadline-cloud/
+Media Services,AWS Elemental Appliances & Software,elemental-appliances-software,no,0,,,2019-08-07,https://aws.amazon.com/elemental-appliances-software/
+Media Services,AWS Elemental MediaConnect,mediaconnect,no,0,,,2018-11-27,https://aws.amazon.com/mediaconnect/
+Media Services,AWS Elemental MediaConvert,mediaconvert,no,0,,,2017-11-26,https://aws.amazon.com/mediaconvert/
+Media Services,AWS Elemental MediaLive,medialive,no,0,,,2017-11-26,https://aws.amazon.com/medialive/
+Media Services,AWS Elemental MediaPackage,mediapackage,no,0,,,2017-11-26,https://aws.amazon.com/mediapackage/
+Media Services,AWS Elemental MediaStore,mediastore,no,0,,,2017-11-26,https://aws.amazon.com/mediastore/
+Media Services,AWS Elemental MediaTailor,mediatailor,no,0,,,2017-11-26,https://aws.amazon.com/mediatailor/
+Migration,AWS Application Discovery Service,application-discovery,no,0,,Free Trial,2016-04-19,https://aws.amazon.com/application-discovery/
+Migration,AWS Application Migration Service (MGN),application-migration-service,no,0,,Always Free,2019-06-11,https://aws.amazon.com/application-migration-service/
+Migration,AWS Database Migration Service (DMS),dms,no,0,,,2016-03-15,https://aws.amazon.com/dms/
+Migration,AWS DataSync,datasync,no,0,,,2018-11-25,https://aws.amazon.com/datasync/
+Migration,AWS Mainframe Modernization,mainframe-modernization,no,0,,,2021-11-30,https://aws.amazon.com/mainframe-modernization/
+Migration,AWS Migration Hub,migration-hub,no,0,,,2017-08-14,https://aws.amazon.com/migration-hub/
+Migration,AWS Snow Family,snow,no,0,,,2015-10-07,https://aws.amazon.com/snow/
+Migration,AWS Transfer Family,aws-transfer-family,no,0,,,2018-11-25,https://aws.amazon.com/aws-transfer-family/
+Migration,Migration Evaluator (formerly TSO Logic),migration-evaluator,no,0,,,2020-07-20,https://aws.amazon.com/migration-evaluator/
+Networking & Content Delivery,Amazon CloudFront,cloudfront,yes,1,CloudFrontDistribution,12 Months Free,2008-11-18,https://aws.amazon.com/cloudfront/
+Networking & Content Delivery,Amazon Route 53,route53,yes,2,Route53HostedZone;Route53ResolverEndpoint,,2010-12-06,https://aws.amazon.com/route53/
+Networking & Content Delivery,Amazon VPC,vpc,yes,6,InternetGateway;NatGateway;RouteTable;Subnet;VPC;VpcEndpoint,,2011-08-03,https://aws.amazon.com/vpc/
+Networking & Content Delivery,AWS App Mesh,app-mesh,no,0,,,2019-03-27,https://aws.amazon.com/app-mesh/
+Networking & Content Delivery,AWS Cloud Map,cloud-map,no,0,,,2018-11-28,https://aws.amazon.com/cloud-map/
+Networking & Content Delivery,AWS Direct Connect,directconnect,no,0,,,2011-08-30,https://aws.amazon.com/directconnect/
+Networking & Content Delivery,AWS Global Accelerator,global-accelerator,no,0,,,2018-11-26,https://aws.amazon.com/global-accelerator/
+Networking & Content Delivery,AWS Private 5G,private5g,no,0,,,2021-11-30,https://aws.amazon.com/private5g/
+Networking & Content Delivery,AWS PrivateLink,privatelink,no,0,,,2017-11-08,https://aws.amazon.com/privatelink/
+Networking & Content Delivery,AWS Transit Gateway,transit-gateway,yes,1,TransitGateway,,2018-11-26,https://aws.amazon.com/transit-gateway/
+Networking & Content Delivery,AWS Verified Access,verified-access,no,0,,,2022-11-29,https://aws.amazon.com/verified-access/
+Networking & Content Delivery,AWS VPN,vpn,yes,1,VPNConnection,,2018-12-18,https://aws.amazon.com/vpn/
+Networking & Content Delivery,Elastic Load Balancing (ELB),elasticloadbalancing,yes,2,LoadBalancer;TargetGroup,12 Months Free,2009-05-17,https://aws.amazon.com/elasticloadbalancing/
+Quantum Technologies,Amazon Braket,braket,no,0,,Free Trial,2020-08-13,https://aws.amazon.com/braket/
+Robotics,AWS RoboMaker,robomaker,no,0,,Free Trial,2018-11-26,https://aws.amazon.com/robomaker/
+Satellite,AWS Ground Station,ground-station,no,0,,,2019-05-22,https://aws.amazon.com/ground-station/
+"Security, Identity, & Compliance",Amazon Cognito,cognito,yes,1,CognitoUserPool,,2014-07-10,https://aws.amazon.com/cognito/
+"Security, Identity, & Compliance",Amazon Detective,detective,no,0,,Free Trial,2019-12-03,https://aws.amazon.com/detective/
+"Security, Identity, & Compliance",Amazon GuardDuty,guardduty,no,0,,Free Trial,2017-11-28,https://aws.amazon.com/guardduty/
+"Security, Identity, & Compliance",Amazon Inspector,inspector,no,0,,Free Trial,2021-11-29,https://aws.amazon.com/inspector/
+"Security, Identity, & Compliance",Amazon Macie,macie,no,0,,Free Trial,2017-08-14,https://aws.amazon.com/macie/
+"Security, Identity, & Compliance",Amazon Security Lake,security-lake,no,0,,,2022-11-29,https://aws.amazon.com/security-lake/
+"Security, Identity, & Compliance",Amazon Verified Permissions,verified-permissions,no,0,,,2022-11-28,https://aws.amazon.com/verified-permissions/
+"Security, Identity, & Compliance",AWS Artifact,artifact,no,0,,,2016-11-30,https://aws.amazon.com/artifact/
+"Security, Identity, & Compliance",AWS Audit Manager,audit-manager,no,0,,,2020-12-08,https://aws.amazon.com/audit-manager/
+"Security, Identity, & Compliance",AWS Certificate Manager,certificate-manager,yes,1,ACMCertificate,,2016-01-21,https://aws.amazon.com/certificate-manager/
+"Security, Identity, & Compliance",AWS CloudHSM,cloudhsm,no,0,,,2013-03-26,https://aws.amazon.com/cloudhsm/
+"Security, Identity, & Compliance",AWS Directory Service,directoryservice,no,0,,,2014-10-21,https://aws.amazon.com/directoryservice/
+"Security, Identity, & Compliance",AWS Firewall Manager,firewall-manager,no,0,,,2018-04-04,https://aws.amazon.com/firewall-manager/
+"Security, Identity, & Compliance",AWS IAM Identity Center,iam/identity-center,no,0,,,,https://aws.amazon.com/iam/identity-center/
+"Security, Identity, & Compliance",AWS Identity and Access Management,iam,yes,5,IAMGroup;IAMPolicy;IAMRole;IAMRoleUnusedAccessFinding;IAMUser,,2011-05-03,https://aws.amazon.com/iam/
+"Security, Identity, & Compliance",AWS Key Management Service (KMS),kms,yes,1,KMSKey,Always Free,2014-11-12,https://aws.amazon.com/kms/
+"Security, Identity, & Compliance",AWS Network Firewall,network-firewall,yes,1,NetworkFirewall,,2020-11-19,https://aws.amazon.com/network-firewall/
+"Security, Identity, & Compliance",AWS Resource Access Manager,ram,no,0,,,2018-12-06,https://aws.amazon.com/ram/
+"Security, Identity, & Compliance",AWS Secrets Manager,secrets-manager,yes,1,Secret,Free Trial,2018-04-04,https://aws.amazon.com/secrets-manager/
+"Security, Identity, & Compliance",AWS Security Hub,security-hub,no,0,,Free Trial,2019-06-24,https://aws.amazon.com/security-hub/
+"Security, Identity, & Compliance",AWS Shield,shield,no,0,,,2016-12-01,https://aws.amazon.com/shield/
+"Security, Identity, & Compliance",AWS WAF,waf,yes,1,WAFWebACL,,2015-10-06,https://aws.amazon.com/waf/
+Serverless,AWS Application Composer,application-composer,no,0,,,2022-12-01,https://aws.amazon.com/application-composer/
+Storage,Amazon Elastic Block Store (EBS),ebs,yes,2,EBSSnapshot;EBSVolume,12 Months Free,2008-08-20,https://aws.amazon.com/ebs/
+Storage,Amazon Elastic File System (EFS),efs,yes,1,EFSFileSystem,12 Months Free,2015-04-09,https://aws.amazon.com/efs/
+Storage,Amazon FSx,fsx,no,0,,,2018-11-28,https://aws.amazon.com/fsx/
+Storage,Amazon S3 Glacier,glacier,no,0,,,2012-08-20,https://aws.amazon.com/glacier/
+Storage,Amazon Simple Storage Service (S3),s3,yes,1,S3Bucket,Free Trial,2006-03-14,https://aws.amazon.com/s3/
+Storage,AWS Backup,backup,yes,2,BackupPlan;BackupVault,,2019-01-15,https://aws.amazon.com/backup/
+Storage,AWS Elastic Disaster Recovery (DRS),disaster-recovery,no,0,,,2019-10-31,https://aws.amazon.com/disaster-recovery/
+Storage,AWS Snow Family,snow,no,0,,,2015-10-07,https://aws.amazon.com/snow/
+Storage,AWS Storage Gateway,storagegateway,no,0,,Always Free,2012-01-24,https://aws.amazon.com/storagegateway/

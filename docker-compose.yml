@@ -1,0 +1,58 @@
+# The web app: an API over the audit core, plus a React frontend.
+#   docker compose up --build    then open http://127.0.0.1:8080
+#
+# SECURITY: ports bind to 127.0.0.1 only. The app serves a full map of an AWS account
+# and has no authentication; exposing these ports means adding authentication first.
+
+services:
+  backend:
+    build:
+      # The repo root: the image needs aws_resource_audit/ as well as backend/.
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      AUDIT_DATA_DIR: /data
+      # Credentials arrive as a read-only Docker secret (see `secrets:` below).
+      AWS_SHARED_CREDENTIALS_FILE: /run/secrets/aws_credentials
+      # The agent's LLM API key file; empty or absent just disables the agent.
+      AGENT_API_KEY_FILE: /run/secrets/llm_api_key
+      # DEBUG also logs the agent's raw, unmasked LLM traffic (see README, Logging).
+      # AUDIT_LOG_LEVEL: DEBUG
+      # The [default] profile is used unless the Scan panel names one; or set AWS_PROFILE.
+    volumes:
+      # Snapshot, outputs, config, group names and uploaded documents: one mount,
+      # so `docker compose down && up` loses nothing.
+      - audit-data:/data
+    secrets:
+      - aws_credentials
+      - llm_api_key
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      # /api/health never reads the snapshot, so a server with no scan yet is healthy.
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  audit-data:
+
+secrets:
+  # AUDIT_AWS_CREDENTIALS_FILE if set, else $HOME/.aws-audit/credentials.
+  aws_credentials:
+    file: ${AUDIT_AWS_CREDENTIALS_FILE:-${HOME}/.aws-audit/credentials}
+  # The whole file is the key. Defaults to /dev/null (no agent), since Compose cannot make
+  # a secret optional. To enable: AUDIT_LLM_API_KEY_FILE=/path/to/key in .env, then up --force-recreate.
+  llm_api_key:
+    file: ${AUDIT_LLM_API_KEY_FILE:-/dev/null}
