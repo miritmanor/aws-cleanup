@@ -29,7 +29,7 @@ def billing(*amounts):
 def rows():
     return [make_row("EC2Instance", "i-1"), make_row("SecurityGroup", "sg-1"),
             make_row("SecurityGroup", "sg-2"), make_row("EBSVolume", "vol-1"),
-            make_row("S3Bucket", "b1", region="global")]
+            make_row("S3Bucket", "b1", region="eu-west-1")]
 
 
 class ServiceCountTests(unittest.TestCase):

@@ -28,7 +28,7 @@ def bill(*cells):
 class FindActiveRegionsTests(unittest.TestCase):
     def test_a_region_with_a_row_is_active_and_global_rows_are_not_a_region(self):
         rows = [make_row("LambdaFunction", "fn", region="us-east-1"),
-                make_row("S3Bucket", "b", region="global")]
+                make_row("IAMRole", "r", region="global")]
         active = find_active_regions(rows, SCANNED)
         self.assertEqual(active.resources, {"us-east-1": 1})
         self.assertEqual(active.regions, ["us-east-1"])
@@ -39,6 +39,18 @@ class FindActiveRegionsTests(unittest.TestCase):
             ("Amazon Lex", "eu-west-1", "1.20"), ("Amazon Lex", "ap-south-1", "0.40")))
         self.assertEqual(active.regions, ["ap-south-1", "eu-west-1"])
         self.assertEqual(active.billed_not_scanned, ["ap-south-1"])
+
+    def test_a_bucket_makes_its_own_region_active(self):
+        active = find_active_regions([make_row("S3Bucket", "b", region="eu-west-1")], SCANNED)
+        self.assertEqual(active.resources, {"eu-west-1": 1})
+
+    def test_a_bucket_outside_the_scan_does_not_hide_an_unscanned_bill(self):
+        """S3 is listed account-wide, so a bucket can sit in a region the scan skipped."""
+        active = find_active_regions(
+            [make_row("S3Bucket", "b", region="ap-south-1")], SCANNED,
+            billing=bill(("Amazon Lex", "ap-south-1", "2.00")))
+        self.assertEqual(active.billed_not_scanned, ["ap-south-1"])
+        self.assertEqual(active.regions, ["ap-south-1"])
 
     def test_a_sub_cent_or_no_region_charge_does_not_make_a_region_active(self):
         active = find_active_regions([], SCANNED, billing=bill(

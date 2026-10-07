@@ -41,8 +41,10 @@ def find_active_regions(rows, scanned, coverage_entries=None, billing=None):
     for amount in getattr(billing, "amounts", ()) or ():
         if amount.region and amount.region != ACCOUNT_WIDE:
             billed[amount.region] = billed.get(amount.region, ZERO) + amount.amount
+    # Rows outside the scan (S3 is listed account-wide) must not hide an unscanned bill.
     billed = {r: a for r, a in billed.items()
-              if a >= BILLING_FINDING_MIN_AMOUNT and r not in resources}
+              if a >= BILLING_FINDING_MIN_AMOUNT
+              and not (r in resources and r in scanned)}
 
     unknown = sorted({e.get("scope") for e in coverage_entries or ()
                       if e.get("capability") == INVENTORY

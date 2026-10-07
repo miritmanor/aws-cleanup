@@ -58,7 +58,7 @@ class StateMachineConnectionTests(ConnectionTypeTestCase):
             "Arguments": {"Bucket": "receipts-store", "Key": "{% $states.input.key %}"}}}}}}}
         self.assert_three_states("statemachine.s3bucket.bucket-parameter",
                                  lambda: self._machine(definition)
-                                 + [make_row("S3Bucket", "receipts-store", region="global")],
+                                 + [make_row("S3Bucket", "receipts-store", region="eu-west-1")],
                                  "orders", "receipts-store")
 
     def test_a_name_filled_in_at_run_time_links_nothing(self):

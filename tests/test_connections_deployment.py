@@ -41,7 +41,7 @@ class CicdConnectionTests(ConnectionTypeTestCase):
         self.assert_three_states(
             "codepipeline.s3bucket.artifact-store",
             lambda: self._pipeline(artifactStore={"type": "S3", "location": "pipe-artifacts"})
-            + [make_row("S3Bucket", "pipe-artifacts", region="global")], "release", "pipe-artifacts")
+            + [make_row("S3Bucket", "pipe-artifacts", region="eu-west-1")], "release", "pipe-artifacts")
 
     def test_codepipeline_codebuild_action(self):
         stages = [{"name": "Build", "actions": [{
@@ -53,7 +53,7 @@ class CicdConnectionTests(ConnectionTypeTestCase):
 
     def test_an_artifact_bucket_is_deployment_tier(self):
         rows = self._pipeline(artifactStore={"location": "pipe-artifacts"})
-        rows.append(make_row("S3Bucket", "pipe-artifacts", region="global"))
+        rows.append(make_row("S3Bucket", "pipe-artifacts", region="eu-west-1"))
         audit.resolve_edges(rows)
         audit.apply_tiers(rows)
         self.assertEqual(rows[1]["tier"], audit.TIER_DEPLOYMENT)

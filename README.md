@@ -260,7 +260,7 @@ Every output — CSV, JSON, HTML, Markdown — carries the same columns, defined
 | Column | What it holds |
 |---|---|
 | `service` | The resource type this script assigns, e.g. `LambdaFunction`, `S3Bucket`. |
-| `region` | The region it was found in, or `global` for S3 and IAM. |
+| `region` | The region it was found in, or `global` for IAM and other account-wide types. An S3 bucket has its own region. |
 | `resource_id` | The native AWS identifier, or the ARN where that is the identifier. |
 | `arn` | The full ARN where AWS exposes one, empty otherwise — most EC2-adjacent types have none. |
 | `account` | The account the resource belongs to. Taken from its ARN when it has one, otherwise from the scanned identity. |

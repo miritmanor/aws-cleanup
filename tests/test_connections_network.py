@@ -336,7 +336,7 @@ class CloudFrontOriginTests(ConnectionTypeTestCase):
         self.assert_three_states(
             "cloudfront.s3bucket.origin",
             lambda: self._dist("site-assets.s3.us-east-1.amazonaws.com")
-            + [make_row("S3Bucket", "site-assets", region="global")], "E1", "site-assets")
+            + [make_row("S3Bucket", "site-assets", region="eu-west-1")], "E1", "site-assets")
 
     def test_cloudfront_loadbalancer_origin(self):
         self.assert_three_states(
@@ -432,7 +432,7 @@ class Route53RecordTests(ConnectionTypeTestCase):
             "DNSName": "s3-website-us-east-1.amazonaws.com."}}
         self.assert_three_states(
             "route53.s3bucket.alias",
-            lambda: self._zone(record) + [make_row("S3Bucket", "static.shop.example", region="global")],
+            lambda: self._zone(record) + [make_row("S3Bucket", "static.shop.example", region="eu-west-1")],
             "Z1", "static.shop.example")
 
 

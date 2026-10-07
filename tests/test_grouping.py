@@ -29,7 +29,7 @@ class TagDimensionTests(unittest.TestCase):
 
     def test_environment_alone_does_not_make_a_project(self):
         rows = [make_row("LambdaFunction", "a", tags={"Environment": "prod"}),
-                make_row("S3Bucket", "b", region="global", tags={"Environment": "prod"})]
+                make_row("S3Bucket", "b", region="eu-west-1", tags={"Environment": "prod"})]
         group(rows)
 
         self.assertEqual([r["project_id"] for r in rows], ["", ""],
@@ -170,7 +170,7 @@ class SharedAndAmbiguousTests(unittest.TestCase):
     def test_a_resource_used_by_two_projects_is_shared(self):
         a = tagged("LambdaFunction", "orders-fn", "orders")
         b = tagged("LambdaFunction", "billing-fn", "billing")
-        bucket = make_row("S3Bucket", "shared-assets", region="global")
+        bucket = make_row("S3Bucket", "shared-assets", region="eu-west-1")
         for row in (a, b):
             audit.add_edge(row, "shared-assets", "reads", "env var",
                            conn_type="lambda.any.env-var-arn-value",
@@ -186,7 +186,7 @@ class SharedAndAmbiguousTests(unittest.TestCase):
         a = tagged("LambdaFunction", "orders-fn", "orders")
         b = tagged("LambdaFunction", "billing-fn", "billing")
         sibling = make_row("DynamoDBTable", "orders-table")
-        bucket = make_row("S3Bucket", "shared-assets", region="global")
+        bucket = make_row("S3Bucket", "shared-assets", region="eu-west-1")
         for row in (a, b):
             audit.add_edge(row, "shared-assets", "reads", "env var",
                            conn_type="lambda.any.env-var-arn-value",

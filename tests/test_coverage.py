@@ -318,14 +318,14 @@ class ReportTests(unittest.TestCase):
 
     def test_the_html_banner_names_the_gaps(self):
         html = audit.render_html_report(
-            [make_row("S3Bucket", "assets", region="global")],
+            [make_row("S3Bucket", "assets", region="eu-west-1")],
             coverage=ledger_with(("LambdaFunction", EAST, cov.DENIED)).as_dicts())
         self.assertIn("did not complete", html)
         self.assertIn("LambdaFunction", html)
 
     def test_complete_coverage_adds_no_banner(self):
         html = audit.render_html_report(
-            [make_row("S3Bucket", "assets", region="global")],
+            [make_row("S3Bucket", "assets", region="eu-west-1")],
             coverage=ledger_with(("LambdaFunction", EAST, cov.COMPLETE)).as_dicts())
         self.assertNotIn("did not complete", html)
 
