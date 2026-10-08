@@ -44,10 +44,13 @@ class ProjectListTests(ApiTestCase):
 
     def test_a_named_tag_project_still_counts_as_tag_derived(self):
         """Hand-picking protection reads the detected method, which naming leaves alone."""
-        from app.api.groups import _tag_derived_keys
+        from app import stores
+        from aws_resource_audit.naming.merges import is_tag_derived
         key = self._tagged_key()
         self.client.post("/api/groups", json={"name": "Shop", "member_key": key})
-        self.assertIn(key, _tag_derived_keys())
+        row = next(r for r in stores.snapshot_store().load().rows if member_key(r) == key)
+        self.assertEqual(row["grouping_method"], "named")
+        self.assertTrue(is_tag_derived(row))
 
     def test_saved_names_are_listed_without_a_scan(self):
         self.client.post("/api/groups", json={"name": "Shop", "member_key": self._tagged_key()})

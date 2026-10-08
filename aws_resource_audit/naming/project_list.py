@@ -3,6 +3,7 @@ Keyed on project_id. Reads the store, so only entry points call it."""
 
 from ..rows import member_key
 from .group_names import GROUP_ID_PREFIX, OVERLAP_PERCENT, load_group_store
+from .merges import absorbed_names, merge_root
 
 SOURCE_TAG = "AWS tag"
 SOURCE_RULE = "name rule"
@@ -22,7 +23,7 @@ def _source_of(row, manual):
     return _SOURCE_BY_PREFIX.get(detected.split(":", 1)[0], "")
 
 
-def _entry(project_id, name, rows, gid=None, saved=None, live=frozenset()):
+def _entry(project_id, name, rows, gid=None, saved=None, live=frozenset(), merged_from=()):
     saved = saved or {}
     manual = bool(saved.get("manual"))
     saved_members = saved.get("members", [])
@@ -44,6 +45,8 @@ def _entry(project_id, name, rows, gid=None, saved=None, live=frozenset()):
         "live_members": live_members,
         "updated_at": saved.get("updated_at"),
         "not_applied": not_applied,
+        "extra_members": len(saved.get("extra_members", [])),
+        "merged_from": list(merged_from),
     }
 
 
@@ -62,9 +65,10 @@ def project_list(all_rows, groups_file):
         gid = pid[len(GROUP_ID_PREFIX):] if pid.startswith(GROUP_ID_PREFIX) else None
         saved = groups.get(gid) if gid else None
         name = (saved or {}).get("name") or rows[0].get("project_group") or pid
-        out.append(_entry(pid, name, rows, gid if saved else None, saved, live))
+        merged_from = absorbed_names(groups, gid) if saved else ()
+        out.append(_entry(pid, name, rows, gid if saved else None, saved, live, merged_from))
     for gid, saved in groups.items():
         pid = GROUP_ID_PREFIX + gid
-        if pid not in by_project:
+        if pid not in by_project and merge_root(groups, gid) == gid:
             out.append(_entry(pid, saved.get("name") or gid, [], gid, saved, live))
     return sorted(out, key=lambda p: (-p["resource_count"], p["name"].lower(), p["project_id"]))

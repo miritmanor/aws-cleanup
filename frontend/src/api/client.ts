@@ -182,10 +182,20 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ name, member_keys: memberKeys }),
     }),
-  addGroupMembers: (id: string, memberKeys: string[]) =>
-    request<Group>(`/api/groups/${encodeURIComponent(id)}/members`, {
+  // Show one project under another's name; forgetting that name splits them again.
+  mergeProject: (sourceProjectId: string, targetProjectId: string) =>
+    request<Group>("/api/groups/merge", {
       method: "POST",
-      body: JSON.stringify({ member_keys: memberKeys }),
+      body: JSON.stringify({
+        source_project_id: sourceProjectId,
+        target_project_id: targetProjectId,
+      }),
+    }),
+  // Any project; one with only a default name is saved under that name first.
+  addToProject: (projectId: string, memberKeys: string[]) =>
+    request<Group>("/api/groups/add-to-project", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, member_keys: memberKeys }),
     }),
   renameGroup: (id: string, name: string) =>
     request<Group>(`/api/groups/${encodeURIComponent(id)}`, {

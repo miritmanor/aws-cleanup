@@ -7,7 +7,7 @@ import { ApiError, api } from "../api/client";
 import { rowKey, text } from "../rows";
 import { projectsById, renameProject } from "../projects/naming";
 import { ProjectHeaderRow } from "./ProjectHeaderRow";
-import type { Group, Project, Row, ServiceMeta } from "../api/types";
+import type { Project, Row, ServiceMeta } from "../api/types";
 
 import { CHECKBOX_COL_WIDTH, COLUMNS, stickyAttrs } from "./resourceColumns";
 import { ResourceRow, buildConnectionLinkPattern } from "./ResourceRow";
@@ -26,9 +26,7 @@ interface Props {
   /** Jump to one row - also wired to the connections column, see renderConnections. */
   onFocusKey: (key: string) => void;
   onClearFocus: () => void;
-  /** Saved names, for the "add selection to an existing project" control. */
-  namedGroups: Group[];
-  /** GET /api/projects: banner names and rename targets, keyed by project_id. */
+  /** GET /api/projects: banner names, rename and "add to existing project" targets. */
   projects: Project[];
   /** A manual-grouping action changed the group store - reload rows and groups. */
   onGroupsChanged: () => void;
@@ -50,7 +48,6 @@ export function ResourceTable({
   focusKey,
   onFocusKey,
   onClearFocus,
-  namedGroups,
   projects,
   onGroupsChanged,
   selected,
@@ -65,9 +62,11 @@ export function ResourceTable({
   const [grouped, setGrouped] = useState(true);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [newGroupName, setNewGroupName] = useState("");
-  const [addToGid, setAddToGid] = useState("");
+  const [addToProjectId, setAddToProjectId] = useState("");
   const [groupError, setGroupError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // A project with no resources left in this scan cannot take more.
+  const addTargets = useMemo(() => projects.filter((p) => p.resource_count > 0), [projects]);
 
   // Renaming a project from its banner: the same act as on the Projects tab.
   const [editingGroup, setEditingGroup] = useState<string | null>(null);
@@ -204,7 +203,7 @@ export function ResourceTable({
     setSelected(new Set());
     setGroupError(null);
     setNewGroupName("");
-    setAddToGid("");
+    setAddToProjectId("");
   }
 
   async function createGroupFromSelection() {
@@ -240,11 +239,11 @@ export function ResourceTable({
   }
 
   async function addSelectionToGroup() {
-    if (!addToGid || selected.size === 0) return;
+    if (!addToProjectId || selected.size === 0) return;
     setGroupError(null);
     setBusy(true);
     try {
-      await api.addGroupMembers(addToGid, [...selected]);
+      await api.addToProject(addToProjectId, [...selected]);
       clearSelection();
       onGroupsChanged();
     } catch (e) {
@@ -326,16 +325,18 @@ export function ResourceTable({
           >
             Create project
           </button>
-          {namedGroups.length > 0 && (
+          {addTargets.length > 0 && (
             <>
               <span className="divider" />
-              <select value={addToGid} onChange={(e) => setAddToGid(e.target.value)} disabled={busy}>
+              <select value={addToProjectId} onChange={(e) => setAddToProjectId(e.target.value)} disabled={busy}>
                 <option value="">Add to existing project…</option>
-                {namedGroups.map((g) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
+                {addTargets.map((p) => (
+                  <option key={p.project_id} value={p.project_id}>
+                    {p.name} ({p.resource_count})
+                  </option>
                 ))}
               </select>
-              <button onClick={() => void addSelectionToGroup()} disabled={busy || !addToGid}>
+              <button onClick={() => void addSelectionToGroup()} disabled={busy || !addToProjectId}>
                 Add
               </button>
             </>

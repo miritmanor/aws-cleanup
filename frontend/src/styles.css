@@ -168,6 +168,7 @@ button.conn-link {
 .check-text { display: flex; flex-direction: column; gap: 4px; }
 .scan-options-body input[type="text"] { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; }
 .hint { color: var(--muted); font-size: 12px; font-weight: normal; }
+.actions .merge-into { margin-right: 8px; font-size: 12px; }
 
 .scan-progress { margin-top: 12px; }
 .progress-track { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }

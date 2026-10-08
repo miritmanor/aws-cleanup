@@ -237,7 +237,7 @@ class ManualGroupingTests(ApiTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Project tag", response.json()["detail"])
 
-    def test_adding_a_member_to_an_existing_group_makes_it_manual(self):
+    def test_adding_a_member_to_an_existing_group_keeps_it_growing(self):
         a, b = self._two_unrelated_members()
         created = self.client.post(
             "/api/groups", json={"name": "MyBlog", "member_key": a}).json()
@@ -247,7 +247,7 @@ class ManualGroupingTests(ApiTestCase):
             f"/api/groups/{created['id']}/members", json={"member_keys": [b]})
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertTrue(body["manual"])
+        self.assertFalse(body["manual"])
         self.assertIn(b, {m["member_key"] for m in body["members"]})
 
         rows = {member_key(source): row
@@ -270,6 +270,82 @@ class ManualGroupingTests(ApiTestCase):
                 for row, source in zip(self.client.get("/api/scan").json()["rows"], self.rows)}
         self.assertNotEqual(rows[a]["project_group"], "Merged")
         self.assertNotEqual(rows[b]["project_group"], "Merged")
+
+
+class ProjectMergeTests(ApiTestCase):
+    """Merging one project into another from the Projects tab, and splitting it again.
+    The corpus's only detected projects are tag projects, so the source is hand-picked."""
+
+    def setUp(self):
+        super().setUp()
+        self.rows = self.write_snapshot()
+
+    def _projects(self):
+        return {p["project_id"]: p for p in self.client.get("/api/projects").json()}
+
+    def _loose_project(self):
+        """A project of two untagged resources, built by hand-picking them."""
+        body = self.client.get("/api/scan").json()
+        keys = [member_key(source) for row, source in zip(body["rows"], self.rows)
+                if row["grouping_method"] != "tag"][:2]
+        created = self.client.post(
+            "/api/groups/manual", json={"name": "Loose", "member_keys": keys}).json()
+        return self._projects()[f"group:{created['id']}"]
+
+    def _merge(self, source_id, target_id):
+        return self.client.post("/api/groups/merge", json={
+            "source_project_id": source_id, "target_project_id": target_id})
+
+    def test_merging_shows_both_under_the_targets_name_and_forgetting_splits_them(self):
+        source = self._loose_project()
+        response = self._merge(source["project_id"], "tag:orders")
+        self.assertEqual(response.status_code, 200)
+        gid = response.json()["id"]
+
+        listed = self._projects()
+        self.assertNotIn(source["project_id"], listed)
+        merged = listed[f"group:{gid}"]
+        self.assertEqual(merged["name"], "orders")
+        self.assertEqual(merged["resource_count"], 9 + source["resource_count"])
+        self.assertEqual(merged["merged_from"], ["Loose"])
+
+        self.assertEqual(self.client.delete(f"/api/groups/{gid}").status_code, 204)
+        listed = self._projects()
+        self.assertEqual(listed[source["project_id"]]["name"], "Loose")
+        self.assertEqual(listed["tag:orders"]["resource_count"], 9)
+
+    def test_a_tag_derived_source_is_refused(self):
+        response = self._merge("tag:storefront", "tag:orders")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("AWS Project tag", response.json()["detail"])
+
+    def test_merging_into_itself_is_refused(self):
+        self.assertEqual(self._merge("tag:orders", "tag:orders").status_code, 400)
+
+    def test_a_default_named_project_can_take_hand_picked_resources(self):
+        body = self.client.get("/api/scan").json()
+        key = next(member_key(source) for row, source in zip(body["rows"], self.rows)
+                   if row["grouping_method"] != "tag")
+        response = self.client.post("/api/groups/add-to-project", json={
+            "project_id": "tag:orders", "member_keys": [key]})
+        self.assertEqual(response.status_code, 200)
+
+        orders = self._projects()[f"group:{response.json()['id']}"]
+        self.assertEqual(orders["name"], "orders")
+        self.assertEqual(orders["resource_count"], 10)
+        self.assertEqual(orders["extra_members"], 1)
+        self.assertFalse(orders["manual"])
+
+    def test_adding_to_an_unknown_project_is_refused(self):
+        response = self.client.post("/api/groups/add-to-project", json={
+            "project_id": "deployment:nope", "member_keys": ["Lambda:us-east-1:x"]})
+        self.assertEqual(response.status_code, 400)
+
+    def test_an_absorbed_group_is_marked_as_merged(self):
+        source = self._loose_project()
+        gid = self._merge(source["project_id"], "tag:orders").json()["id"]
+        absorbed = [g for g in self.client.get("/api/groups").json() if g["merged_into"]]
+        self.assertEqual([g["merged_into"] for g in absorbed], [gid])
 
 
 if __name__ == "__main__":

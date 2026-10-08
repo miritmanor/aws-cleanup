@@ -7,6 +7,9 @@ import re
 from fastapi import APIRouter, HTTPException, status
 
 from aws_resource_audit.config import now
+from aws_resource_audit.naming.additions import add_to_group, add_to_project, check_addable
+from aws_resource_audit.naming.group_names import listed_keys
+from aws_resource_audit.naming.merges import EditRefused, forget_group, merge_projects
 from aws_resource_audit.present.format import fmt_dt
 from aws_resource_audit.rows import member_key
 
@@ -18,6 +21,8 @@ from ..schemas import (
     GroupMembersAdd,
     GroupRename,
     ManualGroupCreate,
+    ProjectMembersAdd,
+    ProjectMerge,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,56 +46,30 @@ def _next_gid(store):
     return f"grp-{counter:04d}"
 
 
-def _live_keys():
-    """Member keys in the current scan, or an empty set when there is no scan."""
+def _scan_rows():
+    """The current scan's resolved rows, or an empty list when there is no scan."""
     try:
-        snapshot = stores.snapshot_store().load()
+        return stores.snapshot_store().load().rows
     except Exception:                                            # noqa: BLE001
-        # An empty set does not merely shrink the answer - it turns OFF the
-        # "is this key in the current scan" check at every call site below.
+        # An empty list turns OFF the "in the current scan" and AWS-tag checks
+        # at every call site below - it does not merely shrink the answer.
         logger.warning("could not read the snapshot; member-key validation is "
                        "disabled for this request", exc_info=True)
-        return set()
-    return {member_key(row) for row in snapshot.rows}
+        return []
 
 
-def _tag_derived_keys():
-    """Member keys the scan put in a project by their own AWS tag; hand-picking must not
-    move them. Read from the DETECTED method. Empty if there is no scan."""
-    try:
-        snapshot = stores.snapshot_store().load()
-    except Exception:                                            # noqa: BLE001
-        # Same consequence as _live_keys: real AWS tags stop outranking a
-        # manual grouping, because nothing knows which keys are tag-derived.
-        logger.warning("could not read the snapshot; tag-derived keys cannot "
-                       "be protected for this request", exc_info=True)
-        return set()
-    return {member_key(row) for row in snapshot.rows
-            if (row.get("_detected_grouping_method") or row.get("grouping_method")) == "tag"}
+def _live_keys():
+    """Member keys in the current scan, or an empty set when there is no scan."""
+    return {member_key(row) for row in _scan_rows()}
 
 
-def _member_conflicts(member_keys, groups, exclude_gid=None):
-    """(key, gid, name) for each of `member_keys` already in a DIFFERENT stored group:
-    a resource is never silently moved between groups."""
-    conflicts = []
-    for key in member_keys:
-        for gid, stored in groups.items():
-            if gid == exclude_gid:
-                continue
-            if key in stored.get("members", []):
-                conflicts.append((key, gid, stored.get("name")))
-                break
-    return conflicts
-
-
-def _conflict_detail(conflicts):
-    parts = (f"{k} is already in group {gid} (\"{name}\")" for k, gid, name in conflicts)
-    return ("; ".join(parts) + ". Rename or remove it from that group first, "
-            "or drop it from this selection.")
+def _refused(e):
+    code = status.HTTP_409_CONFLICT if e.conflict else status.HTTP_400_BAD_REQUEST
+    return HTTPException(status_code=code, detail=str(e))
 
 
 def _as_group(gid, stored, live):
-    members = sorted(stored.get("members", []))
+    members = sorted(listed_keys(stored))
     return Group(
         id=gid,
         name=stored.get("name", ""),
@@ -98,6 +77,7 @@ def _as_group(gid, stored, live):
         members=[GroupMember(member_key=k, present=k in live) for k in members],
         live_members=sum(1 for k in members if k in live),
         manual=bool(stored.get("manual")),
+        merged_into=stored.get("merged_into"),
     )
 
 
@@ -127,7 +107,7 @@ def create_group(request: GroupCreate):
     groups = store.setdefault("groups", {})
 
     for gid, stored in groups.items():
-        if request.member_key in stored.get("members", []):
+        if request.member_key in listed_keys(stored):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"{request.member_key} is already in group "
@@ -169,27 +149,11 @@ def create_manual_group(request: ManualGroupCreate):
             detail="a manual group needs at least two distinct member keys - "
                    "a single one has a project to claim, via POST /api/groups.")
 
-    conflicts = _member_conflicts(keys, groups)
-    if conflicts:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail=_conflict_detail(conflicts))
-
-    live = _live_keys()
-    missing = [k for k in keys if live and k not in live]
-    if missing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"not in the current scan: {', '.join(missing)}. A member "
-                   "key looks like '<service>:<region>:<resource_id>' - copy "
-                   "one from the table.")
-
-    tag_derived = sorted(_tag_derived_keys() & set(keys))
-    if tag_derived:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"{', '.join(tag_derived)} already carr{'y' if len(tag_derived) > 1 else 'ies'} "
-                   "a real AWS Project tag - edit the tag in AWS to change its "
-                   "group, manual grouping can't override it.")
+    rows = _scan_rows()
+    try:
+        check_addable(groups, rows, keys)
+    except EditRefused as e:
+        raise _refused(e) from e
 
     gid = _next_gid(store)
     groups[gid] = {"name": request.name, "members": keys, "manual": True,
@@ -197,13 +161,55 @@ def create_manual_group(request: ManualGroupCreate):
     group_store.save(store)
     stores.snapshot_store().invalidate()
 
-    return _as_group(gid, groups[gid], live)
+    return _as_group(gid, groups[gid], {member_key(r) for r in rows})
+
+
+@router.post("/merge", response_model=Group, summary="Merge one project into another")
+def merge_into(request: ProjectMerge):
+    """Show the source project's resources under the target's name from now on. Forgetting
+    the target's name splits them apart again."""
+    try:
+        rows = stores.snapshot_store().load().rows
+    except Exception as e:                                      # noqa: BLE001
+        logger.warning("could not read the snapshot; merge refused", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="No scan to merge projects in.") from e
+
+    group_store = stores.group_store()
+    store = group_store.load()
+    try:
+        gid = merge_projects(store, rows, request.source_project_id,
+                             request.target_project_id, lambda: _next_gid(store))
+    except EditRefused as e:
+        raise _refused(e) from e
+    group_store.save(store)
+    stores.snapshot_store().invalidate()
+
+    return _as_group(gid, store["groups"][gid], _live_keys())
+
+
+@router.post("/add-to-project", response_model=Group, summary="Add resources to a project")
+def add_to_project_members(request: ProjectMembersAdd):
+    """Add a multi-select to any project, saving its current name first if it only has a
+    default one. The project keeps growing on its own."""
+    rows = _scan_rows()
+    group_store = stores.group_store()
+    store = group_store.load()
+    try:
+        gid = add_to_project(store, rows, request.project_id, request.member_keys,
+                             lambda: _next_gid(store))
+    except EditRefused as e:
+        raise _refused(e) from e
+    group_store.save(store)
+    stores.snapshot_store().invalidate()
+
+    return _as_group(gid, store["groups"][gid], _live_keys())
 
 
 @router.post("/{gid}/members", response_model=Group, summary="Add resources to a group")
 def add_group_members(gid: str, request: GroupMembersAdd):
-    """Fold a multi-select into an existing named group, which becomes manual: its
-    membership is exactly its stored list from now on."""
+    """Add a multi-select to a saved name. A manual group lists them as members; any
+    other keeps growing on its own and lists them as extra_members."""
     group_store = stores.group_store()
     store = group_store.load()
     groups = store.setdefault("groups", {})
@@ -212,35 +218,17 @@ def add_group_members(gid: str, request: GroupMembersAdd):
                             detail=f"No group {gid}.")
 
     keys = sorted(set(request.member_keys))
-    conflicts = _member_conflicts(keys, groups, exclude_gid=gid)
-    if conflicts:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail=_conflict_detail(conflicts))
+    rows = _scan_rows()
+    try:
+        check_addable(groups, rows, keys, exclude_gid=gid)
+    except EditRefused as e:
+        raise _refused(e) from e
 
-    live = _live_keys()
-    missing = [k for k in keys if live and k not in live]
-    if missing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"not in the current scan: {', '.join(missing)}. A member "
-                   "key looks like '<service>:<region>:<resource_id>' - copy "
-                   "one from the table.")
-
-    tag_derived = sorted(_tag_derived_keys() & set(keys))
-    if tag_derived:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"{', '.join(tag_derived)} already carr{'y' if len(tag_derived) > 1 else 'ies'} "
-                   "a real AWS Project tag - edit the tag in AWS to change its "
-                   "group, manual grouping can't override it.")
-
-    groups[gid]["members"] = sorted(set(groups[gid].get("members", [])) | set(keys))
-    groups[gid]["manual"] = True
-    groups[gid]["updated_at"] = fmt_dt(now())
+    add_to_group(groups, gid, keys)
     group_store.save(store)
     stores.snapshot_store().invalidate()
 
-    return _as_group(gid, groups[gid], live)
+    return _as_group(gid, groups[gid], {member_key(r) for r in rows})
 
 
 @router.put("/{gid}", response_model=Group, summary="Rename a group")
@@ -263,14 +251,14 @@ def rename_group(gid: str, request: GroupRename):
 @router.delete("/{gid}", status_code=status.HTTP_204_NO_CONTENT,
                summary="Forget a name")
 def delete_group(gid: str):
-    """Drop the name; the project returns to its default name. The only undo, since
-    stored membership only ever grows."""
+    """Drop the name; the project returns to its default name, and projects merged into
+    it split back apart. The only undo, since stored membership only ever grows."""
     group_store = stores.group_store()
     store = group_store.load()
     groups = store.setdefault("groups", {})
     if gid not in groups:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"No group {gid}.")
-    del groups[gid]
+    forget_group(store, gid)
     group_store.save(store)
     stores.snapshot_store().invalidate()

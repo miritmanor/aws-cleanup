@@ -121,6 +121,10 @@ after seeing a run. Use the web app's Projects tab, or add an entry to
 `aws_project_groups.json` seeded with one `<service>:<region>:<resource_id>`
 member key; the next run claims that member's project and fills in the rest.
 
+To add resources to a project, select them in the Resources tab and use **Add to
+existing project…**. To combine two projects, use **Merge into…** on the
+Projects tab. Forgetting a project's name undoes both.
+
 ### Logging
 
 Two channels, and they are not the same thing. The progress lines a scan prints
