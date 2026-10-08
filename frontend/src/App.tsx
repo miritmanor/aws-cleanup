@@ -171,7 +171,11 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>AWS resource audit</h1>
+        <h1>
+          <img className="brand-icon" src="/favicon.svg" alt="" />
+          AWS Cleanup
+          <span className="tagline">See everything in your account, remove what you don't need</span>
+        </h1>
         <nav>
           {TABS.map((t) => (
             <button

@@ -7,6 +7,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <title>{title}</title>
+<link rel="icon" type="image/svg+xml" href="{favicon}">
 <link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator_simple.min.css" rel="stylesheet">
 <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
 {graph_head}{diagram_head}
@@ -23,7 +24,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     color: #f2f5f8; padding: 26px 30px 22px 30px; margin-bottom: 22px;
   }}
   h1 {{ font-size: 22px; margin: 0 0 5px 0; font-weight: 600; letter-spacing: 0.2px; }}
-  h1 .accent {{ color: var(--accent); }}
+  h1 .brand-icon {{ width: 24px; height: 24px; vertical-align: -4px; margin-right: 4px; }}
+  h1 .tagline {{ color: #a9b4c0; font-size: 15px; font-weight: 400; }}
   .subtitle {{ color: #a9b4c0; font-size: 13px; }}
   .content {{ padding: 0 30px; }}
   .toolbar {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }}
@@ -92,7 +94,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
 <header class="hero">
-  <h1>&#9729; <span class="accent">AWS</span> Resource Inventory</h1>
+  <h1><img class="brand-icon" src="{favicon}" alt=""> {app_name} <span class="tagline">&mdash; {tagline}</span></h1>
   <div class="subtitle">Generated {generated_at} &middot; {row_count} resources across {region_count} region(s)
     &middot; data is a point-in-time snapshot, re-run the scan script to refresh</div>
 </header>

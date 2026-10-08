@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AWS Resource Inventory</title>
+<title>AWS Cleanup</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMyMzJGM0UiLz4KICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjI4IiByPSIxNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkY5OTAwIiBzdHJva2Utd2lkdGg9IjUiLz4KICA8cGF0aCBkPSJNMzguNSAzOC41IDUwIDUwIiBzdHJva2U9IiNGRjk5MDAiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTIxIDI4LjVsNSA1IDktMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==">
 <link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator_simple.min.css" rel="stylesheet">
 <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
 
@@ -19,7 +20,8 @@
     color: #f2f5f8; padding: 26px 30px 22px 30px; margin-bottom: 22px;
   }
   h1 { font-size: 22px; margin: 0 0 5px 0; font-weight: 600; letter-spacing: 0.2px; }
-  h1 .accent { color: var(--accent); }
+  h1 .brand-icon { width: 24px; height: 24px; vertical-align: -4px; margin-right: 4px; }
+  h1 .tagline { color: #a9b4c0; font-size: 15px; font-weight: 400; }
   .subtitle { color: #a9b4c0; font-size: 13px; }
   .content { padding: 0 30px; }
   .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
@@ -158,7 +160,7 @@
 </head>
 <body>
 <header class="hero">
-  <h1>&#9729; <span class="accent">AWS</span> Resource Inventory</h1>
+  <h1><img class="brand-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMyMzJGM0UiLz4KICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjI4IiByPSIxNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkY5OTAwIiBzdHJva2Utd2lkdGg9IjUiLz4KICA8cGF0aCBkPSJNMzguNSAzOC41IDUwIDUwIiBzdHJva2U9IiNGRjk5MDAiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTIxIDI4LjVsNSA1IDktMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==" alt=""> AWS Cleanup <span class="tagline">&mdash; see everything in your account, remove what you don&#x27;t need</span></h1>
   <div class="subtitle">Generated 2026-06-01 12:00:00 UTC &middot; 103 resources across 2 region(s)
     &middot; data is a point-in-time snapshot, re-run the scan script to refresh</div>
 </header>

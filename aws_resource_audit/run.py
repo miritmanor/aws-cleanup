@@ -130,7 +130,7 @@ def run(args, *, settings=None, progress=None, should_stop=None):
     coverage.reset()
     set_scan_scope(ident.get("Account") or "",
                    partition_from_arn(ident.get("Arn") or "") or DEFAULT_PARTITION)
-    say(f"AWS resource audit - account {ident.get('Account')} ({ident.get('Arn', '').rsplit('/', 1)[-1]})")
+    say(f"AWS Cleanup - account {ident.get('Account')} ({ident.get('Arn', '').rsplit('/', 1)[-1]})")
 
     account = ident.get("Account") or ""
     saved = (None if (args.regions or args.all_regions)
