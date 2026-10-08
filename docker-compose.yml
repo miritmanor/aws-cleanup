@@ -35,6 +35,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+      # Check every 2s while starting, so the frontend's wait is seconds, not 30s.
+      start_interval: 2s
 
   frontend:
     build:
@@ -43,7 +45,9 @@ services:
     ports:
       - "127.0.0.1:8080:80"
     depends_on:
-      - backend
+      # nginx resolves "backend" once at startup and exits if it fails; wait until healthy.
+      backend:
+        condition: service_healthy
 
 volumes:
   audit-data:
