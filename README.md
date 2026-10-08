@@ -245,10 +245,17 @@ a second read-only Docker secret, the same mechanism as the credentials above
 and for the same reasons; `.env` holds only the path. Changing the key needs
 `up --force-recreate` rather than `up`. (`.env` is gitignored.)
 
-Which provider the key is for comes from `agent_config.json` on the data
-volume (`provider`, default `openai`, with `anthropic` and `bedrock` also
-supported). Bedrock needs no key of its own — it uses the AWS credentials
-above, so the agent is offered whenever that provider is configured.
+The provider is `openai` unless `.env` says otherwise. To change it, set
+`AUDIT_AGENT_PROVIDER` (`openai`, `anthropic`, `bedrock`, or `none` to leave
+the agent out), name a model of that provider, and rebuild:
+
+```bash
+echo "AUDIT_AGENT_PROVIDER=anthropic" >> .env
+docker compose up -d --build
+docker compose exec backend sh -c 'echo "{\"model\": \"<model id>\"}" > /data/agent_config.json'
+```
+
+Bedrock needs no key of its own: it uses the AWS credentials above.
 
 ## Report columns
 

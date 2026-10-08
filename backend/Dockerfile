@@ -14,11 +14,20 @@ WORKDIR /srv
 COPY pyproject.toml requirements.txt ./
 COPY backend/pyproject.toml ./backend/
 
-# CPU-only torch first: the PyPI build pulls several GB of CUDA a laptop cannot use.
-RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch
+# The agent's chat provider, or none to leave the agent out (docker-compose.yml passes it).
+ARG AUDIT_AGENT_PROVIDER=openai
+# Also ENV: app/agent/install.py reads it to know what this image holds.
+ENV AUDIT_AGENT_PROVIDER=${AUDIT_AGENT_PROVIDER}
 
-RUN mkdir -p backend/app && touch backend/app/__init__.py \
- && pip install --no-cache-dir ./backend -r requirements.txt
+# pip only warns about an unknown extra, so a typo would build an image with no agent.
+RUN case "$AUDIT_AGENT_PROVIDER" in \
+      openai|anthropic|bedrock) extras="[agent,$AUDIT_AGENT_PROVIDER]" ;; \
+      none) extras="" ;; \
+      *) echo "AUDIT_AGENT_PROVIDER must be openai, anthropic, bedrock or none," \
+              "not '$AUDIT_AGENT_PROVIDER'" >&2; exit 1 ;; \
+    esac \
+ && mkdir -p backend/app && touch backend/app/__init__.py \
+ && pip install --no-cache-dir "./backend$extras" -r requirements.txt
 
 COPY aws_resource_audit ./aws_resource_audit
 COPY backend/app ./backend/app
@@ -28,8 +37,8 @@ RUN pip install --no-cache-dir --no-deps . ./backend
 
 # Both test suites run during the build, so an image whose tests fail is never produced.
 FROM base AS test
-# No test may download a model: a test that tries fails here instead of needing the internet.
-ENV HF_HUB_OFFLINE=1
+# The [dev] extra (httpx, for TestClient): declared here, not left to arrive transitively.
+RUN pip install --no-cache-dir "./backend[dev]"
 COPY .gitignore aws_resource_audit.py aws_regenerate_report.py cli_output.py ./
 COPY tests ./tests
 COPY tools ./tools

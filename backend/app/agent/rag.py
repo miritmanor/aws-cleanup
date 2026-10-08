@@ -11,13 +11,13 @@ from ..masking import mask_value
 from .documents import DocumentStore
 from .embeddings import get_embeddings
 from .loaders import extract_text
-from .settings import AgentSettings
 
 logger = logging.getLogger(__name__)
 payload = logging.getLogger(PAYLOAD_LOGGER)
 
 # A new collection name, so an old persisted index cannot serve stale vectors.
-_COLLECTION_NAME = "account_documents"
+# "_onnx": the torch-built vectors of the same model differ slightly (decision 0063).
+_COLLECTION_NAME = "account_documents_onnx"
 
 
 def _chunks_for(path: str, splitter):
@@ -49,14 +49,14 @@ def _load_and_chunk(files):
     return chunks
 
 
-def open_index(settings: AgentSettings, persist_dir: str):
+def open_index(persist_dir: str):
     """The Chroma collection, opened but not built. `persist_dir` is resolved by the
     caller against the data volume."""
     from langchain_chroma import Chroma
 
     return Chroma(
         collection_name=_COLLECTION_NAME,
-        embedding_function=get_embeddings(settings),
+        embedding_function=get_embeddings(),
         persist_directory=persist_dir,
     )
 

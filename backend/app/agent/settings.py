@@ -15,14 +15,20 @@ AGENT_CONFIG_FILENAME = "agent_config.json"
 class AgentSettings:
     """Everything agent_config.json can say; the defaults are a fresh install's."""
 
-    provider: str = "openai"
+    # An OpenAI model, for the default provider: set it when AUDIT_AGENT_PROVIDER changes.
     model: str = "gpt-5.6-luna"
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     chroma_dir: str = "agent_index"
     session_ttl_minutes: int = 240
 
 
-_STR_KEYS = ("provider", "model", "embedding_model", "chroma_dir")
+_STR_KEYS = ("model", "chroma_dir")
+
+# Settings this file used to hold: an old file names one, so say where it went.
+_REMOVED_KEYS = {
+    "provider": "the provider is chosen when the image is built: set "
+                "AUDIT_AGENT_PROVIDER in .env, then `docker compose up --build`",
+    "embedding_model": "the embedding model is fixed (all-MiniLM-L6-v2)",
+}
 
 
 def load_agent_settings(path=AGENT_CONFIG_FILENAME) -> AgentSettings:
@@ -36,6 +42,12 @@ def load_agent_settings(path=AGENT_CONFIG_FILENAME) -> AgentSettings:
         raise AuditError(f"{path}: could not be read ({e})")
     if not isinstance(data, dict):
         raise AuditError(f"{path}: expected a JSON object at the top level")
+
+    removed = sorted(set(data) & set(_REMOVED_KEYS))
+    if removed:
+        raise AuditError(
+            f"{path}: remove {', '.join(removed)} - "
+            + "; ".join(_REMOVED_KEYS[key] for key in removed) + ".")
 
     known = set(AgentSettings().__dict__)
     unknown = sorted(set(data) - known)

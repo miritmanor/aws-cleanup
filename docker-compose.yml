@@ -10,6 +10,10 @@ services:
       # The repo root: the image needs aws_resource_audit/ as well as backend/.
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        # The agent's provider: openai, anthropic, bedrock, or none to build without the
+        # agent. Set it in .env; a change needs `docker compose up --build`.
+        AUDIT_AGENT_PROVIDER: ${AUDIT_AGENT_PROVIDER:-openai}
     environment:
       AUDIT_DATA_DIR: /data
       # Credentials arrive as a read-only Docker secret (see `secrets:` below).

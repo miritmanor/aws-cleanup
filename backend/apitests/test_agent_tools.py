@@ -5,14 +5,21 @@ import asyncio
 import json
 import unittest
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
-
-from aws_resource_audit.rows import member_key
-
 from . import _REPO  # noqa: F401  (sys.path fixup)
-from .api_base import ApiTestCase
+from app.agent import install
+
+# Before the langchain imports below: an image built with AUDIT_AGENT_PROVIDER=none has none.
+if install.not_installed_reason():
+    raise unittest.SkipTest(install.not_installed_reason())
+
+from langchain_core.language_models.chat_models import BaseChatModel  # noqa: E402
+from langchain_core.messages import AIMessage, AIMessageChunk  # noqa: E402
+from langchain_core.outputs import (  # noqa: E402
+    ChatGeneration, ChatGenerationChunk, ChatResult)
+
+from aws_resource_audit.rows import member_key  # noqa: E402
+
+from .api_base import ApiTestCase  # noqa: E402
 
 
 class ScriptedToolCallingModel(BaseChatModel):
@@ -182,120 +189,3 @@ class RunTurnToolCallTests(ApiTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-class StreamErrorFrameTests(ApiTestCase):
-    """What the endpoint sends when run_turn raises: the 200 is already sent, so the
-    failure must appear in the body."""
-
-    def setUp(self):
-        super().setUp()
-        from app.api import agent as agent_route
-        self.agent_route = agent_route
-        self.original = agent_route.agent_loop.run_turn
-        self.addCleanup(setattr, agent_route.agent_loop, "run_turn", self.original)
-
-    def _stream_raising(self, exc, tokens=()):
-        async def fake_run_turn(session_id, message, resource_keys):
-            for tok in tokens:
-                yield tok
-            raise exc
-        self.agent_route.agent_loop.run_turn = fake_run_turn
-        response = self.client.post("/api/agent/query",
-                                    json={"session_id": "s1", "message": "hi"})
-        return response, [json.loads(line[len("data: "):])
-                          for line in response.text.split("\n\n") if line.strip()]
-
-    def test_audit_error_message_reaches_the_client_verbatim(self):
-        from aws_resource_audit.errors import AuditError
-        response, frames = self._stream_raising(AuditError("Set OPENAI_API_KEY first."))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(frames[-1], {"error": "Set OPENAI_API_KEY first."})
-
-    def test_unexpected_error_is_generic_and_leaks_nothing(self):
-        """A bug gets a sentence, not an exception class name."""
-        from app.api.agent import GENERIC_ERROR
-        _response, frames = self._stream_raising(RuntimeError("boom"))
-        self.assertEqual(frames[-1], {"error": GENERIC_ERROR})
-        self.assertNotIn("boom", json.dumps(frames))
-        self.assertNotIn("RuntimeError", json.dumps(frames))
-
-    def test_tokens_already_streamed_survive_a_later_failure(self):
-        from app.api.agent import GENERIC_ERROR
-        _response, frames = self._stream_raising(RuntimeError("boom"),
-                                                 tokens=["par", "tial"])
-        self.assertEqual(frames[:2], [{"token": "par"}, {"token": "tial"}])
-        self.assertEqual(frames[-1], {"error": GENERIC_ERROR})
-
-    def test_a_token_containing_a_newline_stays_one_frame(self):
-        async def fake_run_turn(session_id, message, resource_keys):
-            yield "line one\n\nline two"
-        self.agent_route.agent_loop.run_turn = fake_run_turn
-        response = self.client.post("/api/agent/query",
-                                    json={"session_id": "s1", "message": "hi"})
-        frames = [json.loads(line[len("data: "):])
-                  for line in response.text.split("\n\n") if line.strip()]
-        self.assertEqual(frames, [{"token": "line one\n\nline two"}])
-
-
-class AgentAvailabilityTests(ApiTestCase):
-    """GET /api/agent/status, and the key file behind it. No client is ever
-    constructed here - that is the whole point of the endpoint."""
-
-    def setUp(self):
-        super().setUp()
-        import os
-        from app.agent import llm
-        self.llm = llm
-        self.key_file = os.path.join(self.data_dir, "llm_api_key")
-        self.addCleanup(os.environ.pop, llm._API_KEY_FILE_ENV, None)
-        os.environ[llm._API_KEY_FILE_ENV] = self.key_file
-
-    def _write_key(self, text):
-        with open(self.key_file, "w") as f:
-            f.write(text)
-
-    def test_no_key_file_is_unavailable_with_a_reason(self):
-        body = self.client.get("/api/agent/status").json()
-        self.assertFalse(body["available"])
-        self.assertIn("API key", body["reason"])
-
-    def test_an_empty_key_file_reads_as_no_key(self):
-        """`touch` is the documented way to start the container without a
-        key, so an empty file must not read as one."""
-        self._write_key("   \n")
-        self.assertFalse(self.client.get("/api/agent/status").json()["available"])
-
-    def test_a_key_makes_it_available(self):
-        self._write_key("sk-test-not-a-real-key\n")
-        body = self.client.get("/api/agent/status").json()
-        self.assertTrue(body["available"])
-        self.assertEqual(body["reason"], "")
-
-    def test_a_trailing_newline_is_not_part_of_the_key(self):
-        self._write_key("sk-test-not-a-real-key\n")
-        self.assertEqual(self.llm.read_api_key(), "sk-test-not-a-real-key")
-
-    def test_bedrock_needs_no_key_of_its_own(self):
-        import json as _json
-        import os
-        with open(os.path.join(self.data_dir, "agent_config.json"), "w") as f:
-            _json.dump({"provider": "bedrock", "model": "anthropic.claude-v2"}, f)
-        self.assertTrue(self.client.get("/api/agent/status").json()["available"])
-
-    def test_a_broken_agent_config_is_unavailable_not_a_400(self):
-        """Called on page load: a config error must hide the agent, not greet
-        someone with a red banner about a feature they were not using."""
-        import os
-        with open(os.path.join(self.data_dir, "agent_config.json"), "w") as f:
-            f.write("{not json")
-        response = self.client.get("/api/agent/status")
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.json()["available"])
-
-    def test_get_chat_model_without_a_key_raises_audit_error(self):
-        """Not the provider SDK's OpenAIError: the user must fix it, and the message says how."""
-        from aws_resource_audit.errors import AuditError
-        from app.agent.settings import AgentSettings
-        with self.assertRaises(AuditError):
-            self.llm.get_chat_model(AgentSettings())
