@@ -344,15 +344,15 @@ class AccountWideTests(unittest.TestCase):
                                  coverage_entries=complete_inventory(*EC2_TYPES))
         self.assertEqual(report.allocated, Decimal("0"))
 
-    def test_a_bucket_is_not_zero_when_s3_is_billed_by_region(self):
-        """S3 rows carry no region and the S3 bill does; that is unplaced, not free."""
+    def test_an_old_snapshots_global_bucket_is_not_zero_when_s3_is_billed_by_region(self):
+        """Snapshots before decision 0062 record buckets as global; unplaced, not free."""
         s3 = "Amazon Simple Storage Service"
         cells = attributed([make_row("S3Bucket", "b1", region="global")],
                            bill((s3, "us-east-1", "5.00")), GLOBAL)
         self.assertEqual(cells[0]["est_monthly_cost_usd"], "")
         self.assertEqual(cells[0]["cost"], "unallocated (shared bill)")
 
-    def test_a_small_no_region_line_is_not_passed_off_as_a_buckets_cost(self):
+    def test_a_small_no_region_line_is_not_passed_off_as_an_old_global_buckets_cost(self):
         s3 = "Amazon Simple Storage Service"
         report = attribute_costs(
             [make_row("S3Bucket", "b1", region="global")],

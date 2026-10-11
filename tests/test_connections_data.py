@@ -310,7 +310,7 @@ class BucketNotificationTests(ConnectionTypeTestCase):
     def _build(self, config=None):
         def build():
             session = FakeSession({"s3": {
-                "list_buckets": {"Buckets": [{"Name": "uploads",
+                "list_buckets": {"Buckets": [{"Name": "uploads", "BucketRegion": "us-east-1",
                                               "CreationDate": recent()}]},
                 "get_bucket_tagging": client_error(code="NoSuchTagSet"),
                 "get_bucket_notification_configuration": config if config is not None else {
@@ -345,7 +345,7 @@ class BucketNotificationTests(ConnectionTypeTestCase):
     def test_no_bucket_objects_are_read(self):
         """The one thing this feature must never start doing."""
         session = FakeSession({"s3": {
-            "list_buckets": {"Buckets": [{"Name": "uploads", "CreationDate": recent()}]},
+            "list_buckets": {"Buckets": [{"Name": "uploads", "BucketRegion": "us-east-1", "CreationDate": recent()}]},
             "get_bucket_tagging": client_error(code="NoSuchTagSet"),
             "get_bucket_notification_configuration": {},
         }})

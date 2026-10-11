@@ -59,7 +59,7 @@ def _session_with_one_instance_and_one_bucket():
         }]}]},
     })
     session._clients["s3"] = _PermissiveClient("s3", {
-        "list_buckets": {"Buckets": [{"Name": "a-bucket",
+        "list_buckets": {"Buckets": [{"Name": "a-bucket", "BucketRegion": "us-east-1",
                                       "CreationDate": fakes.recent()}]},
     })
     session._clients["cloudwatch"] = _PermissiveClient(

@@ -10,6 +10,7 @@ from ..rows import member_key
 from ..console import say
 from ..scope import scan_account
 from ..text import join_nonempty
+from .bucket_keys import rekey_moved_buckets
 
 
 # Bumped when the file's meaning changes. Version 1 is the first to record
@@ -106,6 +107,7 @@ def apply_assigned_names(all_rows, groups_file):
     if not groups_file:
         return
     store = load_group_store(groups_file)
+    rekey_moved_buckets(store, all_rows)
     groups = store["groups"]
 
     projects = {}

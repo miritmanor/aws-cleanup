@@ -38,9 +38,9 @@ class ResourceKeyTests(unittest.TestCase):
         self.assertNotEqual(east["resource_key"], west["resource_key"])
 
     def test_global_resources_say_global(self):
-        row = make_row("S3Bucket", "assets", region="global", account=ACCOUNT)
+        row = make_row("IAMRole", "deployer", region="global", account=ACCOUNT)
         self.assertEqual(row["resource_key"],
-                         f"aws:S3Bucket:{ACCOUNT}:global:assets")
+                         f"aws:IAMRole:{ACCOUNT}:global:deployer")
 
     def test_display_name_is_not_part_of_the_key(self):
         a = make_row("KeyPair", "kp-1", name="Production key", account=ACCOUNT)

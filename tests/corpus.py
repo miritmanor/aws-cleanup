@@ -132,7 +132,7 @@ _BASELINE = {
 }
 
 # Global services get "global" as their region, exactly as the collectors emit.
-_GLOBAL = {"S3Bucket", "IAMUser", "IAMRole", "IAMGroup", "IAMPolicy",
+_GLOBAL = {"IAMUser", "IAMRole", "IAMGroup", "IAMPolicy",
            "IAMRoleUnusedAccessFinding", "Route53HostedZone", "CloudFrontDistribution"}
 
 
@@ -234,8 +234,9 @@ def _linked_rows():
                    target_service="IAMRole")
     # The runtime/deployment split: one project holding deployment, runtime and
     # unclassified rows, through the real classification path.
+    # In another region than the app, as buckets often are: its links must still resolve.
     deploy_bucket = make_row("S3Bucket", "orders-deploy-artifacts",
-                             "orders-deploy-artifacts", region="global",
+                             "orders-deploy-artifacts", region="us-west-2",
                              tags={"Project": "orders"})
     # A custom resource run once during `amplify push`: deployment, not an idle Lambda.
     push_fn = make_row("LambdaFunction", "orders-userpool-client",

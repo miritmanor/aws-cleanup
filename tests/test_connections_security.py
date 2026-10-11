@@ -249,7 +249,7 @@ class IamConnectionTests(ConnectionTypeTestCase):
         with self._isolated("iamrole.any.resource-grant-prefix", audit.CONN_ON):
             rows = audit.collect_iam(self._grant_role_session(
                 f"arn:aws:dynamodb:{REGION}:{ACCOUNT}:table/orders*"))
-            rows += [make_row("S3Bucket", "orders-data", region="global")]
+            rows += [make_row("S3Bucket", "orders-data", region="eu-west-1")]
             links = audit.resolve_edges(rows)
             self.assertEqual(links, [])
             self.assertNotIn("orders-data", audit.render_connections(self._row(rows, "orders-role")))

@@ -1,5 +1,7 @@
 """Databases and object storage: RDS, DynamoDB, S3."""
 
+import logging
+
 from botocore.exceptions import BotoCoreError, ClientError
 
 from ..arns import arn_scope, probable_resource_id_from_arn
@@ -12,6 +14,10 @@ from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
 from ...collect import raw_capture
 from .rds import rds_family
+
+logger = logging.getLogger(__name__)
+
+ACCOUNT_WIDE = "global"
 
 
 def collect_rds_instances(session, region):
@@ -114,14 +120,15 @@ def collect_dynamodb_tables(session, region):
 
 
 def collect_s3_buckets(session):
-    """S3 is global; only run once, not per-region."""
+    """One account-wide listing, run once; each bucket is recorded in its own region."""
     s3 = session.client("s3", config=RETRY_CONFIG)
     resp = safe_call(s3.list_buckets)
     if "__error__" in resp:
-        return [error_row("S3Bucket", "global", "ERROR", resp["__error__"])]
+        return [error_row("S3Bucket", ACCOUNT_WIDE, "ERROR", resp["__error__"])]
     rows = []
     for b in resp.get("Buckets", []):
         name = b["Name"]
+        region = _bucket_region(s3, b)
         created = b.get("CreationDate")
         tags_resp = safe_call(s3.get_bucket_tagging, capability=coverage.TAGS, Bucket=name)
         tags = tags_to_dict(tags_resp.get("TagSet", [])) if "__error__" not in tags_resp else {}
@@ -131,7 +138,7 @@ def collect_s3_buckets(session):
             "CloudTrail data events, neither of which this read-only scan "
             "enables.")
         rows.append(new_row(
-            "S3Bucket", "global", name, name,
+            "S3Bucket", region, name, name,
             created, "", None, True,
             # Age alone is not evidence about use; it is still shown in "created".
             flag_from_activity(evidence, days_ago(created)),
@@ -139,9 +146,25 @@ def collect_s3_buckets(session):
                                     "events if you need real access history."),
             tags=tags, activity=evidence,
         ))
-        raw_capture.record("S3Bucket", "global", name, b)
+        raw_capture.record("S3Bucket", region, name, b)
         _attach_bucket_notifications(s3, rows[-1], name)
     return rows
+
+
+def _bucket_region(s3, bucket):
+    """ListBuckets' BucketRegion, else GetBucketLocation (None means us-east-1, "EU"
+    is the legacy eu-west-1), else "global" with a warning."""
+    if bucket.get("BucketRegion"):
+        return bucket["BucketRegion"]
+    name = bucket["Name"]
+    resp = safe_call(s3.get_bucket_location, Bucket=name)
+    if "__error__" in resp:
+        logger.warning("S3 bucket %s: no BucketRegion and GetBucketLocation failed (%s) "
+                       "- recorded as global, so its cost stays unallocated",
+                       name, resp["__error__"])
+        return ACCOUNT_WIDE
+    location = resp.get("LocationConstraint")
+    return {None: "us-east-1", "": "us-east-1", "EU": "eu-west-1"}.get(location, location)
 
 
 def _attach_bucket_notifications(s3, row, bucket):

@@ -36,7 +36,7 @@ class RawCaptureTests(unittest.TestCase):
         captured before the truncation."""
         raw_capture.start(self.path)
         for n in range(3):
-            raw_capture.record("S3Bucket", "global", f"bucket-{n}", {"Name": f"bucket-{n}"})
+            raw_capture.record("S3Bucket", "us-east-1", f"bucket-{n}", {"Name": f"bucket-{n}"})
         raw_capture.close()
         self.assertEqual([line["resource_id"] for line in self._lines()],
                          ["bucket-0", "bucket-1", "bucket-2"])
@@ -53,9 +53,9 @@ class RawCaptureTests(unittest.TestCase):
     def test_a_new_scan_discards_the_previous_one(self):
         """A second start() truncates: the file describes one scan."""
         raw_capture.start(self.path)
-        raw_capture.record("S3Bucket", "global", "from-the-old-scan", {})
+        raw_capture.record("S3Bucket", "us-east-1", "from-the-old-scan", {})
         raw_capture.start(self.path)
-        raw_capture.record("S3Bucket", "global", "from-the-new-scan", {})
+        raw_capture.record("S3Bucket", "us-east-1", "from-the-new-scan", {})
         raw_capture.close()
         self.assertEqual([line["resource_id"] for line in self._lines()],
                          ["from-the-new-scan"])
@@ -64,7 +64,7 @@ class RawCaptureTests(unittest.TestCase):
         """Collectors call record() unconditionally. A test driving one directly
         never calls start(), and must not have to know that."""
         raw_capture.close()
-        raw_capture.record("S3Bucket", "global", "nobody-is-listening", {})
+        raw_capture.record("S3Bucket", "us-east-1", "nobody-is-listening", {})
         self.assertFalse(os.path.exists(self.path))
 
     def test_close_is_safe_twice(self):
@@ -88,7 +88,7 @@ class RawCaptureTests(unittest.TestCase):
         """Losing a real scan because its optional notes could not be opened
         would be an absurd trade."""
         raw_capture.start(os.path.join(self.tmp.name, "no", "such", "dir", "x.jsonl"))
-        raw_capture.record("S3Bucket", "global", "b", {})   # must not raise
+        raw_capture.record("S3Bucket", "us-east-1", "b", {})   # must not raise
 
 
 if __name__ == "__main__":

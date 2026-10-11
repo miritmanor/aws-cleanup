@@ -16,7 +16,7 @@ class TierRuleTests(unittest.TestCase):
     def test_amplify_deployment_artifacts_bucket(self):
         app = make_row("AmplifyApp", "d111", "bakery")
         app["_amplify_deployment_artifacts"] = ["bakery-deploy-abc123"]
-        bucket = make_row("S3Bucket", "bakery-deploy-abc123", region="global")
+        bucket = make_row("S3Bucket", "bakery-deploy-abc123", region="eu-west-1")
         audit.apply_tiers([app, bucket])
         self.assertEqual(bucket["tier"], audit.TIER_DEPLOYMENT)
         # The reason names the app, because on an account with three Amplify
@@ -42,7 +42,7 @@ class TierRuleTests(unittest.TestCase):
             "b": {"logical_id": "deploymentbucket", "category": "",
                   "type": "AWS::S3::Bucket"},
         }
-        bucket = make_row("S3Bucket", "b", region="global")
+        bucket = make_row("S3Bucket", "b", region="eu-west-1")
         audit.apply_tiers([app, bucket])
         self.assertEqual(bucket["tier"], audit.TIER_DEPLOYMENT)
 
@@ -67,7 +67,7 @@ class TierRuleTests(unittest.TestCase):
             "bakery-deploy": {"logical_id": "SomethingScaffoldy", "category": "",
                               "type": "AWS::S3::Bucket"},
         }
-        bucket = make_row("S3Bucket", "bakery-deploy", region="global")
+        bucket = make_row("S3Bucket", "bakery-deploy", region="eu-west-1")
         audit.apply_tiers([app, bucket])
         self.assertEqual(bucket["tier"], audit.TIER_DEPLOYMENT)
 
@@ -84,7 +84,7 @@ class TierRuleTests(unittest.TestCase):
         """A bucket an EB application deploys from is deployment."""
         app = make_row("ElasticBeanstalkApplication", "bakery", "bakery")
         bucket = make_row("S3Bucket", "elasticbeanstalk-us-east-1-111122223333",
-                          region="global")
+                          region="eu-west-1")
         audit.add_edge(app, "elasticbeanstalk-us-east-1-111122223333",
                        "stores deployment artifacts in",
                        "folder exists in the service bucket",
@@ -106,7 +106,7 @@ class TierRuleTests(unittest.TestCase):
                        conn_type="ebapplication.s3bucket.source-bundle",
                        target_service="S3Bucket", assert_exists=False)
         unrelated = make_row("S3Bucket", "elasticbeanstalk-us-east-1",
-                             region="global")
+                             region="eu-west-1")
         rows = [app]  # the bucket is deliberately NOT in the scan
         audit.resolve_edges(rows)
         audit.apply_tiers(rows + [unrelated])
@@ -121,7 +121,7 @@ class TierRuleTests(unittest.TestCase):
     def test_a_cloudformation_template_bucket_is_deployment(self):
         """The AWS-generated-name rule, and its reason names CloudFormation."""
         bucket = make_row("S3Bucket", "cf-templates-a1b2c3d4e5f6g-us-east-1",
-                          region="global")
+                          region="eu-west-1")
         audit.apply_tiers([bucket])
         self.assertEqual(bucket["tier"], audit.TIER_DEPLOYMENT)
         self.assertIn("CloudFormation", bucket["why_tier"])
@@ -131,7 +131,7 @@ class TierRuleTests(unittest.TestCase):
         for name in ("cf-templates-a1b2c3d4e5f6g-us-gov-west-1",
                      "cf-templates-a1b2c3d4e5f6g-cn-north-1",
                      "cf-templates-a1b2c3d4e5f6g-ap-southeast-4"):
-            bucket = make_row("S3Bucket", name, region="global")
+            bucket = make_row("S3Bucket", name, region="eu-west-1")
             audit.apply_tiers([bucket])
             self.assertEqual(bucket["tier"], audit.TIER_DEPLOYMENT, name)
 
@@ -155,7 +155,7 @@ class TierAbsenceTests(unittest.TestCase):
 
     def test_no_evidence_defaults_to_assumed_runtime(self):
         rows = [make_row("EC2Instance", "i-0abc"), make_row("S3Bucket", "logs",
-                                                            region="global")]
+                                                            region="eu-west-1")]
         counts = audit.apply_tiers(rows)
         self.assertEqual([r["tier"] for r in rows], [audit.TIER_RUNTIME] * 2)
         self.assertEqual([r["why_tier"] for r in rows], [audit.DEFAULT_WHY_TIER] * 2)
@@ -193,7 +193,7 @@ class TierAbsenceTests(unittest.TestCase):
                      "cf-templates-a1b2c3d4e5f6g",       # no region suffix
                      "cf-templates-abc-us-east-1",       # middle too short
                      "my-cf-templates-a1b2c3d4e5f6g-us-east-1"):  # not anchored
-            bucket = make_row("S3Bucket", name, region="global")
+            bucket = make_row("S3Bucket", name, region="eu-west-1")
             audit.apply_tiers([bucket])
             self.assertEqual(bucket["tier"], audit.TIER_RUNTIME, name)
             self.assertEqual(bucket["why_tier"], audit.DEFAULT_WHY_TIER, name)
@@ -212,7 +212,7 @@ class TierAbsenceTests(unittest.TestCase):
         app["_amplify_deployment_artifacts"] = ["bakery-deploy"]
         fn = make_row("LambdaFunction", "bakery-deploy")   # same id, other type
         app["_amplify_provenance"] = {}
-        bucket = make_row("S3Bucket", "bakery-deploy", region="global")
+        bucket = make_row("S3Bucket", "bakery-deploy", region="eu-west-1")
         audit.add_edge(fn, "bakery-deploy", "dead letter", "DeadLetterConfig",
                        conn_type="lambda.any.dead-letter-config",
                        target_service="S3Bucket")
@@ -228,7 +228,7 @@ class TierAbsenceTests(unittest.TestCase):
         app = make_row("AmplifyApp", "d111", "bakery")
         app["_amplify_deployment_artifacts"] = ["cf-templates-a1b2c3d4e5f6g-us-east-1"]
         bucket = make_row("S3Bucket", "cf-templates-a1b2c3d4e5f6g-us-east-1",
-                          region="global")
+                          region="eu-west-1")
         audit.apply_tiers([app, bucket])
         self.assertEqual(bucket["tier"], audit.TIER_DEPLOYMENT)
         self.assertIn("bakery", bucket["why_tier"])
@@ -240,7 +240,7 @@ class TierIsNotAGroupTests(unittest.TestCase):
     def test_tiers_do_not_change_project_group(self):
         app = make_row("AmplifyApp", "d111", "bakery", tags={"Project": "bakery"})
         app["_amplify_deployment_artifacts"] = ["bakery-deploy"]
-        bucket = make_row("S3Bucket", "bakery-deploy", region="global",
+        bucket = make_row("S3Bucket", "bakery-deploy", region="eu-west-1",
                           tags={"Project": "bakery"})
         table = make_row("DynamoDBTable", "bakery-stores", tags={"Project": "bakery"})
         rows = [app, bucket, table]
@@ -383,7 +383,7 @@ class AmplifyProvenanceCollectionTests(unittest.TestCase):
                  "LogicalResourceId": "DeploymentBucket"},
             ]})
         app = make_row("AmplifyApp", "d111", "bakery")
-        bucket = make_row("S3Bucket", "bakery-deployment", region="global")
+        bucket = make_row("S3Bucket", "bakery-deployment", region="eu-west-1")
         rows = [app, bucket]
         audit.apply_amplify_api_links(rows, session)
         audit.apply_tiers(rows)

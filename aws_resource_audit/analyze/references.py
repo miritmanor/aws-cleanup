@@ -3,6 +3,7 @@ Recomputes risk afterwards. No AWS calls."""
 
 from .. import coverage as cov
 from ..config import ARN_PREFIX_MAX_MATCHES, FILTERED_ENUMERATIONS
+from ..connection_types.vocabulary import GLOBALLY_NAMED_TARGETS
 from ..registry import CONNECTION_TYPES_BY_ID, feeds_grouping
 from .risk import compute_risk
 
@@ -13,7 +14,7 @@ ANY_SCOPE = "*"
 
 def _in_scope(row, edge, source_row):
     """Is this row a legitimate target by account and region? Stated account else the
-    source's; stated region, "*" or the scope rule; "global" rows are in every region."""
+    source's; stated region, "*" or the scope rule; global rows and S3 buckets match anywhere."""
     want_account = edge.get("target_account") or source_row.get("account") or ""
     row_account = row.get("account") or ""
     # An unknown account is not a different one; otherwise old snapshots lose every link.
@@ -21,7 +22,7 @@ def _in_scope(row, edge, source_row):
         if row_account != want_account:
             return False
 
-    if row.get("region") == "global":
+    if row.get("region") == "global" or row.get("service") in GLOBALLY_NAMED_TARGETS:
         return True
 
     want_region = edge.get("target_region")
