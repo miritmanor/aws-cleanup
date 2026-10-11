@@ -25,9 +25,9 @@ def cw_activity(cw, namespace, metric_name, dimensions, stat="Sum",
         Period=86400,  # daily
         Statistics=[stat],
     )
-    common = dict(source=activity.SOURCE_CLOUDWATCH, metric=metric_name,
-                  window_days=CW_LOOKBACK_DAYS,
-                  explanation=explanation or f"{metric_name} over {CW_LOOKBACK_DAYS}d")
+    common = {"source": activity.SOURCE_CLOUDWATCH, "metric": metric_name,
+              "window_days": CW_LOOKBACK_DAYS,
+              "explanation": explanation or f"{metric_name} over {CW_LOOKBACK_DAYS}d"}
     if "__error__" in resp:
         return activity.ActivityEvidence(
             telemetry=activity.LOOKUP_FAILED, error=resp["__error__"], **common)

@@ -16,6 +16,7 @@ from ..cost import (
     period_note,
     service_entry_lines,
 )
+from .brand import APP_NAME, FAVICON_DATA_URI, TAGLINE
 from ..bubbles import BUBBLES_CSS, BUBBLES_JS, BUBBLES_PANEL
 from ..format import display_row
 from ..graph.cytoscape import (
@@ -162,7 +163,7 @@ def render_billing_section(report, cost_report=None):
     return head + "".join(body) + "</details>"
 
 
-def render_html_report(all_rows, title="AWS Resource Inventory", graph=None,
+def render_html_report(all_rows, title=APP_NAME, graph=None,
                        diagram_graph=None, generated_at=None, coverage=None,
                        billing_coverage=None, cost_report=None,
                        overview=None, project_diagrams=()):
@@ -180,6 +181,9 @@ def render_html_report(all_rows, title="AWS Resource Inventory", graph=None,
 
     return HTML_TEMPLATE.format(
         title=title,
+        app_name=esc(APP_NAME),
+        tagline=esc(TAGLINE),
+        favicon=FAVICON_DATA_URI,
         generated_at=(generated_at or now()).strftime("%Y-%m-%d %H:%M:%S UTC"),
         row_count=len(all_rows),
         region_count=len(regions) if regions else 1,
@@ -232,11 +236,11 @@ def render_html_report(all_rows, title="AWS Resource Inventory", graph=None,
     )
 
 
-def generate_html_report(all_rows, html_path, title="AWS Resource Inventory",
+def generate_html_report(all_rows, html_path, title=APP_NAME,
                          graph=None, diagram_graph=None, generated_at=None,
                          coverage=None, billing_coverage=None,
                          cost_report=None, overview=None, project_diagrams=()):
-    with open(html_path, "w") as f:
+    with open(html_path, "w", encoding="utf-8") as f:
         f.write(render_html_report(all_rows, title=title, graph=graph,
                                    diagram_graph=diagram_graph,
                                    generated_at=generated_at, coverage=coverage,

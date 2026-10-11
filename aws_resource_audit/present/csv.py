@@ -33,5 +33,5 @@ def render_csv(all_rows, *, lineterminator="\r\n"):
 
 
 def write_csv(all_rows, path):
-    with open(path, "w", newline="") as handle:
+    with open(path, "w", newline="", encoding="utf-8") as handle:
         handle.write(render_csv(all_rows))

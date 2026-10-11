@@ -32,7 +32,7 @@ def extract_text(path: str) -> str:
         # The AuditError keeps only str(e); the original type and traceback are
         # the half that says WHICH parser gave up and where.
         logger.exception("parsing %s failed", path)
-        raise AuditError(f"{os.path.basename(path)}: could not be read ({e})")
+        raise AuditError(f"{os.path.basename(path)}: could not be read ({e})") from e
     raise AuditError(f"{os.path.basename(path)}: no reader for '{ext}' files.")
 
 

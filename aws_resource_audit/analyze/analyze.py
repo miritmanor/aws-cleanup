@@ -2,10 +2,11 @@
 (POPS row["_graph"], so it runs once, last) -> attribute_costs. No AWS calls."""
 
 from dataclasses import dataclass, field
+from typing import Optional
 
 from ..billing import not_queried
 from .billing_coverage import assess_billing_coverage
-from .active_regions import find_active_regions
+from .active_regions import ActiveRegions, find_active_regions
 from .cost import attribute_costs
 from .default_network import hide_untouched_default_networks
 from .graph import build_graph_data
@@ -28,8 +29,8 @@ class AnalysisResult:
     billing_coverage: object = None
     # Regions whose untouched default VPC was left out of the rows.
     hidden_default_networks: list = field(default_factory=list)
-    # Which scanned (and billed) regions hold anything - an ActiveRegions.
-    active_regions: object = None
+    # Which scanned (and billed) regions hold anything.
+    active_regions: Optional[ActiveRegions] = None
 
 
 def run_analysis(normalized_scan_results, *, default_vpc_ids=None,

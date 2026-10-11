@@ -106,13 +106,13 @@ def _place(radii):
             placed.append((px + pr + r, py, r))
             continue
         best = None
-        for i in range(len(placed)):
-            for j in range(i + 1, len(placed)):
-                for x, y in _tangent_positions(placed[i], placed[j], r):
+        for i, first in enumerate(placed):
+            for second in placed[i + 1:]:
+                for x, y in _tangent_positions(first, second, r):
                     if not _fits(x, y, r, placed):
                         continue
                     key = (round(math.hypot(x, y), 9), round(x, 9), round(y, 9))
-                    if best is None or key < best[0]:
+                    if best is None or key < best[0]:  # pylint: disable=unsubscriptable-object
                         best = (key, x, y)
         if best is None:
             # No free tangent position: place beyond the current extent.

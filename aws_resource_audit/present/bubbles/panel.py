@@ -100,4 +100,3 @@ BUBBLES_PANEL = """
     <div class="bubbles-notes" id="bubblesNotes"></div>
   </div>
 """
-

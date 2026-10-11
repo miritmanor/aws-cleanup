@@ -58,7 +58,7 @@ def resolve_stage_variables(uri, stage_variable_maps):
     resolved = []
     for variables in stage_variable_maps or []:
         out = STAGE_VARIABLE_RE.sub(
-            lambda m: variables.get(m.group(1), m.group(0)), uri)
+            lambda m, found=variables: found.get(m.group(1), m.group(0)), uri)
         if "${stageVariables." not in out and out not in resolved:
             resolved.append(out)
     return resolved

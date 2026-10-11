@@ -1,5 +1,5 @@
-"""Effective membership: the three naming passes in their one correct order (reclaim,
-match, manual overrides). Called only by entry points: render, SnapshotStore, run."""
+"""Effective membership: the naming passes in their one correct order (reclaim, match,
+manual overrides, merges). Called only by entry points: render, SnapshotStore, run."""
 
 from ..rows import member_key
 from .group_names import (
@@ -9,6 +9,7 @@ from .group_names import (
     load_group_store,
     reset_assigned_names,
 )
+from .merges import apply_merges, merge_root
 
 
 def resolve_effective_membership(all_rows, groups_file):
@@ -19,6 +20,7 @@ def resolve_effective_membership(all_rows, groups_file):
         return
     apply_assigned_names(all_rows, groups_file)
     apply_manual_group_overrides(all_rows, groups_file)
+    apply_merges(all_rows, groups_file)
 
 
 def remembered_empty_groups(all_rows, groups_file):
@@ -28,7 +30,10 @@ def remembered_empty_groups(all_rows, groups_file):
         return ()
     live = {member_key(row) for row in all_rows}
     out = []
-    for gid, group in sorted(load_group_store(groups_file).get("groups", {}).items()):
+    groups = load_group_store(groups_file).get("groups", {})
+    for gid, group in sorted(groups.items()):
+        if merge_root(groups, gid) != gid:
+            continue    # shown as part of the project it was merged into
         if not any(key in live for key in group.get("members", [])):
             out.append((group_project_id(gid), group.get("name") or gid))
     return tuple(out)

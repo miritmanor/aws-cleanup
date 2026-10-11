@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from aws_resource_audit.errors import AuditError
 
 from .. import deps
-from ..agent import agent_loop, llm
+from ..agent import install, llm
 from ..agent.settings import load_agent_settings
 from ..schemas import AgentQueryRequest, AgentStatus
 
@@ -30,19 +30,29 @@ def _frame(payload: dict) -> str:
     return f"data: {json.dumps(payload)}\n\n"
 
 
+def _run_turn(session_id: str, message: str, resource_keys: list[str]):
+    """agent_loop imported here, not at module load: it imports langchain, which an
+    image built without the agent does not have."""
+    reason = install.not_installed_reason()
+    if reason:
+        raise AuditError(reason)
+    from ..agent import agent_loop
+    return agent_loop.run_turn(session_id, message, resource_keys)
+
+
 @router.post("/agent/query", summary="Ask the resource Q&A agent a question")
 def query_agent(request: AgentQueryRequest):
     """Stream the reply as SSE (read via fetch, since EventSource is GET-only). Errors
     travel as a final frame: the 200 is already sent when the body starts."""
     async def stream():
         try:
-            async for token in agent_loop.run_turn(
+            async for token in _run_turn(
                 request.session_id, request.message, request.resource_keys,
             ):
                 yield _frame({"token": token})
         except AuditError as exc:
-            # Expected and actionable: no API key, unusable agent config. The
-            # message is written for the user to act on.
+            # Expected and actionable: no API key, unusable agent config, agent not
+            # installed. The message is written for the user to act on.
             logger.warning("agent turn failed for session %s: %s",
                            request.session_id, exc)
             yield _frame({"error": str(exc)})
@@ -63,8 +73,8 @@ def agent_status():
     """Whether the agent is usable. Never fails: a bad config reads as unavailable. A
     presence check only; a wrong key fails at the first question."""
     try:
-        settings = load_agent_settings(deps.agent_config_path())
+        load_agent_settings(deps.agent_config_path())
     except AuditError as exc:
         return AgentStatus(available=False, reason=str(exc))
-    reason = llm.unavailable_reason(settings)
+    reason = llm.unavailable_reason()
     return AgentStatus(available=not reason, reason=reason)

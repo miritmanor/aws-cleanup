@@ -6,6 +6,7 @@ import logging as _logging
 # The library never configures logging; this stops logging.lastResort printing
 # unformatted WARNINGs in programs that never set logging up.
 _logging.getLogger(__name__).addHandler(_logging.NullHandler())
+# pylint: disable=wrong-import-position
 
 # The public surface, listed explicitly so a moved name fails loudly here.
 # Names rebound at runtime are absent: __getattr__ below serves them live.

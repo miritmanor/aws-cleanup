@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "./api/client";
 import type {
-  BillingSummary, ConfigResponse, Graph, Group, Overview, Project, Row,
+  BillingSummary, ConfigResponse, Graph, Overview, Project, Row,
   ScanSummary, ServiceMeta,
 } from "./api/types";
 import { BillingBanner } from "./components/BillingBanner";
@@ -37,7 +37,6 @@ export default function App() {
   const [graph, setGraph] = useState<Graph | null>(null);
   const [billing, setBilling] = useState<BillingSummary | null>(null);
   const [serviceMeta, setServiceMeta] = useState<ServiceMeta>({});
-  const [groups, setGroups] = useState<Group[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   // Starts false so the panel never flashes in and out on load: the
@@ -90,9 +89,8 @@ export default function App() {
     try { setOverview(await api.getOverview()); } catch { setOverview(null); }
   }, []);
 
-  // Saved names (for "add to existing project") and the project list together.
+  // The project list: names, rename and "add to existing project" targets.
   const loadGroups = useCallback(async () => {
-    try { setGroups(await api.getGroups()); } catch { /* listed empty */ }
     try { setProjects(await api.getProjects()); } catch { /* listed empty */ }
   }, []);
 
@@ -173,7 +171,11 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>AWS resource audit</h1>
+        <h1>
+          <img className="brand-icon" src="/favicon.svg" alt="" />
+          AWS Cleanup
+          <span className="tagline">See everything in your account, remove what you don't need</span>
+        </h1>
         <nav>
           {TABS.map((t) => (
             <button
@@ -224,7 +226,6 @@ export default function App() {
                   focusKey={focusKey}
                   onFocusKey={setFocusKey}
                   onClearFocus={() => setFocusKey(null)}
-                  namedGroups={groups}
                   projects={projects}
                   onGroupsChanged={onGroupsChanged}
                   selected={selected}

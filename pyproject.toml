@@ -16,3 +16,26 @@ dependencies = ["boto3>=1.26"]
 [tool.setuptools.packages.find]
 include = ["aws_resource_audit*"]
 namespaces = false
+
+# pylint gates the backend image build (backend/Dockerfile). See docs/decisions/0067.
+[tool.pylint.main]
+# Optional agent packages: the image holds one provider, or none.
+ignored-modules = ["langchain", "langchain_core", "langchain_text_splitters", "langgraph",
+                   "langchain_chroma", "chromadb", "langchain_openai", "langchain_anthropic",
+                   "langchain_aws", "pypdf", "docx", "openpyxl"]
+
+[tool.pylint."messages control"]
+disable = [
+    # Style and size: this repo's limits are 500 lines a file and short comments.
+    "line-too-long", "missing-module-docstring", "missing-class-docstring",
+    "missing-function-docstring", "too-many-locals", "too-many-arguments",
+    "too-many-positional-arguments", "too-many-branches", "too-many-statements",
+    "too-many-instance-attributes", "too-many-nested-blocks", "too-many-return-statements",
+    "too-few-public-methods", "too-many-lines",
+    # Pydantic schemas mirror the core's dataclasses; real repeats are in docs/TECH_DEBT.md.
+    "duplicate-code",
+    # Deliberate: lazy optional imports, one-scan module state, logged catch-alls.
+    "import-outside-toplevel", "global-statement", "invalid-name", "broad-exception-caught",
+    # Collectors share one signature, so most take a region they do not need.
+    "unused-argument",
+]

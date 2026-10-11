@@ -7,7 +7,7 @@ def compute_risk(flag, has_connections, extra_hint=None, has_dangling=False,
                  evidence_gap=""):
     """Very rough triage heuristic. NOT a delete/keep verdict - always check
     actual dependents (including services this script doesn't scan)."""
-    if flag == "ERROR" or flag == "UNKNOWN":
+    if flag in ("ERROR", "UNKNOWN"):
         return "UNKNOWN - insufficient signal, verify manually"
     active = flag.startswith("ACTIVE")
     if extra_hint == "unattached":

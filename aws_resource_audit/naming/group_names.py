@@ -24,7 +24,7 @@ def load_group_store(path):
     if not path or not os.path.exists(path):
         return {"groups": {}}
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
             data.setdefault("groups", {})
     except (json.JSONDecodeError, OSError) as e:
@@ -48,7 +48,7 @@ def save_group_store(path, store):
     store.setdefault("schema_version", GROUP_STORE_VERSION)
     if scan_account():
         store["account"] = scan_account()
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(store, f, indent=2)
 
 
@@ -68,12 +68,17 @@ MANUAL_WHY = "manually grouped"
 DETECTED_PREFIX = "originally: "
 
 
+def listed_keys(group):
+    """Every member key a saved name lists: what it grows from, plus hand-picked extras."""
+    return list(group.get("members", [])) + list(group.get("extra_members", []))
+
+
 def group_project_id(gid):
     """The project_id a saved group gives every row it claims."""
     return f"{GROUP_ID_PREFIX}{gid}"
 
 
-def _claim(row, gid, name):
+def claim_row(row, gid, name):
     """Stamp one row as a member of saved group `gid`: its name AND its ID."""
     row["project_group"] = name
     row["project_id"] = group_project_id(gid)
@@ -150,7 +155,7 @@ def apply_assigned_names(all_rows, groups_file):
     # winner's list, or one merge would entangle the two lists for good.
     owned_elsewhere = {}
     for gid, g in groups.items():
-        for k in g.get("members", []):
+        for k in listed_keys(g):
             owned_elsewhere.setdefault(k, set()).add(gid)
 
     by_gid = {}
@@ -162,7 +167,7 @@ def apply_assigned_names(all_rows, groups_file):
         gained = set()
         for pid in pids:
             for r in projects[pid]:
-                _claim(r, gid, name)
+                claim_row(r, gid, name)
                 k = member_key(r)
                 if owned_elsewhere.get(k, {gid}) <= {gid}:
                     gained.add(k)
@@ -193,20 +198,19 @@ def apply_assigned_names(all_rows, groups_file):
 
 
 def apply_manual_group_overrides(all_rows, groups_file):
-    """Force a hand-assembled ("manual") group's exact membership onto the rows. Must
-    run AFTER apply_assigned_names; never writes the store back."""
+    """Force hand-picked keys onto the rows: a manual group's members and any group's
+    extra_members. Must run AFTER apply_assigned_names; never writes the store back."""
     if not groups_file:
         return
     store = load_group_store(groups_file)
     by_key = {member_key(r): r for r in all_rows}
 
     for gid, g in sorted(store.get("groups", {}).items()):
-        if not g.get("manual"):
-            continue
+        picked = listed_keys(g) if g.get("manual") else g.get("extra_members", [])
         name = g["name"]
-        for key in g.get("members", []):
+        for key in picked:
             row = by_key.get(key)
             if row is None:
                 continue    # not in this scan - stored membership outlives a scan
-            _claim(row, gid, name)
+            claim_row(row, gid, name)
             row["why_grouped"] = _mark_manual(row.get("why_grouped"))

@@ -27,7 +27,8 @@ export const COLUMNS: Column[] = [
   { key: "created", label: "Created" },
   // Charges over the last 30 days, not a monthly forecast; a blank "Cost basis" is not "free".
   { key: "est_monthly_cost_usd", label: "$ last 30d", numeric: true },
-  { key: "cost", label: "Cost basis" },
+  { key: "cost", label: "Cost basis", wide: true },
+  { key: "cost_notes", label: "Cost notes", wide: true },
   { key: "risk_if_removed", label: "Risk" },
   { key: "tier", label: "Runtime / deploy" },
   { key: "connections", label: "Connections", wide: true },

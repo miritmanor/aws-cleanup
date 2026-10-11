@@ -7,8 +7,12 @@ from ..billing import (
     ESTIMATED, NOT_QUERIED, SHARED_UNALLOCATED, UNAVAILABLE, ZERO,
     BucketTotal, CostReport, attribution_for,
 )
-from ..config import BILLING_COVERAGE, CE_SERVICE_MAP, USAGE_TYPE_RESOURCE_TYPES
+from ..config import (
+    BILLING_COVERAGE, BILLING_FINDING_MIN_AMOUNT, CE_SERVICE_MAP,
+    USAGE_TYPE_RESOURCE_TYPES,
+)
 from ..coverage import INCOMPLETE_STATUSES, NOT_REQUESTED, WORST_FIRST
+from .billing_coverage import classify_usage_types
 
 CENT = Decimal("0.01")
 
@@ -55,8 +59,15 @@ def _region_status(entries, service, region):
     return "complete"
 
 
+def _gaps_disproven(breakdown):
+    """True when AWS's usage-type split puts (almost) nothing in uncollected kinds."""
+    uncollected = sum((amount for _label, amount, collected in breakdown
+                       if not collected), ZERO)
+    return bool(breakdown) and uncollected < BILLING_FINDING_MIN_AMOUNT
+
+
 def _split_refusal(ce_service, region, internal, rows, entries, amount,
-                   ignore_gaps=False, also_regional=False):
+                   ignore_gaps=False, also_regional=False, breakdown=()):
     """Why this bucket may not be divided, or "" when it may - the sentence is the
     finding. ignore_gaps: dividing one usage-type line only."""
     if not region and not rows:
@@ -78,6 +89,10 @@ def _split_refusal(ce_service, region, internal, rows, entries, amount,
     if not region and also_regional and not ignore_gaps:
         return ("AWS bills most of this service by region and this scan records "
                 "these resources without one, so this line is not their cost")
+    if gaps and not ignore_gaps and _gaps_disproven(breakdown):
+        kinds = ", ".join(label for label, _amount, _collected in breakdown)
+        return (f"AWS's own split of it ({kinds}) names no resource, and an even "
+                "share would ignore that these are billed by size or by hour")
     if gaps and not ignore_gaps:
         return (f"this bill also covers {', '.join(gaps)}, which this scan "
                 "does not collect, so any share would include money that is "
@@ -105,6 +120,24 @@ def _standing_charge(billing, entry, matching):
         return None
     # Never more than the cell holds: the line is account-wide, the cell is not.
     return min(amount, entry.amount), rows, sorted(set(names))
+
+
+def _held(billing, label, amount, rows, breakdown):
+    """The attribution for rows sharing undivided money: how much, under which bill,
+    AWS's split of it and who shares it. Why it is undivided is on the bucket."""
+    said = f"{amount:.2f} {billing.currency or 'USD'} under {label}."
+    if breakdown:
+        said += (" Account-wide split: "
+                 + ", ".join(f"{name} {part:.2f}" for name, part, _c in breakdown) + ".")
+    counts = {}
+    for row in rows:
+        counts[row.get("service", "")] = counts.get(row.get("service", ""), 0) + 1
+    if counts:
+        said += " Shared by " + ", ".join(
+            f"{n} {name}" for name, n in sorted(counts.items())) + "."
+    return attribution_for(billing, state=SHARED_UNALLOCATED, bucket=label,
+                           explanation=said, shared_amount=amount,
+                           shared_count=len(rows))
 
 
 def _divide(rows, pool, billing, label, basis):
@@ -163,16 +196,16 @@ def attribute_costs(all_rows, billing, coverage_entries=None):
         label = (f"'{entry.service}'"
                  + (f" in {entry.region}" if entry.region else " (no region)"))
         line = _standing_charge(billing, entry, matching)
+        breakdown = classify_usage_types(billing.usage_types_for(entry.service))
         refusal = _split_refusal(
             entry.service, entry.region, internal, matching, entries,
             entry.amount, ignore_gaps=line is not None,
             also_regional=any(a.region and a.amount > ZERO
-                              for a in billing.for_service(entry.service)))
+                              for a in billing.for_service(entry.service)),
+            breakdown=breakdown)
         allocated_rows.update(id(row) for row in matching)
         if refusal:
-            note = attribution_for(
-                billing, state=SHARED_UNALLOCATED, bucket=label,
-                explanation=f"Held against {label} and not divided: {refusal}.")
+            note = _held(billing, label, entry.amount, matching, breakdown)
             for row in matching:
                 row["cost"] = note.as_dict()
             buckets.append(BucketTotal(
@@ -200,11 +233,10 @@ def attribute_costs(all_rows, billing, coverage_entries=None):
         gaps = ", ".join(BILLING_COVERAGE.get(entry.service, ((), ()))[1])
         rest = (f"the rest of this bill covers {gaps}, which this scan does "
                 "not collect")
-        for row in matching:
-            if not any(row is p for p in paid):
-                row["cost"] = attribution_for(
-                    billing, state=SHARED_UNALLOCATED, bucket=label,
-                    explanation=f"Held against {label} and not divided: {rest}.").as_dict()
+        unpaid = [row for row in matching if not any(row is p for p in paid)]
+        note = _held(billing, label, entry.amount - pool, unpaid, breakdown)
+        for row in unpaid:
+            row["cost"] = note.as_dict()
         buckets.append(BucketTotal(
             service=entry.service, region=entry.region, amount=pool,
             row_count=len(paid), allocated=allocated, state=ESTIMATED,

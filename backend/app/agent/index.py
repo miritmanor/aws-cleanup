@@ -4,7 +4,10 @@ and the rebuild. Separate from agent_loop so a rebuild never needs a chat model.
 import os
 import threading
 
+from aws_resource_audit.errors import AuditError
+
 from .. import deps
+from . import install
 from .documents import DocumentStore
 from .rag import open_index, rebuild_index
 from .settings import load_agent_settings
@@ -24,18 +27,20 @@ def persist_dir() -> str:
 def get_index():
     """The shared Chroma collection, opened on first use. Opening does not
     build: a brand-new data volume has an empty index until a rebuild."""
-    settings = load_agent_settings(deps.agent_config_path())
-    directory = os.path.join(deps.data_dir(), settings.chroma_dir)
+    directory = persist_dir()
     with _lock:
         store = _indexes.get(directory)
         if store is None:
-            store = open_index(settings, directory)
+            store = open_index(directory)
             _indexes[directory] = store
         return store
 
 
 def rebuild() -> int:
     """Re-embed the corpus; returns the chunk count. Serialised so two rebuilds never interleave."""
+    reason = install.not_installed_reason()
+    if reason:
+        raise AuditError(reason)
     with _rebuild_lock:
         return rebuild_index(get_index(), DocumentStore(deps.documents_dir()))
 

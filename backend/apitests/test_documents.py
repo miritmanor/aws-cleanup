@@ -11,8 +11,12 @@ from aws_resource_audit.errors import AuditError
 
 from . import _REPO  # noqa: F401  (sys.path fixup)
 from .api_base import ApiTestCase
+from app.agent import install
 from app.agent.documents import DocumentStore, check_name
 from app.agent.loaders import extract_text
+
+# Parsers, splitter and index come with the agent: an image built without it skips them.
+_NO_AGENT = install.not_installed_reason()
 
 
 class NameTests(unittest.TestCase):
@@ -79,6 +83,7 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(self.store.files(), [])
 
 
+@unittest.skipIf(_NO_AGENT, _NO_AGENT)
 class LoaderTests(unittest.TestCase):
     """The formats whose fixtures need no third-party library."""
 
@@ -145,6 +150,7 @@ def _write_minimal_docx(path):
         z.writestr("word/document.xml", document)
 
 
+@unittest.skipIf(_NO_AGENT, _NO_AGENT)
 class ChunkingTests(unittest.TestCase):
     """What gets embedded. No Chroma and no embedding model - _load_and_chunk
     is the part of rag.py that decides content, and it is pure."""
@@ -196,6 +202,7 @@ class FakeIndex:
         self.documents.extend(documents)
 
 
+@unittest.skipIf(_NO_AGENT, _NO_AGENT)
 class RebuildTests(unittest.TestCase):
     """rebuild_index against a fake collection: a rebuild REPLACES, so deleted
     documents stop being searchable."""

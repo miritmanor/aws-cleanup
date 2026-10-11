@@ -216,20 +216,25 @@ class AttributionTests(unittest.TestCase):
     def test_a_partially_covered_bucket_is_not_divided(self):
         """"EC2 - Other" also bills data transfer, so it is not split across EBS volumes."""
         rows = [make_row("EBSVolume", "vol-1")]
-        cells = attributed(rows, bill(("EC2 - Other", "us-east-1", "40.00")),
-                           complete_inventory("EBSVolume", "EBSSnapshot",
-                                              "ElasticIP", "AMI", "NatGateway"))
+        report = attribute_costs(rows, bill(("EC2 - Other", "us-east-1", "40.00")),
+                                 coverage_entries=complete_inventory(
+                                     "EBSVolume", "EBSSnapshot", "ElasticIP", "AMI",
+                                     "NatGateway"))
+        cells = [cost_columns(r) for r in rows]
         self.assertEqual(cells[0]["est_monthly_cost_usd"], "")
-        self.assertEqual(cells[0]["cost"], "unallocated (shared bill)")
-        self.assertIn("data transfer", cells[0]["cost_notes"])
+        self.assertEqual(cells[0]["cost"],
+                         "shared 'EC2 - Other' in us-east-1: 40.00 USD, 1 resource")
+        self.assertIn("this bill also covers inter-AZ and internet data transfer",
+                      report.buckets[0].explanation)
 
     def test_a_denied_collector_stops_its_bucket_being_divided(self):
         rows = [make_row("EC2Instance", "i-1")]
-        cells = attributed(rows, bill((EC2_COMPUTE, "us-east-1", "40.00")),
-                           [{"service": "EC2Instance", "capability": "inventory",
-                             "status": "denied", "scope": "us-east-1"}])
-        self.assertEqual(cells[0]["cost"], "unallocated (shared bill)")
-        self.assertIn("refused or cut short", cells[0]["cost_notes"])
+        report = attribute_costs(rows, bill((EC2_COMPUTE, "us-east-1", "40.00")),
+                                 coverage_entries=[{
+                                     "service": "EC2Instance", "capability": "inventory",
+                                     "status": "denied", "scope": "us-east-1"}])
+        self.assertTrue(cost_columns(rows[0])["cost"].startswith("shared 'Amazon Elastic"))
+        self.assertIn("refused or cut short", report.buckets[0].explanation)
 
     def test_a_shared_resource_is_counted_once_and_charged_to_nobody(self):
         shared = make_row("EC2Instance", "i-shared")
@@ -290,10 +295,14 @@ class AccountWideTests(unittest.TestCase):
     """Global rows against charges with no region: a billed hosted zone is never 0.00."""
 
     def test_a_billed_zone_is_never_shown_as_zero(self):
-        cells = attributed([zone("Z1")], bill((ROUTE53, "", "0.50")), GLOBAL)
+        rows = [zone("Z1")]
+        report = attribute_costs(rows, bill((ROUTE53, "", "0.50")),
+                                 coverage_entries=GLOBAL)
+        cells = [cost_columns(r) for r in rows]
         self.assertEqual(cells[0]["est_monthly_cost_usd"], "")
-        self.assertEqual(cells[0]["cost"], "unallocated (shared bill)")
-        self.assertIn("DNS queries", cells[0]["cost_notes"])
+        self.assertEqual(cells[0]["cost"],
+                         "shared 'Amazon Route 53' (no region): 0.50 USD, 1 resource")
+        self.assertIn("DNS queries", report.buckets[0].explanation)
 
     def test_the_hosted_zone_line_is_divided_across_the_zones(self):
         rows = [zone("Z1"), zone("Z2")]
@@ -314,11 +323,12 @@ class AccountWideTests(unittest.TestCase):
     def test_the_zone_line_is_not_divided_when_the_zone_lookup_was_denied(self):
         billing = with_usage(bill((ROUTE53, "", "0.50")),
                              (ROUTE53, "HostedZone", "0.50"))
-        cells = attributed([zone("Z1")], billing,
-                           [{"service": "Route53HostedZone", "capability": "inventory",
-                             "status": "denied", "scope": "global"}])
-        self.assertEqual(cells[0]["est_monthly_cost_usd"], "")
-        self.assertIn("refused or cut short", cells[0]["cost_notes"])
+        rows = [zone("Z1")]
+        report = attribute_costs(rows, billing, coverage_entries=[{
+            "service": "Route53HostedZone", "capability": "inventory",
+            "status": "denied", "scope": "global"}])
+        self.assertEqual(cost_columns(rows[0])["est_monthly_cost_usd"], "")
+        self.assertIn("refused or cut short", report.buckets[0].explanation)
 
     def test_a_zone_shared_by_two_projects_is_charged_to_nobody(self):
         shared = zone("Z1")

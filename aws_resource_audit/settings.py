@@ -126,10 +126,10 @@ def load_settings(path=CONFIG_FILENAME):
     if not path or not os.path.exists(path):
         return Settings()
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
-        raise AuditError(f"{path}: could not be read ({e})")
+        raise AuditError(f"{path}: could not be read ({e})") from e
     if not isinstance(data, dict):
         raise AuditError(f"{path}: expected a JSON object at the top level")
 

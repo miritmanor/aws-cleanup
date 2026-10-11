@@ -201,6 +201,9 @@ class Group(BaseModel):
                     "list from a multi-select (see ManualGroupCreate) rather "
                     "than a project the automatic detection found and someone "
                     "named. A manual group never auto-extends.")
+    merged_into: Optional[str] = Field(
+        None, description="The group this one was merged into, whose name it is shown "
+                          "under. Forgetting that group clears it.")
 
 
 class Project(BaseModel):
@@ -217,6 +220,12 @@ class Project(BaseModel):
     live_members: int = 0
     updated_at: Optional[str] = None
     not_applied: str = Field("", description="Why a saved name is shown nowhere, or empty.")
+    extra_members: int = Field(0, description="Resources added by hand on top of the ones "
+                                              "the project grows from.")
+    merged_from: list[str] = Field(
+        default_factory=list,
+        description="Names of the projects merged into this one; forgetting its name "
+                    "splits them apart again.")
 
 
 class GroupCreate(StrictModel):
@@ -244,8 +253,22 @@ class ManualGroupCreate(StrictModel):
                     "existing project to claim - use POST /api/groups instead.")
 
 
+class ProjectMembersAdd(StrictModel):
+    """Add resources to any project, by project_id as GET /api/projects lists it."""
+
+    project_id: str = Field(min_length=1)
+    member_keys: list[str] = Field(min_length=1)
+
+
+class ProjectMerge(StrictModel):
+    """Merge one project into another, both by project_id as GET /api/projects lists them."""
+
+    source_project_id: str = Field(min_length=1, description="The project that disappears.")
+    target_project_id: str = Field(min_length=1, description="The project whose name is kept.")
+
+
 class GroupMembersAdd(StrictModel):
-    """Add resources to a named group, which becomes manual from then on."""
+    """Add resources to a named group. A group that grows on its own keeps growing."""
 
     member_keys: list[str] = Field(min_length=1)
 

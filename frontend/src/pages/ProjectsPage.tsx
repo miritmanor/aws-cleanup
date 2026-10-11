@@ -32,6 +32,26 @@ export function ProjectsPage({ projects, onChanged }: Props) {
     if (await act(() => renameProject(project, name))) setEditingId(null);
   }
 
+  function mergeInto(source: Project, targetId: string) {
+    const target = projects.find((p) => p.project_id === targetId);
+    if (!target) return;
+    if (confirm(`Merge "${source.name}" into "${target.name}"? Its resources will be `
+      + `shown under "${target.name}". Forget the name "${target.name}" to split them apart again.`)) {
+      void act(() => api.mergeProject(source.project_id, target.project_id));
+    }
+  }
+
+  function forget(project: Project) {
+    const split = project.merged_from.length
+      ? ` ${project.merged_from.join(", ")} will be split back out.` : "";
+    if (confirm(`Forget the name "${project.name}"? The project goes back to its default name.${split}`)) {
+      void act(() => api.deleteGroup(project.group_id!));
+    }
+  }
+
+  // A project with no resources left has nothing to merge or to be merged into.
+  const mergeTargets = projects.filter((p) => p.resource_count > 0);
+
   return (
     <section className="page">
       <h2>Projects</h2>
@@ -39,7 +59,9 @@ export function ProjectsPage({ projects, onChanged }: Props) {
         Every project this scan found, largest first. Click a name to assign
         one or change it. An assigned name is saved against the resources in
         the project, so it survives the project gaining or losing a resource,
-        and it takes effect immediately - no re-scan needed.
+        and it takes effect immediately - no re-scan needed. Use "Merge into…"
+        to show one project under another's name; forgetting that name splits
+        them apart again.
       </p>
 
       {error && <div className="banner error">{error}</div>}
@@ -83,6 +105,12 @@ export function ProjectsPage({ projects, onChanged }: Props) {
                   {!editing && project.manual && (
                     <div className="hint">hand-picked membership - does not grow on its own</div>
                   )}
+                  {!editing && project.extra_members > 0 && (
+                    <div className="hint">{project.extra_members} added by hand</div>
+                  )}
+                  {!editing && project.merged_from.length > 0 && (
+                    <div className="hint">merged from: {project.merged_from.join(", ")}</div>
+                  )}
                   {!editing && project.not_applied && (
                     <div className="hint warn">not applied: {project.not_applied}</div>
                   )}
@@ -96,14 +124,26 @@ export function ProjectsPage({ projects, onChanged }: Props) {
                 </td>
                 <td className="muted">{project.updated_at ?? "—"}</td>
                 <td className="actions">
+                  {project.resource_count > 0 && mergeTargets.length > 1 && (
+                    <select
+                      className="merge-into"
+                      value=""
+                      onChange={(e) => mergeInto(project, e.target.value)}
+                    >
+                      <option value="">Merge into…</option>
+                      {mergeTargets
+                        .filter((p) => p.project_id !== project.project_id)
+                        .map((p) => (
+                          <option key={p.project_id} value={p.project_id}>
+                            {p.name} ({p.resource_count})
+                          </option>
+                        ))}
+                    </select>
+                  )}
                   {project.group_id && (
                     <button
                       className="linkish danger"
-                      onClick={() => {
-                        if (confirm(`Forget the name "${project.name}"? The project goes back to its default name.`)) {
-                          void act(() => api.deleteGroup(project.group_id!));
-                        }
-                      }}
+                      onClick={() => forget(project)}
                     >
                       forget
                     </button>

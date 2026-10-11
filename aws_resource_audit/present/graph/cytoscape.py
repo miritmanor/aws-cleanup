@@ -2,7 +2,7 @@
 format VALUES: braces NOT doubled, never .format() them. Concatenation order matters."""
 
 from .layout import LAYOUT_HEAD
-from .panel import GRAPH_CSS, GRAPH_PANEL, GRAPH_SWITCH  # noqa: F401  (re-exported)
+from .panel import GRAPH_CSS, GRAPH_PANEL, GRAPH_SWITCH  # noqa: F401  # pylint: disable=unused-import
 
 
 # Format VALUES, not template text: braces are NOT doubled - never call .format() on these.

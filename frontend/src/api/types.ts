@@ -261,6 +261,10 @@ export interface Project {
   updated_at: string | null;
   /** Why a saved name is shown nowhere, or "". */
   not_applied: string;
+  /** Resources added by hand on top of the ones the project grows from. */
+  extra_members: number;
+  /** Names of the projects merged into this one. */
+  merged_from: string[];
 }
 
 export interface Group {
@@ -272,6 +276,8 @@ export interface Group {
   /** A hand-assembled group: its membership is exactly its stored list and never
    *  auto-extends. */
   manual: boolean;
+  /** The group this one was merged into and is shown under, or null. */
+  merged_into: string | null;
 }
 
 export type ConnectionState = "on" | "report-only" | "off";

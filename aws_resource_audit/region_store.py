@@ -14,7 +14,7 @@ def _read(path):
     if not os.path.exists(path):
         return {}
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except (OSError, ValueError) as e:
         # Not fatal: the file only supplies a default, and a scan still runs.
@@ -49,6 +49,6 @@ def record_active_regions(path, account, regions, *, replace, observed_at):
         entry["all_regions_scan_at"] = stamp
     accounts[account] = entry
     data["schema_version"] = STORE_VERSION
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     return stored

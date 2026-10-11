@@ -83,4 +83,3 @@ def collect_glue_crawlers(session, region):
                      conn_type="gluecrawler.s3bucket.target", target_service="S3Bucket")
         rows.append(row)
     return rows
-

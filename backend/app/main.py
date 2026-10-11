@@ -26,7 +26,7 @@ logsetup.configure(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="AWS resource audit",
+    title="AWS Cleanup",
     version="0.1.0",
     summary="Inventory, staleness and dependencies for one AWS account",
     description=__doc__,

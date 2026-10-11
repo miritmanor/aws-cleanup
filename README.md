@@ -121,6 +121,10 @@ after seeing a run. Use the web app's Projects tab, or add an entry to
 `aws_project_groups.json` seeded with one `<service>:<region>:<resource_id>`
 member key; the next run claims that member's project and fills in the rest.
 
+To add resources to a project, select them in the Resources tab and use **Add to
+existing project…**. To combine two projects, use **Merge into…** on the
+Projects tab. Forgetting a project's name undoes both.
+
 ### Logging
 
 Two channels, and they are not the same thing. The progress lines a scan prints
@@ -245,10 +249,17 @@ a second read-only Docker secret, the same mechanism as the credentials above
 and for the same reasons; `.env` holds only the path. Changing the key needs
 `up --force-recreate` rather than `up`. (`.env` is gitignored.)
 
-Which provider the key is for comes from `agent_config.json` on the data
-volume (`provider`, default `openai`, with `anthropic` and `bedrock` also
-supported). Bedrock needs no key of its own — it uses the AWS credentials
-above, so the agent is offered whenever that provider is configured.
+The provider is `openai` unless `.env` says otherwise. To change it, set
+`AUDIT_AGENT_PROVIDER` (`openai`, `anthropic`, `bedrock`, or `none` to leave
+the agent out), name a model of that provider, and rebuild:
+
+```bash
+echo "AUDIT_AGENT_PROVIDER=anthropic" >> .env
+docker compose up -d --build
+docker compose exec backend sh -c 'echo "{\"model\": \"<model id>\"}" > /data/agent_config.json'
+```
+
+Bedrock needs no key of its own: it uses the AWS credentials above.
 
 ## Report columns
 

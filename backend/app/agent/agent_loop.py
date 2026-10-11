@@ -62,7 +62,7 @@ def _get_agent():
 
 def reset():
     """Drop the compiled agent and index handle so the next call rebuilds them (tests,
-    provider changes)."""
+    agent_config.json changes)."""
     global _agent, _checkpointer, _snapshot_store
     with _lock:
         _agent, _checkpointer, _snapshot_store = None, None, None

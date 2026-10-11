@@ -15,30 +15,36 @@ dependencies = [
     "uvicorn[standard]>=0.27",
     "pydantic>=2.6",
     # The core is installed from the repo root by the Dockerfile, not declared here.
+    # Multipart document uploads; FastAPI fails at import without it.
+    "python-multipart>=0.0.9",
+]
 
-    # The agent only. langchain 1.0+ for langchain.agents.create_agent.
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.27",       # FastAPI's TestClient needs it
+    # Pinned: a new release adds checks, and the build fails on any message.
+    "pylint==4.1.3",
+]
+
+# The agent, minus its chat provider. The Dockerfile installs it with exactly one
+# provider extra below, named by AUDIT_AGENT_PROVIDER, or neither for "none".
+agent = [
+    # langchain 1.0+ for langchain.agents.create_agent.
     "langchain>=1.0",
     "langchain-core>=0.3",
     "langchain-text-splitters>=0.3",
     "langgraph>=0.2",
+    # Also the embedding model: Chroma's bundled ONNX all-MiniLM-L6-v2, no torch.
     "langchain-chroma>=0.1",
     "chromadb>=0.5",
-    "langchain-huggingface>=0.1",
-    "sentence-transformers>=3.0",
-    # Multipart document uploads; FastAPI fails at import without it.
-    "python-multipart>=0.0.9",
-    # Document parsers (see agent/loaders.py), all pure-Python wheels.
+    # Document parsers (see agent/loaders.py).
     "pypdf>=4.0",
     "python-docx>=1.1",
     "openpyxl>=3.1",
-    # Every provider is installed: agent_config.json picks one at runtime.
-    "langchain-openai>=0.2",
-    "langchain-anthropic>=0.2",
-    "langchain-aws>=0.2",
 ]
-
-[project.optional-dependencies]
-dev = ["httpx>=0.27"]     # FastAPI's TestClient needs it
+openai = ["langchain-openai>=0.2"]
+anthropic = ["langchain-anthropic>=0.2"]
+bedrock = ["langchain-aws>=0.2"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]

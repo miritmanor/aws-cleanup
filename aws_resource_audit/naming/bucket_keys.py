@@ -12,10 +12,11 @@ def rekey_moved_buckets(store, all_rows):
     current = {r["resource_id"]: member_key(r) for r in all_rows
                if r.get("service") == BUCKET_SERVICE}
     for group in store.get("groups", {}).values():
-        members = group.get("members", [])
-        moved = [_current_key(k, current) for k in members]
-        if moved != members:
-            group["members"] = sorted(set(moved))
+        for field in ("members", "extra_members"):
+            keys = group.get(field, [])
+            moved = [_current_key(k, current) for k in keys]
+            if moved != keys:
+                group[field] = sorted(set(moved))
 
 
 def _current_key(key, current):

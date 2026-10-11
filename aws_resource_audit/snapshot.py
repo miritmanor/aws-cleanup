@@ -213,7 +213,7 @@ def write_snapshot(path, all_rows, graph, grouping, account, regions, scanned_at
     directory = os.path.dirname(path) or "."
     temp = os.path.join(directory, f".{os.path.basename(path)}.partial")
     try:
-        with open(temp, "w") as handle:
+        with open(temp, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2, default=str)
     except BaseException:
         # BaseException, not Exception: an interrupted scan must not leave the
@@ -237,10 +237,10 @@ def read_snapshot(path):
             "somewhere else, check "
             "'output_dir' and 'snapshot_file' in audit_config.json.")
     try:
-        with open(path) as handle:
+        with open(path, encoding="utf-8") as handle:
             data = json.load(handle)
     except (json.JSONDecodeError, OSError) as e:
-        raise AuditError(f"{path}: could not be read ({e})")
+        raise AuditError(f"{path}: could not be read ({e})") from e
     if not isinstance(data, dict):
         raise AuditError(f"{path}: expected a JSON object at the top level")
 

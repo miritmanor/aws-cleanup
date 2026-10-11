@@ -3,8 +3,6 @@ out-of-scan references. Returns findings; present/markdown.py writes them."""
 
 from collections import namedtuple
 
-from ..config import NAME_TOKEN_MAX_SHARE
-
 WEAK_EVIDENCE_MARKERS = ("config reference", "LOW CONFIDENCE name-match heuristic")
 
 LARGE_CLUSTER_FRACTION = 0.15

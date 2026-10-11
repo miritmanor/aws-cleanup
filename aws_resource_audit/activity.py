@@ -1,7 +1,7 @@
 """Whether a resource was used, and how well that is known: used, measured
 idle, or no signal at all - three answers, never collapsed into one."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, fields as dataclass_fields
 from datetime import datetime
 
 # Where the evidence came from.
@@ -108,5 +108,5 @@ def restore(data):
     for name in ("last_activity", "latest_sample"):
         value = fields.get(name)
         fields[name] = datetime.fromisoformat(value) if value else None
-    known = {f for f in ActivityEvidence.__dataclass_fields__}
+    known = {f.name for f in dataclass_fields(ActivityEvidence)}
     return ActivityEvidence(**{k: v for k, v in fields.items() if k in known})

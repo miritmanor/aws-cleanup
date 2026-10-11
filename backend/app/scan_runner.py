@@ -125,6 +125,8 @@ class ScanRunner:
         self._thread = None
         self._stop = threading.Event()
         self.state = ScanState()
+        # An end="" fragment waiting for the rest of its line.
+        self._partial = ""
 
     def is_running(self):
         return self._lock.locked()
@@ -137,7 +139,7 @@ class ScanRunner:
         attributes; `settings` is explicit; `on_finish` runs after, success or not."""
         # Acquired on the REQUEST thread and released by the scan thread, so a second
         # POST is refused rather than queued.
-        if not self._lock.acquire(blocking=False):
+        if not self._lock.acquire(blocking=False):  # pylint: disable=consider-using-with
             raise ScanInProgress(
                 "A scan is already running. Wait for it to finish - "
                 "GET /api/scans/status reports how far along it is.")
@@ -208,9 +210,9 @@ class ScanRunner:
         if not message:
             return
         if end == "":
-            self._partial = getattr(self, "_partial", "") + message
+            self._partial = self._partial + message
             return
-        line = getattr(self, "_partial", "") + message
+        line = self._partial + message
         self._partial = ""
         self.state.append_log(line.rstrip())
 

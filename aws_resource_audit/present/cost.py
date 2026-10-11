@@ -41,6 +41,15 @@ def cost_state_word(state):
     return _STATE_WORDING.get(state, state or "")
 
 
+def cost_basis(attribution):
+    """The state word, or for a shared bill, which bill it is and how much is in it."""
+    if attribution.state != SHARED_UNALLOCATED or attribution.shared_amount is None:
+        return cost_state_word(attribution.state)
+    n = attribution.shared_count
+    return (f"shared {attribution.bucket}: {attribution.shared_amount:.2f} "
+            f"{attribution.currency or 'USD'}, {n} resource{'' if n == 1 else 's'}")
+
+
 def cost_columns(row):
     """The three cost cells for one row, from its stored attribution."""
     attribution = restore_attribution(row.get("cost"))
@@ -48,7 +57,7 @@ def cost_columns(row):
               if attribution.state in _NUMERIC_STATES else "")
     return {
         "est_monthly_cost_usd": figure,
-        "cost": cost_state_word(attribution.state),
+        "cost": cost_basis(attribution),
         "cost_notes": attribution.explanation,
     }
 

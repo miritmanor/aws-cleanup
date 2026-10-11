@@ -10,6 +10,10 @@ services:
       # The repo root: the image needs aws_resource_audit/ as well as backend/.
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        # The agent's provider: openai, anthropic, bedrock, or none to build without the
+        # agent. Set it in .env; a change needs `docker compose up --build`.
+        AUDIT_AGENT_PROVIDER: ${AUDIT_AGENT_PROVIDER:-openai}
     environment:
       AUDIT_DATA_DIR: /data
       # Credentials arrive as a read-only Docker secret (see `secrets:` below).
@@ -35,6 +39,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+      # Check every 2s while starting, so the frontend's wait is seconds, not 30s.
+      start_interval: 2s
 
   frontend:
     build:
@@ -43,7 +49,9 @@ services:
     ports:
       - "127.0.0.1:8080:80"
     depends_on:
-      - backend
+      # nginx resolves "backend" once at startup and exits if it fails; wait until healthy.
+      backend:
+        condition: service_healthy
 
 volumes:
   audit-data:
