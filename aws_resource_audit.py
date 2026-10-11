@@ -17,7 +17,8 @@ def build_parser():
         epilog="Where the output goes, and which detections run, live in "
                "audit_config.json, not here. Run aws_regenerate_report.py to "
                "redraw the report from the last scan without touching AWS.")
-    parser.add_argument("--regions", nargs="*", help="Specific regions to scan (e.g. us-east-1 eu-west-1)")
+    parser.add_argument("--regions", nargs="*", help="Specific regions to scan, space-separated. Default: the regions "
+                             "saved for this account, else the profile's region, else us-east-1")
     parser.add_argument("--all-regions", action="store_true", help="Scan all enabled regions")
     parser.add_argument("--profile", required=True,
                         help="AWS named profile to use. Required - there is no fallback to "

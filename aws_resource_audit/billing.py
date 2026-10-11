@@ -205,6 +205,9 @@ class CostAttribution:
     # The Cost Explorer service and region holding this row's unsplit money.
     bucket: str = ""
     explanation: str = ""
+    # SHARED_UNALLOCATED only: the undivided total and how many rows share it.
+    shared_amount: Decimal = None
+    shared_count: int = 0
 
     def as_dict(self):
         return {
@@ -216,6 +219,8 @@ class CostAttribution:
             "source": self.source,
             "bucket": self.bucket,
             "explanation": self.explanation,
+            "shared_amount": _dump_decimal(self.shared_amount),
+            "shared_count": self.shared_count,
         }
 
 
@@ -225,19 +230,22 @@ def restore_attribution(data):
     known = {f.name for f in dataclass_fields(CostAttribution)}
     fields = {k: v for k, v in data.items() if k in known}
     fields["amount"] = to_decimal(fields.get("amount"))
+    fields["shared_amount"] = to_decimal(fields.get("shared_amount"))
+    fields["shared_count"] = int(fields.get("shared_count") or 0)
     fields["period_start"] = _load_date(fields.get("period_start"))
     fields["period_end"] = _load_date(fields.get("period_end"))
     return CostAttribution(**fields)
 
 
 def attribution_for(billing, *, state, amount=None, bucket="", explanation="",
-                    source=SOURCE_COST_EXPLORER):
+                    source=SOURCE_COST_EXPLORER, shared_amount=None, shared_count=0):
     """A CostAttribution stamped with the period and currency of `billing`."""
     return CostAttribution(
         state=state, amount=amount, currency=billing.currency,
         period_start=billing.period_start, period_end=billing.period_end,
         source=source if billing.queried else SOURCE_NONE,
-        bucket=bucket, explanation=explanation)
+        bucket=bucket, explanation=explanation,
+        shared_amount=shared_amount, shared_count=shared_count)
 
 
 @dataclass(frozen=True)

@@ -185,7 +185,7 @@ class CorpusCoverageTests(unittest.TestCase):
         self.assertFalse(any(r["flag"] == "ERROR" for r in rows))
         costs = [audit.cost_columns(r)["cost"] for r in rows]
         self.assertIn("estimated share", costs)
-        self.assertIn("unallocated (shared bill)", costs)
+        self.assertTrue(any(c.startswith("shared '") for c in costs))
         self.assertTrue(any(n["kind"] == "stub" for n in full["nodes"]),
                         "no dangling stub node in the graph")
         self.assertTrue(any(e.get("bridged") for e in contracted["edges"]),

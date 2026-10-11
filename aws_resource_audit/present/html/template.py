@@ -331,7 +331,7 @@ const table = new Tabulator("#table", {{
         return why + (d.billing_note ? "\\n\\n" + d.service + ": " + d.billing_note : "");
       }}}},
     {{title: "{cost_column_label}", field: "est_monthly_cost_usd", width: 150, hozAlign: "right"}},
-    {{title: "How it was arrived at", field: "cost", width: 170}},
+    {{title: "How it was arrived at", field: "cost", width: 270}},
     {{title: "Cost notes", field: "cost_notes", width: 220}},
     {{title: "Risk if removed", field: "risk_if_removed", headerFilter: "input", width: 170,
       formatter: function(cell) {{

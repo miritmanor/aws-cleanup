@@ -47,7 +47,7 @@ Scanned and found.
 
 These resources are in the table above. The charges below are theirs together, with no defensible way to say how much belongs to which, so their cost column is blank.
 
-- **EC2 - Other in us-east-1**: 40.00 USD - this bill also covers inter-AZ and internet data transfer, which this scan does not collect, so any share would include money that is not theirs
+- **EC2 - Other in us-east-1**: 40.00 USD - AWS's own split of it (NAT gateway, EBS volume storage) names no resource, and an even share would ignore that these are billed by size or by hour
 - **Amazon DynamoDB in us-east-1**: 3.00 USD - the scan was refused or cut short on DynamoDBTable in us-east-1, so it may not have found everything this charge covers
 - rounding: 0.04 USD left over from the buckets that were divided - shares are rounded down so they can never exceed the bill
 

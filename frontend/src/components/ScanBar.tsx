@@ -188,7 +188,7 @@ export function ScanBar({ onFinished, scannedAt, account, rowCount }: Props) {
             Regions
             <input
               type="text"
-              placeholder="us-east-1 eu-west-1"
+              placeholder={defaults?.regions.length ? defaults.regions.join(" ") : "us-east-1"}
               value={regions}
               disabled={allRegions}
               onChange={(e) => {
