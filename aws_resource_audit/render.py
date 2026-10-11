@@ -12,7 +12,7 @@ from .console import say, set_quiet
 from .analyze.project_summary import KIND_PROJECT, summarize_projects
 from .analyze.service_summary import summarize_services
 from .naming.effective import remembered_empty_groups, resolve_effective_membership
-from .present.csv import CSV_FIELDNAMES, write_csv
+from .present.csv import CSV_FIELDNAMES, write_csv  # pylint: disable=unused-import
 from .present.graph.drawio import write_drawio
 from .present.graph.mermaid import write_mermaid
 from .present.bubbles import overview_payload
@@ -84,7 +84,7 @@ def render_outputs(snapshot, paths, settings):
                 continue
             source = render_mermaid(extracted, rows)
             filename = project_mermaid_filename(summary.project_id)
-            with open(os.path.join(os.path.dirname(paths["mermaid"]), filename), "w") as f:
+            with open(os.path.join(os.path.dirname(paths["mermaid"]), filename), "w", encoding="utf-8") as f:
                 f.write(source)
             drawio_file = project_drawio_filename(summary.project_id)
             write_drawio(extracted, rows, os.path.join(os.path.dirname(paths["drawio"]), drawio_file),

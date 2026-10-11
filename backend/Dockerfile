@@ -35,10 +35,12 @@ COPY backend/app ./backend/app
 # Both packages, --no-deps because the layer above already resolved them.
 RUN pip install --no-cache-dir --no-deps . ./backend
 
-# Both test suites run during the build, so an image whose tests fail is never produced.
+# pylint and both test suites run during the build, so an image that fails them is never produced.
 FROM base AS test
-# The [dev] extra (httpx, for TestClient): declared here, not left to arrive transitively.
+# The [dev] extra (httpx for TestClient, pylint): declared here, not left to arrive transitively.
 RUN pip install --no-cache-dir "./backend[dev]"
+# Lint before the tests: any pylint message fails the build. Config: pyproject.toml.
+RUN pylint aws_resource_audit backend/app
 COPY .gitignore aws_resource_audit.py aws_regenerate_report.py cli_output.py ./
 COPY tests ./tests
 COPY tools ./tools

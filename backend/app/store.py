@@ -136,13 +136,13 @@ class ConfigStore:
         if not self.exists():
             return {}
         try:
-            with open(self.path) as handle:
+            with open(self.path, encoding="utf-8") as handle:
                 data = json.load(handle)
         except (json.JSONDecodeError, OSError) as e:
             # The AuditError carries the message; only the traceback and the
             # original exception type are lost, so DEBUG puts them back.
             logger.debug("reading %s failed", self.path, exc_info=True)
-            raise AuditError(f"{self.path}: could not be read ({e})")
+            raise AuditError(f"{self.path}: could not be read ({e})") from e
         if not isinstance(data, dict):
             raise AuditError(f"{self.path}: expected a JSON object at the top level")
         return data
@@ -153,7 +153,7 @@ class ConfigStore:
         directory = os.path.dirname(self.path) or "."
         os.makedirs(directory, exist_ok=True)
         temp = os.path.join(directory, f".{os.path.basename(self.path)}.candidate")
-        with open(temp, "w") as handle:
+        with open(temp, "w", encoding="utf-8") as handle:
             json.dump(data, handle, indent=2, sort_keys=True)
             handle.write("\n")
         try:
@@ -161,7 +161,7 @@ class ConfigStore:
         except AuditError as e:
             os.unlink(temp)
             # Name the user's file, not the temp file, in the message.
-            raise AuditError(str(e).replace(temp, self.path, 1))
+            raise AuditError(str(e).replace(temp, self.path, 1)) from e
         except Exception:
             os.unlink(temp)
             raise

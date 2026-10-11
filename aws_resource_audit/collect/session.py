@@ -26,7 +26,7 @@ def _session(profile=None, **kwargs):
     try:
         return boto3.Session(**kwargs)
     except BotoCoreError as e:
-        raise AuditError(_auth_failed(e, profile))
+        raise AuditError(_auth_failed(e, profile)) from e
 
 
 def _sts(session):

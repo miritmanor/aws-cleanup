@@ -15,7 +15,7 @@ from ..rows import error_row
 from .amplify import apply_amplify_api_links
 from .stacks import apply_stack_membership
 from .calls import brief_error  # noqa: F401
-from .regions import collect_default_vpc_ids, get_regions  # noqa: F401
+from .regions import collect_default_vpc_ids, get_regions  # noqa: F401  # pylint: disable=unused-import
 from .cost import collect_billing
 from .resources import (
     COLLECTORS_GLOBAL,

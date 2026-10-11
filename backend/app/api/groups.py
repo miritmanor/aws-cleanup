@@ -13,7 +13,7 @@ from aws_resource_audit.naming.merges import EditRefused, forget_group, merge_pr
 from aws_resource_audit.present.format import fmt_dt
 from aws_resource_audit.rows import member_key
 
-from .. import deps, stores
+from .. import stores
 from ..schemas import (
     Group,
     GroupCreate,

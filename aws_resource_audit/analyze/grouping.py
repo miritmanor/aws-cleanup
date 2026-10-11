@@ -270,7 +270,7 @@ def _tag_star_links(all_rows):
         if row.get("grouping_method") == "tag" and row.get("project_id"):
             by_project.setdefault(row["project_id"], []).append(idx)
     links = []
-    for project, members in sorted(by_project.items()):
+    for _, members in sorted(by_project.items()):
         if len(members) < 2:
             continue
         hub = members[0]

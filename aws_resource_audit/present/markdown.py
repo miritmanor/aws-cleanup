@@ -149,7 +149,7 @@ def write_grouping_audit(findings, output_path=None, coverage=None,
                                    billing_coverage=billing_coverage,
                                    cost_report=cost_report)
     if output_path:
-        with open(output_path, "w") as handle:
+        with open(output_path, "w", encoding="utf-8") as handle:
             handle.write(report)
     say(summarize_grouping_audit(findings))
     return report

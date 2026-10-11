@@ -14,5 +14,5 @@ def render_json(all_rows):
 
 
 def write_json(all_rows, path):
-    with open(path, "w") as handle:
+    with open(path, "w", encoding="utf-8") as handle:
         handle.write(render_json(all_rows))

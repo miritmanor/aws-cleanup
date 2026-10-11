@@ -103,10 +103,10 @@ def _services(rows):
 def _bill_lines(billing):
     """Positive bill lines summed over regions, plus the credits left out."""
     totals = {}
-    credits = ZERO
+    credit_total = ZERO
     for entry in billing.amounts:
         if entry.amount < ZERO:
-            credits += entry.amount
+            credit_total += entry.amount
             continue
         totals[entry.service] = totals.get(entry.service, ZERO) + entry.amount
     lines = tuple(
@@ -117,14 +117,14 @@ def _bill_lines(billing):
             why="A line of the AWS bill for the period, as Cost Explorer names it.")
         for name, amount in sorted(totals.items(), key=lambda t: (-t[1], t[0]))
         if amount > ZERO)
-    return lines, credits
+    return lines, credit_total
 
 
 def summarize_services(rows, billing=None):
     """Summaries by AWS service, and the bill's lines for the cost view."""
     services = _services(rows)
     queried = bool(billing and billing.queried)
-    lines, credits = _bill_lines(billing) if queried else ((), ZERO)
+    lines, credit_total = _bill_lines(billing) if queried else ((), ZERO)
     notes = []
     if not queried:
         notes.append("Cost was not queried for this scan, so the cost view is "
@@ -137,8 +137,8 @@ def summarize_services(rows, billing=None):
                      "AWS names them. They do not match the service circles "
                      "one-to-one: 'EC2 - Other', for example, covers EBS volumes, "
                      "Elastic IPs and NAT gateways.")
-    if credits < ZERO:
-        notes.append(f"{-credits} {billing.currency} of credits and refunds are "
+    if credit_total < ZERO:
+        notes.append(f"{-credit_total} {billing.currency} of credits and refunds are "
                      "not drawn - a circle cannot have a negative size.")
     return ServiceOverview(
         services=services,

@@ -72,7 +72,6 @@ def collect_cloudwatch_log_groups(session, region):
                     if ts:
                         last_event = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
                 ref_days = days_ago(last_event) if last_event else days_ago(created)
-                retention = lg.get("retentionInDays", "never expires")
 
                 source_label, embedded_id, group_match_id, group_match_service = infer_log_group_source(name)
 

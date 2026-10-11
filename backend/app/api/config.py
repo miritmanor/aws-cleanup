@@ -1,7 +1,7 @@
 """Reading and writing audit_config.json, validated by the core's own load_settings(),
 so the API and CLI accept exactly the same configs."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 
 from aws_resource_audit.connection_types import CONNECTION_TYPES
 from aws_resource_audit.registry import resolve_connection_states

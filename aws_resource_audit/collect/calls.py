@@ -25,7 +25,7 @@ def brief_error(err):
         return f"{code.group(1)}: {action.group(1)}"
     if code:
         return code.group(1)
-    return text.split("\n")[0][:60]
+    return text.split("\n", maxsplit=1)[0][:60]
 
 
 def error_code(err):

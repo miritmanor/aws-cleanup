@@ -393,4 +393,4 @@ document.getElementById("groupSelect").addEventListener("change", function(e) {{
 
 
 # Re-exported so `from .template import SERVICE_META` keeps working.
-from .service_meta import SERVICE_META  # noqa: E402,F401
+from .service_meta import SERVICE_META  # noqa: E402,F401  # pylint: disable=wrong-import-position,unused-import

@@ -1,7 +1,7 @@
 """What AWS charged, and how well that is known: period, currency, completeness,
 and "not queried" kept distinct from zero. Decimal, never float."""
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, fields as dataclass_fields, replace
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -222,7 +222,7 @@ class CostAttribution:
 def restore_attribution(data):
     if not data:
         return CostAttribution()
-    known = set(CostAttribution.__dataclass_fields__)
+    known = {f.name for f in dataclass_fields(CostAttribution)}
     fields = {k: v for k, v in data.items() if k in known}
     fields["amount"] = to_decimal(fields.get("amount"))
     fields["period_start"] = _load_date(fields.get("period_start"))

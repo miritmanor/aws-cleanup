@@ -185,7 +185,7 @@ analyzer advisor explorer organizations support trusted bots
 """.split())
 
 # Re-exported so existing `from .config import ...` keeps working.
-from .billing_tables import (  # noqa: E402,F401
+from .billing_tables import (  # noqa: E402,F401  # pylint: disable=wrong-import-position,unused-import
     CE_SERVICE_MAP,
     BILLING_COVERAGE,
     BILLING_NON_RESOURCE_SERVICES,

@@ -20,7 +20,7 @@ _ELB_ORIGIN = re.compile(r"^(?:internal-)?(.+)-[0-9]+\.[a-z0-9-]+\.elb\.amazonaw
 def _link_origin(row, domain):
     """A "routes to" link for an origin this scan inventories; others stay text."""
     domain = (domain or "").lower()
-    for pattern, conn_type, service in (
+    for pattern, conn_type, _service in (
             (_S3_ORIGIN, "cloudfront.s3bucket.origin", "S3Bucket"),
             (_ELB_ORIGIN, "cloudfront.loadbalancer.origin", "LoadBalancer")):
         match = pattern.match(domain)

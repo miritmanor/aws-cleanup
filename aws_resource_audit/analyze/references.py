@@ -215,7 +215,7 @@ def resolve_edges(all_rows, coverage=None):
                 continue
             if targets:
                 for tidx in targets:
-                    tgt, src = all_rows[tidx], all_rows[idx]
+                    tgt, src = all_rows[tidx], row
                     # A prefix edge's target_id is the pattern; show the matched row's own id.
                     shown_id = tgt["resource_id"] if by_prefix else edge["target_id"]
                     common = {

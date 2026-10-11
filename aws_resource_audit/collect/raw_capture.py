@@ -18,7 +18,7 @@ def start(path):
     global _file
     close()
     try:
-        _file = open(path, "w")
+        _file = open(path, "w", encoding="utf-8")  # pylint: disable=consider-using-with
     except OSError as e:                                    # noqa: BLE001
         _file = None
         console.warn(f"could not open the raw capture file ({e}); "

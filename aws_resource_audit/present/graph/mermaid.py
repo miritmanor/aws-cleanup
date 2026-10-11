@@ -79,5 +79,5 @@ def render_mermaid(graph, all_rows, title=None):
 
 
 def write_mermaid(graph, all_rows, path, title=None):
-    with open(path, "w") as handle:
+    with open(path, "w", encoding="utf-8") as handle:
         handle.write(render_mermaid(graph, all_rows, title=title))

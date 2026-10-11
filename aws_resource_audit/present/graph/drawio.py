@@ -175,5 +175,5 @@ def render_drawio(graph, all_rows, title="AWS architecture"):
 
 
 def write_drawio(graph, all_rows, path, title="AWS architecture"):
-    with open(path, "w") as handle:
+    with open(path, "w", encoding="utf-8") as handle:
         handle.write(render_drawio(graph, all_rows, title=title))

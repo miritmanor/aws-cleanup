@@ -39,7 +39,7 @@ def _write_debug_json(path, payload):
     """A best-effort runtime/ debug dump: a failed write must never lose a finished
     scan. default=str, since nothing reads it back."""
     try:
-        with open(path, "w") as handle:
+        with open(path, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2, default=str)
     except (OSError, TypeError, ValueError) as e:               # noqa: BLE001
         # console.warn already mirrors the message into logging; this adds the

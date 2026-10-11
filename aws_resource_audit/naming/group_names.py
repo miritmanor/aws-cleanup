@@ -24,7 +24,7 @@ def load_group_store(path):
     if not path or not os.path.exists(path):
         return {"groups": {}}
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
             data.setdefault("groups", {})
     except (json.JSONDecodeError, OSError) as e:
@@ -48,7 +48,7 @@ def save_group_store(path, store):
     store.setdefault("schema_version", GROUP_STORE_VERSION)
     if scan_account():
         store["account"] = scan_account()
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(store, f, indent=2)
 
 

@@ -240,7 +240,7 @@ def generate_html_report(all_rows, html_path, title=APP_NAME,
                          graph=None, diagram_graph=None, generated_at=None,
                          coverage=None, billing_coverage=None,
                          cost_report=None, overview=None, project_diagrams=()):
-    with open(html_path, "w") as f:
+    with open(html_path, "w", encoding="utf-8") as f:
         f.write(render_html_report(all_rows, title=title, graph=graph,
                                    diagram_graph=diagram_graph,
                                    generated_at=generated_at, coverage=coverage,
