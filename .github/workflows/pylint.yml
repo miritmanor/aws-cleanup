@@ -5,20 +5,18 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+    # The backend image's Python. The backend needs 3.11+; pylint 4 needs 3.10+.
+    - uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.12"
+    # Both packages with their dependencies, or pylint reports every import as missing.
+    # backend[dev] holds the pinned pylint.
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .  # Install the project in editable mode
-        pip install pylint
+        pip install . "./backend[dev]"
+    # The same command as backend/Dockerfile. Config: pyproject.toml.
     - name: Analysing the code with pylint
-      run: |
-        pylint $(git ls-files '*.py')
+      run: pylint aws_resource_audit backend/app
