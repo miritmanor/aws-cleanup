@@ -16,51 +16,6 @@ It never deletes anything. It tells you what it found, how sure it is, and why.
 > **Status:** a personal project, shared as-is. It is read-only by design, but you
 > run it against your own account at your own risk. MIT licensed, no warranty.
 
-## Why trust this with your AWS account?
-
-Handing a script `sts:AssumeRole` or IAM credentials is a real ask, so here's
-what's true about this one and how to verify it yourself rather than take our
-word for it:
-
-- **Read-only by construction, not by promise.** Every AWS call is
-  `Describe*`/`List*`/`Get*` — inventory reads, nothing that creates,
-  modifies, or deletes a resource. The one exception is opt-in and impossible
-  to trigger by accident: `--tag-groups` writes a `Project=<name>` tag, and
-  even that runs in dry-run mode unless you also pass `--confirm`. Verify it
-  yourself: `aws_resource_audit/collect/` (everything that talks to AWS
-  during a scan) contains no `tag_resources`/`create_*`/`delete_*`/`put_*`/
-  `modify_*`/`update_*` call at all — the only such call in the whole package
-  is `tag_resources` in [`naming/tagging.py`](aws_resource_audit/naming/tagging.py),
-  which `run()` reaches only from `--tag-groups`.
-- **A least-privilege IAM role ships with the repo**: its permission list is
-  exactly the read actions the collectors call — not the AWS-managed
-  `ReadOnlyAccess` policy, which covers every AWS service. Deploy
-  [`iam/aws-audit-role.yaml`](iam/aws-audit-role.yaml) and the identity you scan
-  with never holds more than that; see [`iam/README.md`](iam/README.md) for the
-  two-identity setup (a bare `sts:AssumeRole`-only base identity, and the narrow
-  role it assumes). `--tag-groups --confirm` deliberately fails through this
-  role — the role backing routine scans can't write, on purpose.
-- **No network calls except to AWS's own APIs.** No telemetry, no phone-home,
-  no third-party endpoint. `aws_resource_audit/collect/` is the only place
-  that talks to the network, and it only talks to `boto3`.
-- **No dependency beyond `boto3`** for the CLI — nothing else is on the
-  network's attack surface or in the supply chain for the path that actually
-  touches your account. (The optional web app adds FastAPI/React, but it's
-  the same read-only core underneath, still bound to `127.0.0.1` with no
-  auth exposed beyond your machine.)
-- **A test suite that makes no AWS calls at all**, entirely against mock data
-  (`tests/`, see [`tests/README.md`](tests/README.md)) — you can read exactly
-  what the code is asserted to do without ever pointing it at a real account.
-- **The scan output stays local.** `aws_scan.json` and the rendered reports
-  are the whole account's inventory and are `.gitignore`d — nothing is
-  uploaded anywhere by this tool.
-
-If you'd rather not take even a read-only role's word for it, run it once
-under a profile with no permissions at all — every failed call is reported
-explicitly (on the console and in the "Scan coverage" section of
-`grouping_audit.md`) rather than silently swallowed, so you can see exactly
-what it tried to read.
-
 ## Quick start
 
 Needs Python 3.9+ and an AWS profile (ideally one that assumes the role in
@@ -161,6 +116,51 @@ that file, and changing it needs `up --force-recreate` rather than `up`.
 No AWS config file reaches the container, so a profile there has no default
 region. Before the first scan a blank Regions box scans `us-east-1`; after it,
 the box is filled in with the regions that scan found resources in.
+
+## Why trust this with your AWS account?
+
+Handing a script `sts:AssumeRole` or IAM credentials is a real ask, so here's
+what's true about this one and how to verify it yourself rather than take our
+word for it:
+
+- **Read-only by construction, not by promise.** Every AWS call is
+  `Describe*`/`List*`/`Get*` — inventory reads, nothing that creates,
+  modifies, or deletes a resource. The one exception is opt-in and impossible
+  to trigger by accident: `--tag-groups` writes a `Project=<name>` tag, and
+  even that runs in dry-run mode unless you also pass `--confirm`. Verify it
+  yourself: `aws_resource_audit/collect/` (everything that talks to AWS
+  during a scan) contains no `tag_resources`/`create_*`/`delete_*`/`put_*`/
+  `modify_*`/`update_*` call at all — the only such call in the whole package
+  is `tag_resources` in [`naming/tagging.py`](aws_resource_audit/naming/tagging.py),
+  which `run()` reaches only from `--tag-groups`.
+- **A least-privilege IAM role ships with the repo**: its permission list is
+  exactly the read actions the collectors call — not the AWS-managed
+  `ReadOnlyAccess` policy, which covers every AWS service. Deploy
+  [`iam/aws-audit-role.yaml`](iam/aws-audit-role.yaml) and the identity you scan
+  with never holds more than that; see [`iam/README.md`](iam/README.md) for the
+  two-identity setup (a bare `sts:AssumeRole`-only base identity, and the narrow
+  role it assumes). `--tag-groups --confirm` deliberately fails through this
+  role — the role backing routine scans can't write, on purpose.
+- **No network calls except to AWS's own APIs.** No telemetry, no phone-home,
+  no third-party endpoint. `aws_resource_audit/collect/` is the only place
+  that talks to the network, and it only talks to `boto3`.
+- **No dependency beyond `boto3`** for the CLI — nothing else is on the
+  network's attack surface or in the supply chain for the path that actually
+  touches your account. (The optional web app adds FastAPI/React, but it's
+  the same read-only core underneath, still bound to `127.0.0.1` with no
+  auth exposed beyond your machine.)
+- **A test suite that makes no AWS calls at all**, entirely against mock data
+  (`tests/`, see [`tests/README.md`](tests/README.md)) — you can read exactly
+  what the code is asserted to do without ever pointing it at a real account.
+- **The scan output stays local.** `aws_scan.json` and the rendered reports
+  are the whole account's inventory and are `.gitignore`d — nothing is
+  uploaded anywhere by this tool.
+
+If you'd rather not take even a read-only role's word for it, run it once
+under a profile with no permissions at all — every failed call is reported
+explicitly (on the console and in the "Scan coverage" section of
+`grouping_audit.md`) rather than silently swallowed, so you can see exactly
+what it tried to read.
 
 ## What a scan costs
 
