@@ -195,40 +195,6 @@ not line up is listed as one of four things:
 Each finding says how many resources of each type the report actually holds,
 so "AWS charged me and this table is empty" is visible rather than inferred.
 
-## Interpreting the output
-
-AWS itself limits how much of this can be known, and the reports are honest
-about it rather than rounding up to a verdict:
-
-- **AWS does not retain long usage history for most services.** CloudWatch
-  metrics go back ~15 months at most, CloudTrail Event History 90 days. IAM
-  "last used" fields are the most reliable long-range signal.
-- **`inferred=True` with a blank `last_used` means "no better signal was
-  available"** — it fell back to the creation date. It does *not* mean
-  "confirmed no activity."
-- **Always read the `notes` column.** A failed API lookup (permissions,
-  throttling) is reported there explicitly rather than silently treated as
-  "idle."
-- **Read the "Scan coverage" section of `grouping_audit.md` first.** It lists
-  every lookup that was denied, failed, cut short or never requested. Where a
-  resource type appears there, this scan cannot tell "none exist" from "none
-  were visible", and nothing in the report should be read as proof that
-  something is unused.
-- **An unresolved reference is not a deleted resource.** A `DANGLING` entry
-  says which of four things happened: the target's region was not scanned, its
-  lookup failed, it was simply not found, or a direct lookup confirmed it is
-  gone. Only the last lowers a removal risk rating.
-- **An empty `connections` field is a hint of an orphan, not proof.** Connection
-  detection only covers the services this script scans.
-- **A few things AWS creates in every region are not listed:** a default VPC
-  that nothing is in and nobody changed (with its subnets, route table,
-  internet gateway and default security group), the default EventBridge bus,
-  and the X-Ray `Default` group and sampling rule. A default VPC that is used
-  or modified is listed.
-- `STALE_THRESHOLD_DAYS` (730) and `CW_LOOKBACK_DAYS` (455) in
-  `aws_resource_audit/config.py` are the tunable thresholds behind the `flag`
-  column.
-
 ## How it is built
 
 Two front ends over one core, and the core knows about neither:
