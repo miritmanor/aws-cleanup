@@ -1,5 +1,5 @@
 """The document index: a Chroma collection of the user's uploads, rebuilt only on request
-(never during a turn). Chunks are masked before embedding, like scan rows."""
+(never during a turn). Stored as written, on the data volume; the search tool masks hits."""
 
 import logging
 import os
@@ -7,7 +7,6 @@ import os
 from aws_resource_audit import console
 
 from . import PAYLOAD_LOGGER
-from ..masking import mask_value
 from .documents import DocumentStore
 from .embeddings import get_embeddings
 from .loaders import extract_text
@@ -33,7 +32,7 @@ def _chunks_for(path: str, splitter):
         console.warn(f"agent: skipping {name} - {e}")
         return []
     return [
-        Document(page_content=mask_value(piece), metadata={"source": name, "chunk": i})
+        Document(page_content=piece, metadata={"source": name, "chunk": i})
         for i, piece in enumerate(splitter.split_text(text))
     ]
 

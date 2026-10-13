@@ -1,4 +1,4 @@
-"""The agent's tools and run_turn against a stub chat model: tool calls, masking and
+"""The agent's tools and run_turn against a stub chat model: tool calls, pseudonyms and
 resource_keys. The model's wording is not testable this way."""
 
 import asyncio
@@ -93,8 +93,46 @@ class QueryResourcesToolTests(ApiTestCase):
         self.assertNotIn("111122223333", blob)
         self.assertNotIn("123456789012", blob)
 
+    def test_a_resource_id_token_finds_its_row(self):
+        token = self.tool.invoke({})[0]["resource_id"]
+        found = self.tool.invoke({"resource_id": token})
+        self.assertEqual([r["resource_id"] for r in found], [token])
+
     def test_unmatched_filter_returns_empty_not_an_error(self):
         self.assertEqual(self.tool.invoke({"service": "NoSuchService"}), [])
+
+
+class SearchDocumentsToolTests(ApiTestCase):
+    """The document tool with a stand-in index: searched with real values, returned masked."""
+
+    def setUp(self):
+        super().setUp()
+        self.rows = self.write_snapshot()
+        from app import stores
+        from app.agent.tools import make_search_documents_tool
+        self.queries = []
+        name = self.rows[0]["resource_id"]
+        self.name = name
+        queries = self.queries
+
+        class FakeIndex:
+            def similarity_search(self, query, k):
+                queries.append(query)
+                from langchain_core.documents import Document
+                return [Document(page_content=f"{name} belongs to payments, see 10.0.4.17",
+                                 metadata={"source": "runbook.md"})]
+
+        self.store = stores.snapshot_store()
+        self.tool = make_search_documents_tool(FakeIndex(), self.store)
+
+    def test_hits_are_masked_and_the_query_is_revealed_locally(self):
+        pseudonymizer, _rows = self.store.get_masked_view()
+        token = pseudonymizer.mask_text(self.name)
+        hits = self.tool.invoke({"query": f"what is {token}?"})
+        self.assertEqual(self.queries, [f"what is {self.name}?"])
+        text = json.dumps(hits)
+        self.assertNotIn(self.name, text)
+        self.assertNotIn("10.0.4.17", text)
 
 
 class RunTurnToolCallTests(ApiTestCase):
@@ -153,18 +191,38 @@ class RunTurnToolCallTests(ApiTestCase):
         self.assertTrue(all(v is None for v in other_filters.values()), calls[0])
 
     def test_resource_keys_resolve_to_masked_context(self):
+        """What the model sees is masked; its echo comes back to the user revealed."""
         target = next(r for r in self.rows if "111122223333" in r["resource_id"])
         key = member_key(target)
+        seen = []
 
         class EchoModel(ScriptedToolCallingModel):
             def _stream(self, messages, stop=None, run_manager=None, **kwargs):
                 last_human = [m for m in messages if m.type == "human"][-1].content
+                seen.append(last_human)
                 for word in last_human.split(" "):
                     yield ChatGenerationChunk(message=AIMessageChunk(content=word + " "))
 
         text = self._run(EchoModel(responses=[]), "what is this?", resource_keys=[key])
-        self.assertIn("Currently selected resource(s):", text)
-        self.assertNotIn("111122223333", text)
+        self.assertIn("Currently selected resource(s):", seen[0])
+        for secret in ("111122223333", target["resource_id"], target["name"]):
+            self.assertNotIn(secret, seen[0])
+        self.assertIn(target["resource_id"], text)
+
+    def test_the_question_is_masked_and_the_reply_revealed(self):
+        name = self.rows[0]["resource_id"]
+        seen = []
+
+        class EchoModel(ScriptedToolCallingModel):
+            def _stream(self, messages, stop=None, run_manager=None, **kwargs):
+                last_human = [m for m in messages if m.type == "human"][-1].content
+                seen.append(last_human)
+                for word in last_human.split(" "):
+                    yield ChatGenerationChunk(message=AIMessageChunk(content=word + " "))
+
+        text = self._run(EchoModel(responses=[]), f"why is {name} stale?")
+        self.assertNotIn(name, seen[0])
+        self.assertEqual(text.strip(), f"why is {name} stale?")
 
     def test_unknown_resource_key_is_dropped_not_an_error(self):
         model = ScriptedToolCallingModel(responses=[AIMessage(content="sure, ask away")])

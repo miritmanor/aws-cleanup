@@ -169,19 +169,25 @@ class BuildTimeProviderTests(_ProviderTestCase):
         self.assertFalse(body["available"])
         self.assertIn("AUDIT_AGENT_PROVIDER=none", body["reason"])
 
+    def test_no_provider_named_means_the_agent_is_off(self):
+        os.environ.pop(self.install.PROVIDER_ENV)
+        body = self.client.get("/api/agent/status").json()
+        self.assertFalse(body["available"])
+        self.assertIn("the default", body["reason"])
+
     def test_a_question_to_an_image_without_the_agent_is_an_error_frame(self):
         """Not a 500 from importing langchain: the endpoint refuses before agent_loop loads."""
         self._set_provider("none")
         response = self.client.post("/api/agent/query",
                                     json={"session_id": "s1", "message": "hi"})
         self.assertEqual(response.status_code, 200)
-        self.assertIn("not installed", self._frames(response)[-1]["error"])
+        self.assertIn("The agent is off", self._frames(response)[-1]["error"])
 
     def test_a_reindex_in_an_image_without_the_agent_is_a_400(self):
         self._set_provider("none")
         response = self.client.post("/api/agent/documents/reindex")
         self.assertEqual(response.status_code, 400)
-        self.assertIn("not installed", response.json()["detail"])
+        self.assertIn("The agent is off", response.json()["detail"])
 
     def test_a_missing_provider_package_is_named(self):
         self.install._is_installed = lambda module: module != "langchain_openai"

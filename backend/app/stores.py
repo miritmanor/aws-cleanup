@@ -15,7 +15,8 @@ def snapshot_store(paths=None):
     with _lock:
         store = _snapshots.get(key)
         if store is None:
-            store = SnapshotStore(paths["snapshot"], groups_path=paths["groups"])
+            store = SnapshotStore(paths["snapshot"], groups_path=paths["groups"],
+                                  key_dir=deps.data_dir())
             _snapshots[key] = store
         return store
 

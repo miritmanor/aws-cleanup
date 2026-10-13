@@ -18,7 +18,8 @@ from aws_resource_audit.present.format import display_row
 from aws_resource_audit.settings import load_settings
 from aws_resource_audit.snapshot import read_snapshot
 
-from .masking import mask_row
+from .privacy.key import load_or_create_key
+from .privacy.pseudonymizer import Pseudonymizer
 
 
 logger = logging.getLogger(__name__)
@@ -32,9 +33,10 @@ class SnapshotStore:
     """The scan. Reading applies the group store via resolve_effective_membership (the
     same passes a CLI re-render uses), so naming needs no re-scan."""
 
-    def __init__(self, path, groups_path=None):
+    def __init__(self, path, groups_path=None, key_dir=None):
         self.path = path
         self.groups_path = groups_path
+        self.key_dir = key_dir or os.path.dirname(path) or "."
         self._lock = threading.Lock()
         self._stamp = None
         self._cached = None
@@ -78,19 +80,27 @@ class SnapshotStore:
             self._stamp, self._cached = stamp, snapshot
             return snapshot
 
-    def get_masked_rows(self):
-        """Every row via display_row() then mask_row(): the only resource data the agent
-        may read. Cached on the snapshot's stamp."""
+    def get_masked_view(self):
+        """(Pseudonymizer, masked rows): the only resource data the agent may read, and the
+        means to un-mask its reply. Cached on the snapshot's stamp; no scan means no rows."""
         with self._lock:
             stamp = self.stamp()
-            if stamp is not None and stamp == self._masked_stamp and self._masked_cached is not None:
+            if stamp == self._masked_stamp and self._masked_cached is not None:
                 return self._masked_cached
-        snapshot = self.load()
-        masked = [mask_row(display_row(row)) for row in snapshot.rows]
+        try:
+            rows = self.load().rows
+        except SnapshotMissing:
+            rows = []
+        pseudonymizer = Pseudonymizer(load_or_create_key(self.key_dir), rows)
+        view = (pseudonymizer, [pseudonymizer.mask_row(display_row(row)) for row in rows])
         with self._lock:
-            self._masked_stamp = self.stamp()
-            self._masked_cached = masked
-        return masked
+            self._masked_stamp, self._masked_cached = stamp, view
+        return view
+
+    def get_masked_rows(self):
+        """Every row via display_row() then Pseudonymizer.mask_row(). SnapshotMissing if no scan."""
+        self.load()
+        return self.get_masked_view()[1]
 
     def invalidate(self):
         """Drop the cache. Called after a scan, so the next read is fresh even

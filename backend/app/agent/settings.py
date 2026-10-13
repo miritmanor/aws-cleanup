@@ -15,7 +15,7 @@ AGENT_CONFIG_FILENAME = "agent_config.json"
 class AgentSettings:
     """Everything agent_config.json can say; the defaults are a fresh install's."""
 
-    # An OpenAI model, for the default provider: set it when AUDIT_AGENT_PROVIDER changes.
+    # An OpenAI model: set it when AUDIT_AGENT_PROVIDER is anthropic or bedrock.
     model: str = "gpt-5.6-luna"
     chroma_dir: str = "agent_index"
     session_ttl_minutes: int = 240

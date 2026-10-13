@@ -165,12 +165,11 @@ class ChunkingTests(unittest.TestCase):
 
         return _load_and_chunk(self.store.files())
 
-    def test_an_account_id_is_masked_before_it_is_embedded(self):
-        """The real account id never reaches the vectors, only its placeholder."""
+    def test_a_chunk_is_stored_as_written(self):
+        """The index is local; masking happens when the search tool hands hits to the model."""
         self.store.save("notes.md", b"Owned by payments. Account 123456789012.")
         text = "\n".join(c.page_content for c in self._chunks())
-        self.assertNotIn("123456789012", text)
-        self.assertIn("ACCOUNT-", text)
+        self.assertIn("123456789012", text)
 
     def test_a_chunk_carries_the_document_name_not_its_path(self):
         self.store.save("notes.md", b"x")
