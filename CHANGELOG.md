@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The architecture diagram now shows a CloudWatch log group when it forwards events (a subscription filter to Lambda, Kinesis, Firehose or OpenSearch), with "logs to" and "forwards to" lines. Log groups that only receive logs are still left out. Regenerate or reload to see it; no re-scan needed.
 - The agent no longer fails on newer OpenAI models (e.g. `gpt-5.6-luna`) with "Function tools with reasoning_effort are not supported". OpenAI requests now use the Responses API. Rebuild the image to pick this up.
 - The CLI's scan command is renamed from `aws_resource_audit.py` to `aws_cleanup.py`. Flags are unchanged.
 - Reports, the snapshot and the config files are now always read and written as UTF-8. Before, the CLI on Windows used the local code page, which could fail on non-ASCII names.

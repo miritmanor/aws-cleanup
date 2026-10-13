@@ -12,6 +12,7 @@ from .network_tree import network_tree
 # draw.io's resIcon name and AWS category colour, as its "AWS" sidebar draws them.
 COMPUTE, STORAGE, DATABASE = "#ED7100", "#7AA116", "#C925D1"
 INTEGRATION, FRONTEND, NETWORK, SECURITY = "#E7157B", "#DD344C", "#8C4FFF", "#DD344C"
+MANAGEMENT = "#E7157B"
 DRAWIO_SHAPES = {
     "EC2Instance": ("ec2", COMPUTE),
     "LambdaFunction": ("lambda", COMPUTE),
@@ -55,6 +56,7 @@ DRAWIO_SHAPES = {
     "EventBridgeRule": ("eventbridge", INTEGRATION),
     "EventBridgeSchedule": ("eventbridge", INTEGRATION),
     "EventBridgeBus": ("eventbridge", INTEGRATION),
+    "CloudWatchLogGroup": ("cloudwatch_2", MANAGEMENT),
 }
 _FALLBACK = ("general", "#232F3E")
 
