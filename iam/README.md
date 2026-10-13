@@ -86,7 +86,7 @@ aws_secret_access_key = ...
 ```
 
 ```bash
-python3 aws_resource_audit.py --all-regions --profile aws-audit
+python3 aws_cleanup.py --all-regions --profile aws-audit
 ```
 
 ### Web app
