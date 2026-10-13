@@ -27,8 +27,9 @@ aws sts get-caller-identity >/dev/null 2>&1 \
 TASK_ARN="$(aws ecs list-tasks --cluster "$APP_NAME" --service-name "$APP_NAME" \
     --desired-status RUNNING --query 'taskArns[0]' --output text 2>/dev/null)" \
     || die "No app '$APP_NAME' in $AWS_REGION. Is the app stack up? Check AUDIT_APP_NAME and AWS_REGION."
-[ -n "$TASK_ARN" ] && [ "$TASK_ARN" != "None" ] \
-    || die "The app has no running task yet. If it was just created, wait a minute and try again."
+if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+    die "The app has no running task yet. If it was just created, wait a minute and try again."
+fi
 
 STATE="$(aws ecs describe-tasks --cluster "$APP_NAME" --tasks "$TASK_ARN" --query \
     "tasks[0].containers[?name=='frontend'] | [0].[runtimeId, managedAgents[?name=='ExecuteCommandAgent'] | [0].lastStatus]" \

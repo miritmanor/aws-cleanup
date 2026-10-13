@@ -5,9 +5,13 @@
 set -euo pipefail
 
 APP_NAME="${AUDIT_APP_NAME:-aws-cleanup}"
+# Unused here; the scripts that source this file read them.
+# shellcheck disable=SC2034
 BASE_STACK="${APP_NAME}-base"
+# shellcheck disable=SC2034
 APP_STACK="${APP_NAME}-app"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC2034
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 die() {
