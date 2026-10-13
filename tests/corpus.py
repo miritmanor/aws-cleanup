@@ -1,5 +1,5 @@
 """A deterministic synthetic account for the golden renders: every service, plus the
-awkward cases (report-only, dangling, collision, shared hub, bridge, tiers, billing)."""
+awkward cases (report-only, dangling, collision, shared hub, two-hop chain, tiers, billing)."""
 
 import contextlib
 import io
@@ -206,16 +206,16 @@ def _linked_rows():
                    "inline policy Resource arn:aws:s3:::static-assets-archive/*",
                    conn_type="iamrole.any.resource-grant",
                    target_service="S3Bucket")
-    # The only edge pointing AT an API. It reaches the row outputs but not the drawn graph:
-    # a role-to-pool pair has no structural end to bridge onto.
+    # The only edge pointing AT an API. It reaches the row outputs; the diagram
+    # draws no IAM role, so it is not drawn.
     audit.add_edge(role, "restapi9001", "IAM policy grants API access to",
                    "execute-api Resource ARN 'arn:aws:execute-api:us-east-1:"
                    "123456789012:restapi9001/*/*/*' on this role",
                    conn_type="iamrole.apigateway.execute-api-grant")
     rows.append(role)
 
-    # The bridge: app -> user pool (hidden) -> Lambda contracts into one bridged edge whose
-    # endpoints' connections columns never mention each other.
+    # A chain app -> user pool -> Lambda, whose two ends' connections columns
+    # never mention each other.
     portal = make_row("AmplifyApp", "amplify9001", "orders-portal",
                       tags={"Project": "orders"})
     pool = make_row("CognitoUserPool", "us-east-1_orders01", "orders-directory")
@@ -227,7 +227,7 @@ def _linked_rows():
                    "user pool LambdaConfig",
                    conn_type="cognito.lambda.trigger",
                    target_service="LambdaFunction")
-    # The two-hop chain that must NOT bridge.
+    # A second hop off the pool, to an IAM role.
     audit.add_edge(pool, "OrdersExecution", "SMS caller role",
                    "user pool SmsConfiguration.SnsCallerArn",
                    conn_type="cognito.iamrole.sms-caller",
@@ -338,7 +338,7 @@ def billing():
 
 def build():
     """The finished account through the real passes in run()'s order. Returns (rows,
-    contracted_graph, full_graph, grouping_notes)."""
+    full_graph, grouping_notes)."""
     rows = _baseline_rows() + _linked_rows()
     edge_links = audit.resolve_edges(rows)
     # After resolve_edges (the runtime rule reads resolved incoming links) and
@@ -347,7 +347,6 @@ def build():
     notes = quiet(audit.apply_project_grouping, rows, edge_links=edge_links,
                    default_vpc_ids={"vpc-0default00001"})
     full = audit.build_graph_data(rows, notes.get("grouping_links"))
-    contracted = audit.contract_graph(full)
     # Last, as in run(): it reads membership, so it cannot run before grouping.
     audit.attribute_costs(rows, billing(), coverage_entries=coverage_entries())
-    return rows, contracted, full, notes
+    return rows, full, notes

@@ -129,7 +129,7 @@ class RenderAppliesTheGroupStoreTests(unittest.TestCase):
 class ResolveEffectiveMembershipTests(unittest.TestCase):
     def test_a_rename_takes_effect_on_rows_already_named_by_a_scan(self):
         """reset_assigned_names runs first, or a rename never takes hold."""
-        rows, _c, _f, _n = corpus.build()
+        rows, _f, _n = corpus.build()
         seed = next(audit.member_key(r) for r in rows if r.get("project_id"))
         for row in rows:
             if audit.member_key(row) == seed:
@@ -144,7 +144,7 @@ class ResolveEffectiveMembershipTests(unittest.TestCase):
         self.assertTrue(renamed)
 
     def test_it_is_safe_with_no_group_file(self):
-        rows, _c, _f, _n = corpus.build()
+        rows, _f, _n = corpus.build()
         resolve_effective_membership(rows, None)   # must not raise
         self.assertTrue(rows)
 
@@ -158,7 +158,7 @@ class ResolveEffectiveMembershipTests(unittest.TestCase):
 
     def test_a_tag_project_can_be_named(self):
         """Every project can be named, whatever its source."""
-        rows, _c, _f, _n = corpus.build()
+        rows, _f, _n = corpus.build()
         tagged = [r for r in rows if r.get("project_id") == "tag:orders"]
         self._named(rows, audit.member_key(tagged[0]))
         self.assertTrue(all(r["project_group"] == "Whatever" for r in tagged))
@@ -167,7 +167,7 @@ class ResolveEffectiveMembershipTests(unittest.TestCase):
     def test_forgetting_a_name_restores_what_was_detected(self):
         """The default name and the per-resource grouping method come back,
         not just the ID - a tagged row reads "tag" again, not "inferred"."""
-        rows, _c, _f, _n = corpus.build()
+        rows, _f, _n = corpus.build()
         before = {audit.member_key(r): (r["project_id"], r["project_group"],
                                         r["grouping_method"]) for r in rows}
         seed = next(audit.member_key(r) for r in rows if r.get("project_id") == "tag:orders")
@@ -190,7 +190,7 @@ class ResolveEffectiveMembershipTests(unittest.TestCase):
 
 class RememberedEmptyGroupsTests(unittest.TestCase):
     def test_a_group_whose_members_are_all_gone_is_reported(self):
-        rows, _c, _f, _n = corpus.build()
+        rows, _f, _n = corpus.build()
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "groups.json")
             with open(path, "w") as f:
@@ -199,7 +199,7 @@ class RememberedEmptyGroupsTests(unittest.TestCase):
             self.assertEqual(remembered_empty_groups(rows, path), (("group:g1", "Deleted"),))
 
     def test_a_group_with_one_surviving_member_is_not_reported(self):
-        rows, _c, _f, _n = corpus.build()
+        rows, _f, _n = corpus.build()
         seed = audit.member_key(rows[0])
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "groups.json")

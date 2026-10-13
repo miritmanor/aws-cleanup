@@ -82,7 +82,7 @@ class ExplicitSettingsTests(unittest.TestCase):
 
     def _snapshot_in(self, directory):
         """Written through output_paths(), not a hand-built path."""
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         paths = audit.output_paths(Settings(output_dir=directory))
         audit.write_snapshot(
             paths["snapshot"], rows, full, notes,

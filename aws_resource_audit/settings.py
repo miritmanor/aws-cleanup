@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass, field
 
 from .config import BUBBLE_METRIC_IDS
+from .console import warn
 from .errors import AuditError
 from .connection_types.vocabulary import CONN_OFF, CONN_ON, CONN_REPORT_ONLY
 
@@ -72,12 +73,9 @@ class Settings:
     # Turn off every mechanism not read straight from an AWS API: fewer, smaller,
     # more trustworthy project groups.
     authoritative_only: bool = False
-    # Draw the dependency-graph panel in the HTML report. Turn off if the CDN
-    # the graph library loads from is blocked.
+    # Draw the Diagram view in the HTML report. Turn off if the CDN Mermaid
+    # loads from is blocked.
     graph_in_html: bool = True
-    # Draw every resource in the Graph tab instead of contracting supporting ones.
-    # The Diagram tab is always the contracted architecture view.
-    graph_all_nodes: bool = False
     # Draw the overview (bubble chart) in the HTML report; needs no CDN.
     bubbles_in_html: bool = True
     # The overview's opening metric; validated at load. "cost" exists only By service.
@@ -94,8 +92,9 @@ class Settings:
     role_name: str = "AWS-audit-role"
 
 
-_BOOL_KEYS = ("authoritative_only", "graph_in_html", "graph_all_nodes",
-              "bubbles_in_html", "assume_role")
+_BOOL_KEYS = ("authoritative_only", "graph_in_html", "bubbles_in_html", "assume_role")
+# Settings that no longer do anything: accepted with a warning so old files still load.
+_RETIRED_KEYS = ("graph_all_nodes",)
 _STR_KEYS = ("output_dir", "snapshot_file", "role_name", "bubbles_default_metric")
 
 
@@ -133,7 +132,11 @@ def load_settings(path=CONFIG_FILENAME):
     if not isinstance(data, dict):
         raise AuditError(f"{path}: expected a JSON object at the top level")
 
-    unknown = sorted(set(data) - set(Settings().__dict__))
+    for key in _RETIRED_KEYS:
+        if key in data:
+            warn(f"{path}: '{key}' no longer does anything (the Graph tab was removed); "
+                 "delete it from the file.")
+    unknown = sorted(set(data) - set(Settings().__dict__) - set(_RETIRED_KEYS))
     if unknown:
         known = ", ".join(sorted(Settings().__dict__))
         raise AuditError(f"{path}: unknown setting(s) {', '.join(unknown)}. Known settings: {known}")

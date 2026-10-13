@@ -50,7 +50,6 @@ class LoadSettingsTests(unittest.TestCase):
             "connection_types": {"ec2.ami.image-id": "off"},
             "authoritative_only": True,
             "graph_in_html": False,
-            "graph_all_nodes": True,
             "bubbles_in_html": False,
             "bubbles_default_metric": "cost",
             "assume_role": True,
@@ -59,7 +58,6 @@ class LoadSettingsTests(unittest.TestCase):
         self.assertEqual(settings.connection_types, {"ec2.ami.image-id": "off"})
         self.assertTrue(settings.authoritative_only)
         self.assertFalse(settings.graph_in_html)
-        self.assertTrue(settings.graph_all_nodes)
         self.assertFalse(settings.bubbles_in_html)
         self.assertEqual(settings.bubbles_default_metric, "cost")
         self.assertTrue(settings.assume_role)
@@ -124,6 +122,13 @@ class LoadSettingsTests(unittest.TestCase):
         with self.assertRaises(AuditError) as ctx:
             load_settings(self._write({"graph_all_node": True}))
         self.assertIn("unknown setting", str(ctx.exception))
+
+    def test_a_retired_setting_loads_with_a_warning(self):
+        """graph_all_nodes outlived the Graph tab: an old file must still load."""
+        with mock.patch("aws_resource_audit.settings.warn") as warn:
+            settings = load_settings(self._write({"graph_all_nodes": True}))
+        self.assertEqual(settings, Settings())
+        self.assertIn("graph_all_nodes", warn.call_args[0][0])
 
     def test_an_unknown_connection_type_id_is_rejected(self):
         """A typo'd connection-type key is caught end to end (by resolve_connection_states)."""

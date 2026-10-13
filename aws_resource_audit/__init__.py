@@ -240,7 +240,7 @@ from .collect.amplify import (
     normalize_for_name_match,
 )
 from .analyze.references import resolve_edges
-from .analyze.graph import build_graph_data, contract_graph, extract_project
+from .analyze.graph import build_graph_data, extract_project
 from .analyze.grouping import (
     ASSIGNED,
     AMBIGUOUS,
@@ -292,14 +292,7 @@ from .analyze.architecture import ARCHITECTURE_SERVICES, architecture_graph
 from .present.graph.mermaid import render_mermaid, write_mermaid
 from .present.graph.drawio import render_drawio, write_drawio
 from .present.html.template import HTML_TEMPLATE, SERVICE_META
-from .present.graph.cytoscape import (
-    CYTOSCAPE_VERSION,
-    GRAPH_CSS,
-    GRAPH_HEAD,
-    GRAPH_JS,
-    GRAPH_PANEL,
-    GRAPH_SWITCH,
-)
+from .present.graph.views import VIEW_CSS, VIEW_JS, VIEW_SWITCH
 from .present.html import build_console_url, generate_html_report, render_html_report
 from .snapshot import (
     SCHEMA_VERSION,

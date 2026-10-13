@@ -59,12 +59,12 @@ export function ArchitecturePanel({ source, projects, projectId, onProjectChange
   }
 
   return (
-    <section className="graph-panel architecture-panel">
-      <div className="graph-controls">
+    <section className="diagram-panel architecture-panel">
+      <div className="diagram-controls">
         <span>
           The application&rsquo;s runtime shape: solid lines are calls and data use;
-          dotted lines are likely but unproven (IAM access, a name match). Use the
-          Graph tab for every link, including what only groups resources together.
+          dotted lines are likely but unproven (IAM access, a name match). The
+          Resources tab's Connections column lists every link.
         </span>
         {/* Same control as the report's Diagram tab: hidden for one project,
             whose diagram is the account's. */}
@@ -103,7 +103,7 @@ export function ArchitecturePanel({ source, projects, projectId, onProjectChange
       </div>
       {error ? (
         <p className="empty">
-          This diagram could not be rendered: {error}. The same graph is in the Graph tab.
+          This diagram could not be rendered: {error}. Download the .mmd to view it elsewhere.
         </p>
       ) : (
         <div className="diagram-scroll" ref={container} />

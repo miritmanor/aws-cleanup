@@ -114,45 +114,6 @@ export interface ScanRequest {
   debug?: boolean;
 }
 
-export interface GraphNode {
-  id: string;
-  kind: "resource" | "stub";
-  service: string;
-  label: string;
-  hub?: boolean;
-}
-
-export interface GraphEdgeLink {
-  rel: string;
-  conn_type: string;
-  evidence: string;
-  confidence: string;
-  grouping: boolean;
-}
-
-export interface GraphEdgeVia {
-  service: string;
-  label: string;
-}
-
-export interface GraphEdge {
-  source: string;
-  target: string;
-  category: "link" | "attribute";
-  state: "resolved" | "dangling" | "attribute";
-  grouping: boolean;
-  confidence: string;
-  links: GraphEdgeLink[];
-  bridged?: boolean;
-  via?: GraphEdgeVia[];
-}
-
-export interface Graph {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  stats: Record<string, number>;
-}
-
 /** The architecture diagram's Mermaid source from GET /api/mermaid, rendered in Python. */
 export interface MermaidResponse {
   mermaid: string;
@@ -300,7 +261,6 @@ export interface ConfigResponse {
   exists: boolean;
   authoritative_only: boolean;
   graph_in_html: boolean;
-  graph_all_nodes: boolean;
   bubbles_in_html: boolean;
   bubbles_default_metric: string;
   snapshot_file: string;
@@ -314,7 +274,6 @@ export interface ConfigUpdate {
   connection_types: Record<string, ConnectionState>;
   authoritative_only: boolean;
   graph_in_html: boolean;
-  graph_all_nodes: boolean;
   bubbles_in_html: boolean;
   bubbles_default_metric: string;
   snapshot_file: string;

@@ -1,5 +1,5 @@
 """HTML_TEMPLATE is rendered with str.format(), so every literal brace in it is DOUBLED;
-the present/graph assets substituted in are NOT. rowKey() must mirror rows.member_key()."""
+the present/graph assets substituted in are NOT."""
 
 
 HTML_TEMPLATE = """<!DOCTYPE html>
@@ -10,7 +10,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <link rel="icon" type="image/svg+xml" href="{favicon}">
 <link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator_simple.min.css" rel="stylesheet">
 <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
-{graph_head}{diagram_head}
+{diagram_head}
 <style>
   :root {{
     --bg: #f4f6f8; --card: #ffffff; --card-2: #f7f9fb; --border: #dfe4ea;
@@ -43,9 +43,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .pill.risk-lo b {{ color: #1e8449; }}
   .legend {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; font-size: 11.5px; color: var(--text-dim); }}
   .legend .swatch {{ display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }}
-  .graph-exports {{ margin-bottom: 16px; font-size: 11.5px; color: var(--text-dim); }}
-  .graph-exports a {{ color: var(--link); text-decoration: none; }}
-  .graph-exports a:hover {{ text-decoration: underline; }}
+  .diagram-exports {{ margin-bottom: 16px; font-size: 11.5px; color: var(--text-dim); }}
+  .diagram-exports a {{ color: var(--link); text-decoration: none; }}
+  .diagram-exports a:hover {{ text-decoration: underline; }}
   .table-wrap {{ background: var(--card); border: 1px solid var(--border); border-radius: 11px;
          overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,0.06); }}
   #table {{ font-size: 12.5px; }}
@@ -89,7 +89,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .tabulator-group .grp-count {{ color: var(--text-dim); font-weight: 400; margin-left: 7px; }}
   .tabulator-group .grp-cost {{ color: #9a6a00; font-weight: 500; margin-left: 10px; }}
   footer {{ margin-top: 18px; font-size: 11.5px; color: var(--text-dim); line-height: 1.65; }}
-{graph_css}{diagram_css}{bubbles_css}
+{view_css}{diagram_css}{bubbles_css}
 </style>
 </head>
 <body>
@@ -110,7 +110,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 {billing_section}
 {bubbles_panel}
   <div class="toolbar">
-{graph_switch}
+{view_switch}
     <div>
       <label for="search">Search (any column)</label>
       <input type="text" id="search" placeholder="e.g. i-0abc, myapp, us-west-2...">
@@ -150,8 +150,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   <div class="legend" id="legend"></div>
 
-{graph_panel}{diagram_panel}
-  <div class="graph-exports">
+{diagram_panel}
+  <div class="diagram-exports">
     Same architecture diagram, written beside this file as plain text:
     <a href="{mermaid_file}">{mermaid_file}</a> (Mermaid, the source behind the Diagram view) -
     written even when the panels above are off.
@@ -183,20 +183,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     "Risk if removed", "Connections" and "Why grouped" are built only from what the scan reads -
     verify actual dependents before deleting anything. The Remove button is inactive: this page is a
     static file with no server behind it.<br>
-    The Graph view draws the same links this table reports: a solid line grouped its two endpoints
-    into one project, a dashed one was detected but deliberately not trusted to group, a faint dotted
-    one means the two share an attribute (a tag, VPC, IAM role or name word) with no actual link
-    between them, and a ghost node is something referenced here that this scan did not find. Clicking
-    a node narrows the canvas and the table to it and its neighbours - that focus stays on until
-    you clear it.
-    Use the Layout control there to change how the nodes are placed: Clusters shows the shape of
-    the account, Layered puts each project in its own box and orders it by dependency direction.<br>
-    The Diagram view draws the same links again as a static hierarchical picture, which is the
-    thing a force layout cannot do - but it is a picture: no hovering, no inspector, no filtering.
+    The Diagram view draws the application's runtime shape as a static hierarchical picture: no
+    hovering, no filtering. The Connections column above lists every link it is drawn from.
     Bold nodes are compute, database or storage - the application's main shape; muted nodes
     (load balancer, API Gateway, SQS/SNS, Amplify) are supporting context, not excluded, just
     drawn quieter.
-    All of the report's data is embedded in this file, but the table, graph and diagram libraries
+    All of the report's data is embedded in this file, but the table and diagram libraries
     load from unpkg.com; without network access each shows a message instead.
   </footer>
 </div>
@@ -204,7 +196,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <script>
 const ROWS = {rows_json};
 const SERVICE_META = {service_meta_json};
-const GRAPH = {graph_json};
 const BUBBLES = {bubbles_json};
 const DIAGRAM_SOURCES = {diagram_sources_json};
 const DIAGRAM_PROJECT_NAMES = {diagram_names_json};
@@ -239,10 +230,6 @@ function riskClass(v) {{
     `<span><span class="swatch" style="background:${{color}}"></span>${{cat}}</span>`
   ).join("");
   document.getElementById("legend").innerHTML = html;
-  // The graph panel's own copy, shown only in fullscreen - see graph-color-legend
-  // in panel.py. Absent entirely when "graph_in_html" is off.
-  const graphLegend = document.getElementById("graphColorLegend");
-  if (graphLegend) graphLegend.innerHTML = html;
 }})();
 
 // Projects are grouped by project_id and titled with the name.
@@ -353,22 +340,13 @@ const table = new Tabulator("#table", {{
   ],
 }});
 
-// Must mirror member_key() in the Python exactly - it is the join between a
-// graph node and its table row, and a mismatch filters the table to nothing.
-function rowKey(d) {{ return d.service + ":" + d.region + ":" + d.resource_id; }}
-
-// Row keys when a graph node is focused, else null. Declared here because applyFilters
-// reads it and GRAPH_JS is appended later.
-let graphFocus = null;
-
 // One combined predicate: each Tabulator setFilter REPLACES the active filter.
 function applyFilters() {{
   const q = document.getElementById("search").value.toLowerCase();
   const bill = document.getElementById("billingFilter").value;
   const tier = document.getElementById("tierFilter").value;
-  if (!q && !bill && !tier && !graphFocus) {{ table.clearFilter(); return; }}
+  if (!q && !bill && !tier) {{ table.clearFilter(); return; }}
   table.setFilter(function(data) {{
-    if (graphFocus && !graphFocus.has(rowKey(data))) return false;
     if (bill && data.billing !== bill) return false;
     // "__none__" asks for unclassified rows ("" already means "(all)").
     if (tier === "__none__" ? !!data.tier : (tier && data.tier !== tier)) return false;
@@ -385,7 +363,7 @@ document.getElementById("groupSelect").addEventListener("change", function(e) {{
   groupField = e.target.value;
   table.setGroupBy(e.target.value || false);
 }});
-{graph_js}{bubbles_js}
+{diagram_js}{bubbles_js}
 </script>
 </body>
 </html>

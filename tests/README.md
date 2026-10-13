@@ -93,20 +93,17 @@ because the failure it catches is invisible at runtime.
   `aws_resource_audit/connection_types/`; `assert_three_states` lives in
   `connections_base.py`. A coverage test in `test_connections_grouping.py` fails
   if a connection type is added without a test in any of them.
-- `test_graph.py` — the graph payload. `GraphContractionTests` covers the
-  bridged edge (the one deliberate exception to graph/`connections` agreement)
-  and the rules that keep bridging from redrawing the supercluster. Shared
-  helpers are in `graph_helpers.py`.
-- `test_graph_render.py` — the Mermaid view, the HTML report's graph and diagram
-  tabs, and project extraction. The `render_html_report` tests catch a mistake
+- `test_graph.py` — the graph payload. Shared helpers are in `graph_helpers.py`.
+- `test_graph_render.py` — the Mermaid view, the HTML report's Diagram tab and
+  view switch, and project extraction. The `render_html_report` tests catch a mistake
   in `HTML_TEMPLATE`'s doubled braces at test time rather than at the end of a
   real multi-minute scan.
 - `test_tiers.py` — one test per tiering rule on its own evidence, and the
   precedence between them. Includes that the absence of evidence produces an
   *assumed* `runtime` with `DEFAULT_WHY_TIER` (empty), distinguishable from a rule that
   actually fired. Plus the collect half (the
-  `LogicalResourceId`/`deploymentArtifacts` capture) and that both graph renderers
-  compartment a project only when it holds more than one tier.
+  `LogicalResourceId`/`deploymentArtifacts` capture) and that the architecture
+  diagram draws only a project's runtime half.
 - `test_run_pipeline.py` — `run()` end to end against a faked AWS. Every piece the
   scan orchestrates was covered and the sequence joining them was not, which is the
   seam that broke when collection and analysis moved into their own modules. It
@@ -124,8 +121,8 @@ because the failure it catches is invisible at runtime.
 - `test_raw_capture.py` — that the raw dump is written as it goes, describes
   exactly one scan, and never costs a scan more than a line of notes when it fails.
 - `test_service_map.py` — `ReportCategoryTests` pins `SERVICE_META` categories to
-  `tools/aws_service_coverage.csv`; `StructuralCategoryTests` pins the graph's
-  membership to those categories. Neither is meaningful without the other.
+  `tools/aws_service_coverage.csv`; `StructuralCategoryTests` pins
+  `STRUCTURAL_SERVICES` to those categories. Neither is meaningful without the other.
 - `test_references.py` — how each kind of reference is worded in `connections`.
 - `test_json.py`, `test_cost.py`, `test_clock.py`, `test_settings.py` — the JSON
   schema, the cost split, the pinned clock, output paths and config validation.

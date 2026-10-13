@@ -1,4 +1,4 @@
-"""The HTML report: render_html_report substitutes rows, graph payloads and panel
+"""The HTML report: render_html_report substitutes rows, the diagram and panel
 assets into HTML_TEMPLATE (see template.py), plus AWS console deep links."""
 
 import json
@@ -19,16 +19,9 @@ from ..cost import (
 from .brand import APP_NAME, FAVICON_DATA_URI, TAGLINE
 from ..bubbles import BUBBLES_CSS, BUBBLES_JS, BUBBLES_PANEL
 from ..format import display_row
-from ..graph.cytoscape import (
-    GRAPH_CSS,
-    GRAPH_HEAD,
-    GRAPH_JS,
-    GRAPH_PANEL,
-    GRAPH_SWITCH,
-)
 from ..graph.diagram import DIAGRAM_CSS, DIAGRAM_HEAD, DIAGRAM_JS, diagram_panel
-from ..graph.layout import LAYOUT_JS
 from ..graph.mermaid import render_mermaid
+from ..graph.views import VIEW_CSS, VIEW_JS, VIEW_SWITCH
 from .template import HTML_TEMPLATE, SERVICE_META
 
 
@@ -163,13 +156,12 @@ def render_billing_section(report, cost_report=None):
     return head + "".join(body) + "</details>"
 
 
-def render_html_report(all_rows, title=APP_NAME, graph=None,
+def render_html_report(all_rows, title=APP_NAME,
                        diagram_graph=None, generated_at=None, coverage=None,
                        billing_coverage=None, cost_report=None,
                        overview=None, project_diagrams=()):
-    """Render the report to a string (testable without a scan). graph=None omits the
-    graph panel; generated_at is when the SCAN ran, not the render."""
-    diagram_graph = graph if diagram_graph is None else diagram_graph
+    """Render the report to a string (testable without a scan). diagram_graph=None omits
+    the Diagram view; generated_at is when the SCAN ran, not the render."""
     # Only the public schema reaches the browser.
     enriched = [display_row(r, {"console_url": build_console_url(r)})
                 for r in all_rows]
@@ -205,17 +197,13 @@ def render_html_report(all_rows, title=APP_NAME, graph=None,
         bubbles_json=json.dumps(overview, default=str) if overview else "null",
         # Bare names: every output lands in one directory, so relative links resolve.
         mermaid_file=OUTPUT_FILENAMES["mermaid"],
-        graph_json=json.dumps(graph, default=str) if graph else "null",
-        graph_head=GRAPH_HEAD if graph else "",
-        graph_css=GRAPH_CSS if graph else "",
-        graph_switch=GRAPH_SWITCH if graph else "",
-        graph_panel=GRAPH_PANEL if graph else "",
-        # LAYOUT_JS and DIAGRAM_JS first: GRAPH_JS is an IIFE that calls them on parse.
-        graph_js=(LAYOUT_JS + DIAGRAM_JS + GRAPH_JS) if graph else "",
-        # The same string write_mermaid writes to the .mmd, from `diagram_graph`
-        # (always contracted, whatever "graph_all_nodes" says).
-        diagram_head=DIAGRAM_HEAD if graph else "",
-        diagram_css=DIAGRAM_CSS if graph else "",
+        view_css=VIEW_CSS if diagram_graph else "",
+        view_switch=VIEW_SWITCH if diagram_graph else "",
+        # DIAGRAM_JS first: VIEW_JS calls its initDiagram().
+        diagram_js=(DIAGRAM_JS + VIEW_JS) if diagram_graph else "",
+        # The same string write_mermaid writes to the .mmd.
+        diagram_head=DIAGRAM_HEAD if diagram_graph else "",
+        diagram_css=DIAGRAM_CSS if diagram_graph else "",
         diagram_panel=diagram_panel(render_mermaid(diagram_graph, all_rows))
                      if diagram_graph else "",
         # Per-project diagrams from render.py; "" is the whole account, always present.
@@ -237,11 +225,11 @@ def render_html_report(all_rows, title=APP_NAME, graph=None,
 
 
 def generate_html_report(all_rows, html_path, title=APP_NAME,
-                         graph=None, diagram_graph=None, generated_at=None,
+                         diagram_graph=None, generated_at=None,
                          coverage=None, billing_coverage=None,
                          cost_report=None, overview=None, project_diagrams=()):
     with open(html_path, "w", encoding="utf-8") as f:
-        f.write(render_html_report(all_rows, title=title, graph=graph,
+        f.write(render_html_report(all_rows, title=title,
                                    diagram_graph=diagram_graph,
                                    generated_at=generated_at, coverage=coverage,
                                    billing_coverage=billing_coverage,

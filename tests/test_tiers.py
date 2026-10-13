@@ -392,7 +392,7 @@ class AmplifyProvenanceCollectionTests(unittest.TestCase):
 
 class TierRenderingTests(unittest.TestCase):
     """The architecture diagram leaves deployment resources out instead of
-    compartmenting them; the Graph tab still compartments."""
+    compartmenting them."""
 
     def test_a_mixed_project_draws_one_box_and_only_its_runtime_half(self):
         rows = []

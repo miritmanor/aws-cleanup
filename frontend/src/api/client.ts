@@ -9,7 +9,6 @@ import type {
   ConfigUpdate,
   DefaultRegions,
   DocumentUploadResult,
-  Graph,
   Group,
   Project,
   IconPack,
@@ -131,10 +130,6 @@ async function* streamAgentQuery(body: AgentQueryRequest): AsyncGenerator<string
 
 export const api = {
   getScan: () => request<ScanSummary>("/api/scan"),
-  getGraph: (allNodes?: boolean) =>
-    request<Graph>(
-      allNodes === undefined ? "/api/graph" : `/api/graph?all_nodes=${allNodes}`,
-    ),
   getServiceMeta: () => request<ServiceMeta>("/api/service-meta"),
 
   /** The bill and which of it the scan can speak for; read from the snapshot. */

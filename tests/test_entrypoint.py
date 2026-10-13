@@ -112,7 +112,7 @@ class ReportEntryPointTests(unittest.TestCase):
     def test_it_renders_a_snapshot_with_no_credentials(self):
         """The end-to-end claim: a real snapshot on disk, the real entry point,
         no AWS reachable, and six rendered files at the end of it."""
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         with tempfile.TemporaryDirectory() as tmp:
             # Where the renderer will look, from the same function it uses.
             scan_dir = os.path.normpath(os.path.join(tmp, audit.Settings.output_dir))
@@ -142,7 +142,7 @@ class ReportEntryPointTests(unittest.TestCase):
 
     def test_the_library_render_prints_no_file_list(self):
         """The web app calls render() too, and its users cannot open these paths."""
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         lines = []
         with tempfile.TemporaryDirectory() as tmp:
             settings = audit.Settings(output_dir=tmp)
