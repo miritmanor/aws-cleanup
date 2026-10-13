@@ -24,6 +24,7 @@ _IAM_ACTION = {
     ("s3", "ListBuckets"): "s3:ListAllMyBuckets",
     ("s3", "ListObjectsV2"): "s3:ListBucket",
     ("s3", "GetBucketNotificationConfiguration"): "s3:GetBucketNotification",
+    ("accessanalyzer", "ListFindingsV2"): "access-analyzer:ListFindings",
 }
 # Names that match an operation but are not one here: re.search, and the base
 # identity's own AssumeRole (granted to it, not to this role).
