@@ -1,11 +1,15 @@
 # The web app: an API over the audit core, plus a React frontend.
 #   docker compose up --build    then open http://127.0.0.1:8080
+#   Published images instead: set AUDIT_BACKEND_IMAGE / AUDIT_FRONTEND_IMAGE in .env, then
+#   docker compose pull && docker compose up    (no --build, or it builds over them).
 #
 # SECURITY: ports bind to 127.0.0.1 only. The app serves a full map of an AWS account
 # and has no authentication; exposing these ports means adding authentication first.
 
 services:
   backend:
+    # The image to run; `up --build` builds and tags it under this name, `pull` fetches it.
+    image: ${AUDIT_BACKEND_IMAGE:-aws-cleanup-backend:local}
     build:
       # The repo root: the image needs aws_resource_audit/ as well as backend/.
       context: .
@@ -43,11 +47,15 @@ services:
       start_interval: 2s
 
   frontend:
+    image: ${AUDIT_FRONTEND_IMAGE:-aws-cleanup-frontend:local}
     build:
       context: .
       dockerfile: frontend/Dockerfile
     ports:
       - "127.0.0.1:8080:80"
+    environment:
+      # Where nginx sends /api and /files: this file's backend service.
+      BACKEND_HOST: backend
     depends_on:
       # nginx resolves "backend" once at startup and exits if it fails; wait until healthy.
       backend:

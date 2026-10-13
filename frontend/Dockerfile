@@ -14,5 +14,9 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# At start nginx writes conf.d/default.conf from this, substituting only ${BACKEND_*}.
+COPY frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
+# "backend" is the Compose service name; on ECS both containers share a task, so 127.0.0.1.
+ENV BACKEND_HOST=backend \
+    NGINX_ENVSUBST_FILTER=^BACKEND_
 EXPOSE 80
