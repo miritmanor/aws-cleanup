@@ -78,14 +78,12 @@ python3 aws_cleanup.py --all-regions --profile <your-profile>
 python3 aws_regenerate_report.py
 ```
 
-A scan writes into two subdirectories of `output_dir` (default `./Output`):
-`results/` holds the seven reports plus the `aws_scan.json` snapshot they render
-from — and one `aws_resource_graph-<project>.mmd` and one
-`aws_architecture-<project>.drawio` per project alongside the account-wide
-diagrams — while `runtime/` holds two debug dumps you only read when something
-looks wrong. Start with `results/aws_inventory.html`. The `.drawio` files open in
-draw.io (diagrams.net) with its own AWS icons, every box and line editable; the
-`.mmd` shows placeholder icons outside this tool.
+Results go to `./Output/results/`. Start with `aws_inventory.html`. The same
+data is in `aws_inventory.csv` and `aws_inventory.json`. The architecture diagram
+is in `aws_resource_graph.mmd` (Mermaid) and `aws_architecture.drawio` (opens in
+draw.io, fully editable), plus one of each per project. `grouping_audit.md`
+explains how resources were grouped and lists anything the scan could not read.
+`aws_scan.json` is the saved scan that `aws_regenerate_report.py` renders from.
 
 Run `python3 aws_cleanup.py --help` to see the flags.
 
@@ -114,20 +112,16 @@ Projects tab. Forgetting a project's name undoes both.
 
 ### Configuration: `audit_config.json`
 
-Optional, read from the **current directory** — it is an input you maintain,
-not something a scan writes. An absent file means every connection type keeps
-its registry default and outputs land in `./Output`. Being read from the cwd is
-also what makes a second account renderable: `cd` to a directory with its own
-`audit_config.json` and run `aws_regenerate_report.py`.
+Optional, read from the current directory. Every key is optional. An invalid
+file stops the run before any AWS call.
 
 ```json
 {
   "output_dir": "./Output",
   "snapshot_file": "aws_scan.json",
-  "connection_types": {"amplify.apigateway.name-match": "off", "iamrole.*": "report-only"},
+  "connection_types": {"amplify.apigateway.name-match": "off"},
   "authoritative_only": false,
   "graph_in_html": true,
-  "graph_all_nodes": false,
   "bubbles_in_html": true,
   "bubbles_default_metric": "resource_count",
   "assume_role": false,
@@ -135,33 +129,21 @@ also what makes a second account renderable: `cd` to a directory with its own
 }
 ```
 
-`settings.py` rejects unknown keys, non-boolean switches and invalid states
-*before* any AWS call — a silently ignored setting would mean detections you
-believe are off are still merging your projects, with nothing in the
-output saying so.
-
-- `connection_types` keys are exact ids, fnmatch globs, or comma-separated
-  lists, applied **in file order**, so a broad glob can be narrowed by naming an
-  exception after it. `authoritative_only` is applied first as a floor. A key
-  matching no known id is a hard error. Run `--debug` to print the resolved table.
-- `snapshot_file` must be a **bare `.json` filename**, not a path: every output
-  of a run lives in one directory, and `.gitignore` matches the snapshot by name
-  — a `scan.txt` would be a complete account inventory sitting
-  untracked-but-committable.
-- `graph_in_html` and `graph_all_nodes` are read at render time, so changing
-  either is a re-render rather than a re-scan.
-- `bubbles_in_html` draws the overview in the report, and
-  `bubbles_default_metric` picks which metric it opens on — one of
-  `resource_count`, `unused_pct`, `unused_count`, `cost`. The overview has two
-  views, **By service** and **By project**; it opens on By service until a
-  project has been tagged, named or matched by a name rule. `cost` exists only
-  By service, where the circles are the lines of the AWS bill. Unlike the graph
-  panel, the overview needs no CDN: its circles are computed in Python and
-  embedded as data, so it works with the network off. Both are render-time too.
-- `assume_role` / `role_name` trade the `--profile` identity in for a dedicated
-  least-privilege role before scanning. Off by default. `role_name` is
-  overridable with the `AWS_AUDIT_ROLE_NAME` env var. See
+- `output_dir`, `snapshot_file`: where results go. `snapshot_file` must be a
+  plain `.json` filename, not a path.
+- `connection_types`: set individual link types to `on`, `off` or
+  `report-only`. Keys are ids or wildcards; `--debug` prints the full list.
+- `authoritative_only`: group resources only on links read directly from AWS,
+  never on inferred ones.
+- `graph_in_html`: show the Diagram view in the HTML report.
+- `bubbles_in_html`, `bubbles_default_metric`: show the overview chart, and
+  which metric it opens on (`resource_count`, `unused_pct`, `unused_count` or
+  `cost`).
+- `assume_role`, `role_name`: assume this IAM role before scanning. See
   [`iam/README.md`](iam/README.md).
+
+Changing `graph_in_html` or the `bubbles_*` keys needs only
+`aws_regenerate_report.py`, not a new scan.
 
 ### Web app
 
@@ -182,21 +164,9 @@ the box is filled in with the regions that scan found resources in.
 
 ## What a scan costs
 
-One `ce:GetCostAndUsage` request (~$0.01), grouped by service **and** region so
-that a single-region scan cannot absorb the whole account's spending. A second
-request is made **only** when the bill contains a category this tool refuses to
-divide and that actually spent something — `EC2 - Other`, which bills NAT
-gateways and VPC endpoints alongside EBS volumes. That one asks for the
-usage-type breakdown, so the report can say what is inside the category instead
-of just naming it. An account with no such category pays for one request.
-
-Equivalent requests are reused for six hours within a process, keyed by account,
-period, metric and grouping — so the web app running several scans does not pay
-several times. An incomplete response is never reused, and a cached result never
-crosses an account. The observation time is shown next to the figures.
-
-`--no-cost` makes neither request. The report then says **not queried**
-everywhere a cost would be, which is deliberately not the same as zero.
+Each scan makes one or two Cost Explorer requests, about $0.01 each. With
+`--no-cost` it makes none, and the report shows "not queried" wherever a cost
+would be.
 
 ## Where the money went that the report will not attribute
 
