@@ -186,6 +186,20 @@ class RunTurnToolCallTests(ApiTestCase):
         self.assertIn("saw 2 messages", text_a)  # system prompt + A's own message
         self.assertIn("saw 2 messages", text_b)  # system prompt + B's own - not A's too
 
+    def test_content_blocks_stream_as_their_text(self):
+        """OpenAI's Responses API streams content as a list of blocks, not a str."""
+
+        class BlockStreamingModel(ScriptedToolCallingModel):
+            def _stream(self, messages, stop=None, run_manager=None, **kwargs):
+                yield ChatGenerationChunk(message=AIMessageChunk(
+                    content=[{"type": "reasoning", "summary": [], "index": 0}]))
+                for word in ("Two ", "stale ", "buckets."):
+                    yield ChatGenerationChunk(message=AIMessageChunk(
+                        content=[{"type": "text", "text": word, "index": 1}]))
+
+        text = self._run(BlockStreamingModel(responses=[]), "what's stale?")
+        self.assertEqual(text, "Two stale buckets.")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -138,10 +138,11 @@ async def run_turn(session_id: str, message: str, resource_keys: list[str]) -> A
         ):
             kind = event["event"]
             if kind == "on_chat_model_stream":
-                chunk = event["data"]["chunk"]
-                if chunk.content:
-                    reply.append(chunk.content)
-                    yield chunk.content
+                # .text, not .content: the Responses API streams a list of blocks, not a str.
+                text = event["data"]["chunk"].text
+                if text:
+                    reply.append(text)
+                    yield text
             elif kind == "on_chat_model_start":
                 # The full input the model receives (system prompt, history, tool results).
                 payload.debug("turn %s -> model: %r",
