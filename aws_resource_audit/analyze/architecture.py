@@ -24,7 +24,12 @@ ARCHITECTURE_SERVICES = frozenset({
     # Schedules and rules stay as their own boxes: their target may also be
     # invoked some other way, and a box is how the diagram says "and on a timer".
     "EventBridgeRule", "EventBridgeSchedule", "EventBridgeBus",
+    "CloudWatchLogGroup",
 })
+
+# Drawn only when it passes events on to something drawn: every Lambda has a
+# log group, and one that only receives logs would add a box per function.
+DRAWN_WHEN_FORWARDING = {"CloudWatchLogGroup": "loggroup.any.subscription-filter"}
 
 # The verb on a runtime line, where the semantics' default ("invokes", "uses")
 # can say more. A connection type absent here uses the default for its semantics.
@@ -68,6 +73,9 @@ VERBS = {
     "appsync.lambda.datasource": "resolves with",
     "appsync.cognito.authorizer": "authorizes with",
     "appsync.lambda.authorizer": "authorizes with",
+    "loggroup.any.name-convention": "logs to",
+    "lambda.loggroup.logging-config": "logs to",
+    "loggroup.any.subscription-filter": "forwards to",
 }
 
 # Not drawn, but lines run through them: Route 53 -> custom domain -> API is
@@ -80,7 +88,8 @@ _DEFAULT_VERB = {SEM_INVOKES: "invokes", SEM_READS_OR_WRITES: "uses"}
 # event-source mapping names its queue, and the queue is what triggers it.
 REVERSED = frozenset({"lambda.any.event-source-mapping", "ecsservice.loadbalancer.target",
                       "eventbridgerule.eventbridgebus.membership",
-                      "cloudfront.wafwebacl.protected-by", "firehose.kinesis.source"})
+                      "cloudfront.wafwebacl.protected-by", "firehose.kinesis.source",
+                      "loggroup.any.name-convention"})
 
 # Runtime by semantics but about deploying: a Beanstalk app's source bundles.
 NOT_RUNTIME = frozenset({
@@ -90,9 +99,10 @@ NOT_RUNTIME = frozenset({
 })
 
 # Drawn although not runtime by semantics: a Beanstalk environment's instances serve
-# its traffic, and a VPN's traffic enters through its transit gateway.
+# its traffic, a VPN's enters through its transit gateway, a function writes its logs.
 ALSO_RUNTIME = frozenset({"elasticbeanstalk.ec2instance.environment-resource",
-                          "vpnconnection.transitgateway.attachment"})
+                          "vpnconnection.transitgateway.attachment",
+                          "loggroup.any.name-convention", "lambda.loggroup.logging-config"})
 
 # Likely but unproven runtime links, drawn dotted: a Lambda env var holding a
 # bare table or bucket name is a name match, yet almost always means "uses".
@@ -131,11 +141,16 @@ def _semantics(conn_type):
     return conn.semantics if conn else None
 
 
-def _drawable_ids(nodes, tier_of):
-    return {n["id"] for n in nodes
-            if n.get("kind") == "resource"
-            and n.get("service") in ARCHITECTURE_SERVICES
-            and tier_of(n["id"]) != TIER_DEPLOYMENT}
+def _drawable_ids(graph, tier_of):
+    candidates = {n["id"]: n.get("service") for n in graph.get("nodes") or []
+                  if n.get("kind") == "resource"
+                  and n.get("service") in ARCHITECTURE_SERVICES
+                  and tier_of(n["id"]) != TIER_DEPLOYMENT}
+    forwarding = {source for source, target, conn_type in _links(graph)
+                  if conn_type == DRAWN_WHEN_FORWARDING.get(candidates.get(source))
+                  and candidates.get(target) not in (None, *DRAWN_WHEN_FORWARDING)}
+    return {i for i, service in candidates.items()
+            if service not in DRAWN_WHEN_FORWARDING or i in forwarding}
 
 
 def _links(graph):
@@ -223,7 +238,7 @@ def architecture_graph(graph, all_rows):
         return tiers.get(node_id.split("#", 1)[0], "")
 
     nodes = graph.get("nodes") or []
-    drawn = _drawable_ids(nodes, tier_of)
+    drawn = _drawable_ids(graph, tier_of)
     edges = {}
 
     def add(source, target, verb, style, conn_type):

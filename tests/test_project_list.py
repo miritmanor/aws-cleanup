@@ -17,7 +17,7 @@ from aws_resource_audit.naming.project_list import project_list
 
 class ProjectListTests(unittest.TestCase):
     def setUp(self):
-        self.rows, _c, _f, _n = corpus.build()
+        self.rows, _f, _n = corpus.build()
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.path = os.path.join(tmp.name, "groups.json")

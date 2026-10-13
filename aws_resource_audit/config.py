@@ -54,7 +54,7 @@ COMPONENT_TAG_KEYS = ["Service", "service"]
 GROUP_TAG_KEYS = PROJECT_TAG_KEYS + ENVIRONMENT_TAG_KEYS + COMPONENT_TAG_KEYS
 
 # Shared plumbing (one SG or key pair reused across unrelated projects): its edges
-# never merge projects, and the graph contracts it away. An AMI is not one.
+# never merge projects; graph nodes mark it as a hub. An AMI is not one.
 NON_BRIDGING_SERVICES = frozenset({"SecurityGroup", "KeyPair"})
 
 # Most listings are exhaustive, so a referenced resource missing from one is gone.
@@ -83,8 +83,8 @@ METRIC_ABSENCE_MEANS_IDLE = {
     "VolumeWriteOps": False,
 }
 
-# What the graph draws: AWS's application categories minus build artifacts; the
-# rest becomes "via" links. tests/test_service_map.py holds the set to that rule.
+# AWS's application categories minus build artifacts; grouping ranks these first.
+# tests/test_service_map.py holds the set to that rule.
 STRUCTURAL_SERVICES = frozenset({
     # Compute - the things that run code
     "EC2Instance", "LambdaFunction", "ElasticBeanstalkEnvironment", "AutoScalingGroup",

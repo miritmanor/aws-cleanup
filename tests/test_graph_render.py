@@ -1,11 +1,10 @@
-"""Rendering the graph: the Mermaid architecture view, the HTML report's graph and
-diagram tabs, graph_all_nodes, and one project's extracted subgraph."""
+"""Rendering the graph: the Mermaid architecture view, the HTML report's Diagram tab,
+and one project's extracted subgraph."""
 
 import contextlib
 import io
 import json
 import os
-import re
 import tempfile
 import unittest
 
@@ -26,7 +25,7 @@ class MermaidArchitectureTests(unittest.TestCase):
                            conn_type="ec2.ami.image-id", target_service="LoadBalancer")
             rows = [inst, lb]
             graph, _, _ = graph_for(rows)
-        return rows, audit.contract_graph(graph)
+        return rows, graph
 
     def test_no_admin_subgraph_is_drawn(self):
         rows, graph = self._graph()
@@ -49,83 +48,55 @@ class HtmlReportTests(unittest.TestCase):
             graph, _, _ = graph_for(rows)
         return rows, graph
 
-    def test_renders_with_a_graph(self):
+    def test_renders_with_a_diagram(self):
         rows, graph = self._rows_and_graph()
-        html = audit.render_html_report(rows, graph=graph)
-        self.assertIn("const GRAPH = {", html)
-        self.assertIn(f"cytoscape@{audit.CYTOSCAPE_VERSION}", html)
+        html = audit.render_html_report(rows, diagram_graph=graph)
+        self.assertIn("mermaid@", html)
         self.assertIn('id="viewSwitch"', html)
-        self.assertIn('id="graphWrap"', html)
+        self.assertIn('id="diagramWrap"', html)
         self.assertIn("new Tabulator", html)
 
-    def test_renders_without_a_graph(self):
-        """graph=None must drop the panel AND its CDN script, not just hide it."""
+    def test_renders_without_a_diagram(self):
+        """diagram_graph=None must drop the panel AND its CDN script, not just hide it."""
         rows, _ = self._rows_and_graph()
-        html = audit.render_html_report(rows, graph=None)
-        self.assertIn("const GRAPH = null;", html)
-        self.assertNotIn("cytoscape", html)
+        html = audit.render_html_report(rows, diagram_graph=None)
+        self.assertNotIn("mermaid@", html)
         self.assertNotIn('id="viewSwitch"', html)
         self.assertIn("new Tabulator", html)
 
+    def test_there_is_no_graph_tab(self):
+        rows, graph = self._rows_and_graph()
+        html = audit.render_html_report(rows, diagram_graph=graph)
+        self.assertNotIn("cytoscape", html)
+        self.assertNotIn('data-view="graph"', html)
+
     def test_every_row_is_embedded(self):
         rows, graph = self._rows_and_graph()
-        html = audit.render_html_report(rows, graph=graph)
+        html = audit.render_html_report(rows, diagram_graph=graph)
         start = html.index("const ROWS = ") + len("const ROWS = ")
         end = html.index(";\nconst SERVICE_META", start)
         self.assertEqual(len(json.loads(html[start:end])), len(rows))
 
-    def test_graph_js_and_css_survive_formatting_verbatim(self):
-        """GRAPH_JS/GRAPH_CSS are format VALUES with single braces, embedded verbatim."""
+    def test_view_js_and_css_survive_formatting_verbatim(self):
+        """VIEW_JS/VIEW_CSS are format VALUES with single braces, embedded verbatim."""
         rows, graph = self._rows_and_graph()
-        html = audit.render_html_report(rows, graph=graph)
-        self.assertIn(audit.GRAPH_JS, html)
-        self.assertIn(audit.GRAPH_CSS, html)
-        self.assertIn(audit.GRAPH_PANEL, html)
-
-    def _full_and_contracted(self):
-        """Lambda -> IAMRole -> S3Bucket: the role is in `full`, contracted in `contracted`."""
-        with only_these({"iamrole.any.resource-grant": audit.CONN_ON,
-                         "group.shared-iam-role": audit.CONN_ON}):
-            fn = make_row("LambdaFunction", "myFn", "myFn", iam_role="execRole")
-            role = make_row("IAMRole", "execRole", "execRole", iam_role="execRole")
-            bucket = make_row("S3Bucket", "bucket-0", "bucket-0")
-            audit.add_edge(role, "bucket-0", "grants access to",
-                           "Resource ARN in the role's own policies",
-                           conn_type="iamrole.any.resource-grant",
-                           target_service="S3Bucket")
-            rows = [fn, role, bucket]
-            full, _, _ = graph_for(rows)
-        return rows, full, audit.contract_graph(full)
-
-    def test_diagram_tab_can_differ_from_the_graph_tab(self):
-        """With graph_all_nodes, the Graph tab draws everything while the Diagram tab
-        stays the contracted architecture view."""
-        rows, full, contracted = self._full_and_contracted()
-        html = audit.render_html_report(rows, graph=full, diagram_graph=contracted)
-        m = re.search(r"const GRAPH = (.*?);\n", html)
-        self.assertEqual(len(json.loads(m.group(1))["nodes"]), len(full["nodes"]))
-        # One escaped <br/> per node of the CONTRACTED graph.
-        self.assertEqual(html.count("&lt;br/&gt;"), len(contracted["nodes"]))
-
-    def test_diagram_graph_defaults_to_the_graph_tab(self):
-        """diagram_graph=None falls back to `graph`."""
-        rows, graph = self._rows_and_graph()
-        html = audit.render_html_report(rows, graph=graph)
-        self.assertEqual(html.count("&lt;br/&gt;"), len(graph["nodes"]))
+        html = audit.render_html_report(rows, diagram_graph=graph)
+        self.assertIn(audit.VIEW_JS, html)
+        self.assertIn(audit.VIEW_CSS, html)
+        self.assertIn(audit.VIEW_SWITCH, html)
 
 
-class RenderOutputsGraphAllNodesTests(unittest.TestCase):
-    """render_outputs(): graph_all_nodes reaches the Graph tab and the JSON, never the
-    Diagram tab or the .mmd file."""
+class RenderOutputsDiagramTests(unittest.TestCase):
+    """render_outputs(): the Diagram tab and the .mmd file draw the same architecture graph."""
 
     def test_the_mmd_file_and_the_diagram_tab_draw_the_architecture_graph(self):
-        rows, contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "aws_scan.json")
             audit.write_snapshot(path, rows, full, notes, account="123456789012",
                                  regions=["us-east-1"], scanned_at=audit.now())
             snapshot = audit.read_snapshot(path)
-            settings = audit.Settings(output_dir=tmp, graph_all_nodes=True)
+            settings = audit.Settings(output_dir=tmp)
             paths = audit.output_paths(settings)
             with contextlib.redirect_stdout(io.StringIO()):
                 audit.render_outputs(snapshot, paths, settings)
@@ -135,13 +106,8 @@ class RenderOutputsGraphAllNodesTests(unittest.TestCase):
             with open(paths["mermaid"]) as f:
                 mmd = f.read()
 
-        m = re.search(r"const GRAPH = (.*?);\n", html)
-        graph_node_count = len(json.loads(m.group(1))["nodes"])
         mmd_node_count = mmd.count("<br/>")
-
-        # The whole point: with graph_all_nodes on, the Graph tab is bigger -
-        # if it were not, this test would be proving nothing.
-        self.assertGreater(graph_node_count, mmd_node_count)
+        self.assertTrue(mmd_node_count, "an empty diagram would prove nothing")
         self.assertEqual(mmd_node_count,
                          len(audit.architecture_graph(full, snapshot.rows)["nodes"]))
         self.assertEqual(html.count("&lt;br/&gt;"), mmd_node_count,

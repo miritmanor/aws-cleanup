@@ -23,10 +23,10 @@ DIAGRAM_CSS = """
 """
 
 _PANEL_OPEN = """
-  <div class="graph-wrap" id="diagramWrap" style="display:none">
-    <div class="graph-controls">
+  <div class="panel-wrap" id="diagramWrap" style="display:none">
+    <div class="panel-controls">
       <span>The application&rsquo;s runtime shape: solid lines are calls and data use; dotted
-        lines are likely but unproven (IAM access, a name match). Use the Graph view for every link.</span>
+        lines are likely but unproven (IAM access, a name match). The table's Connections column lists every link.</span>
       <span id="diagramScopeWrap" style="display:none">
         <label for="diagramScope">Scope</label>
         <select id="diagramScope"></select>
@@ -109,7 +109,7 @@ function drawDiagram() {
       diagramNote(scroll,
         "This diagram could not be rendered: " +
         String(err && err.message ? err.message : err) +
-        ". The same graph is in the Graph view, and beside this file as a .mmd.");
+        ". The same diagram is beside this file as a .mmd.");
     });
 }
 

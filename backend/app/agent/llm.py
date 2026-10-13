@@ -55,7 +55,9 @@ def get_chat_model(settings: AgentSettings):
     provider = install.provider()
     if provider == "openai":
         from langchain_openai import ChatOpenAI
-        return ChatOpenAI(model=settings.model, temperature=0, api_key=api_key)
+        # Responses API: newer models reject tools + their default reasoning on chat completions.
+        return ChatOpenAI(model=settings.model, temperature=0, api_key=api_key,
+                          use_responses_api=True)
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
         return ChatAnthropic(model=settings.model, temperature=0, api_key=api_key)

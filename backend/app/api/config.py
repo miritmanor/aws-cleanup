@@ -44,7 +44,6 @@ def get_config():
         exists=store.exists(),
         authoritative_only=settings.authoritative_only,
         graph_in_html=settings.graph_in_html,
-        graph_all_nodes=settings.graph_all_nodes,
         bubbles_in_html=settings.bubbles_in_html,
         bubbles_default_metric=settings.bubbles_default_metric,
         snapshot_file=settings.snapshot_file,

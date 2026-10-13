@@ -1,4 +1,4 @@
-"""Read-only views of the snapshot: rows, overview, graph, architecture diagram and the
+"""Read-only views of the snapshot: rows, overview, architecture diagram and the
 service colour table. No AWS calls."""
 
 from fastapi import APIRouter, Query
@@ -6,7 +6,6 @@ from fastapi import APIRouter, Query
 from aws_resource_audit.analyze.billing_coverage import assess_billing_coverage
 from aws_resource_audit.analyze.cost import attribute_costs
 from aws_resource_audit.analyze.architecture import architecture_graph, project_architecture
-from aws_resource_audit.analyze.graph import contract_graph
 from aws_resource_audit.analyze.project_summary import summarize_projects
 from aws_resource_audit.analyze.service_summary import summarize_services
 from aws_resource_audit.naming.effective import remembered_empty_groups
@@ -78,24 +77,6 @@ def get_billing():
             lines=service_entry_lines(entry, report.currency))
             for entry in report.listed_services()],
     )
-
-
-@router.get("/graph", summary="The dependency graph")
-def get_graph(
-    all_nodes: bool = Query(
-        default=None,
-        description="Draw every scanned resource instead of contracting "
-                    "supporting ones away. Defaults to the graph_all_nodes "
-                    "setting."),
-):
-    """The graph payload, contracted unless the query parameter says otherwise."""
-    settings = deps.get_settings()
-    snapshot = stores.snapshot_store(deps.get_paths(settings)).load()
-    graph = snapshot.graph or {}
-    draw_all = settings.graph_all_nodes if all_nodes is None else all_nodes
-    if graph and not draw_all:
-        graph = contract_graph(graph)
-    return graph
 
 
 @router.get("/mermaid", summary="The architecture diagram, as Mermaid source")

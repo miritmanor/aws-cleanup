@@ -82,6 +82,32 @@ class LineTests(unittest.TestCase):
         self.assertEqual(edges_of(arch), {("nightly", "fn"): ("triggers", "solid")})
 
 
+class LogGroupTests(unittest.TestCase):
+    def setUp(self):
+        self.fn = make_row("LambdaFunction", "fn")
+        self.logs = make_row("CloudWatchLogGroup", "/aws/lambda/fn")
+        self.stream = make_row("FirehoseStream", "to-s3")
+
+    def test_a_log_group_that_only_receives_logs_is_not_drawn(self):
+        rows = [self.fn, self.logs]
+        arch = architecture_graph(graph(rows, (self.logs, self.fn, "loggroup.any.name-convention")), rows)
+        self.assertEqual([n["id"] for n in arch["nodes"]], [key(self.fn)])
+        self.assertEqual(arch["edges"], [])
+
+    def test_a_forwarding_log_group_is_drawn_between_writer_and_destination(self):
+        rows = [self.fn, self.logs, self.stream]
+        arch = architecture_graph(graph(rows, (self.logs, self.fn, "loggroup.any.name-convention"),
+                                        (self.logs, self.stream, "loggroup.any.subscription-filter")), rows)
+        self.assertEqual(edges_of(arch), {("fn", "/aws/lambda/fn"): ("logs to", "solid"),
+                                          ("/aws/lambda/fn", "to-s3"): ("forwards to", "solid")})
+
+    def test_an_explicit_logging_config_logs_to_a_forwarding_group(self):
+        rows = [self.fn, self.logs, self.stream]
+        arch = architecture_graph(graph(rows, (self.fn, self.logs, "lambda.loggroup.logging-config"),
+                                        (self.logs, self.stream, "loggroup.any.subscription-filter")), rows)
+        self.assertEqual(edges_of(arch)[("fn", "/aws/lambda/fn")], ("logs to", "solid"))
+
+
 class PassThroughTests(unittest.TestCase):
     def test_a_custom_domain_is_drawn_as_route53_to_the_api(self):
         zone, domain = make_row("Route53HostedZone", "Z1", region="global"), make_row("APIGatewayDomainName", "api.x")

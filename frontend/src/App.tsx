@@ -4,13 +4,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "./api/client";
 import type {
-  BillingSummary, ConfigResponse, Graph, Overview, Project, Row,
+  BillingSummary, ConfigResponse, Overview, Project, Row,
   ScanSummary, ServiceMeta,
 } from "./api/types";
 import { BillingBanner } from "./components/BillingBanner";
 import { ScanBar } from "./components/ScanBar";
 import { ResourceTable } from "./components/ResourceTable";
-import { GraphPanel } from "./components/GraphPanel";
 import { ArchitecturePanel } from "./components/ArchitecturePanel";
 import { OverviewPanel } from "./components/OverviewPanel";
 import { ProjectsPage } from "./pages/ProjectsPage";
@@ -18,14 +17,13 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { AgentPanel } from "./components/AgentPanel";
 
 type Tab =
-  | "overview" | "resources" | "graph" | "architecture" | "projects" | "settings";
+  | "overview" | "resources" | "architecture" | "projects" | "settings";
 
 // Overview first: "what is in this account, and what looks idle" comes before
 // the per-resource question.
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "resources", label: "Resources" },
-  { id: "graph", label: "Graph" },
   { id: "architecture", label: "Architecture" },
   { id: "projects", label: "Projects" },
   { id: "settings", label: "Settings" },
@@ -34,7 +32,6 @@ const TABS: { id: Tab; label: string }[] = [
 export default function App() {
   const [tab, setTab] = useState<Tab>("overview");
   const [scan, setScan] = useState<ScanSummary | null>(null);
-  const [graph, setGraph] = useState<Graph | null>(null);
   const [billing, setBilling] = useState<BillingSummary | null>(null);
   const [serviceMeta, setServiceMeta] = useState<ServiceMeta>({});
   const [projects, setProjects] = useState<Project[]>([]);
@@ -42,7 +39,6 @@ export default function App() {
   // Starts false so the panel never flashes in and out on load: the
   // uncertain state and the unavailable one should look the same.
   const [agentAvailable, setAgentAvailable] = useState(false);
-  const [allNodes, setAllNodes] = useState(false);
   const [focusKey, setFocusKey] = useState<string | null>(null);
   // Checkbox multi-select, lifted here so it survives tab switches and can also
   // scope an agent question. ResourceTable decides what to do with it.
@@ -74,14 +70,6 @@ export default function App() {
   const loadBilling = useCallback(async () => {
     try { setBilling(await api.getBilling()); } catch { setBilling(null); }
   }, []);
-
-  const loadGraph = useCallback(async () => {
-    try {
-      setGraph(await api.getGraph(allNodes));
-    } catch {
-      setGraph(null);
-    }
-  }, [allNodes]);
 
   // The summaries AND the packed circle positions, both computed in Python -
   // see components/OverviewPanel.tsx for why neither is derived here.
@@ -128,21 +116,17 @@ export default function App() {
     })();
   }, [loadScan, loadGroups, loadConfig, loadBilling, loadOverview]);
 
-  // The graph is fetched separately because the all_nodes toggle refetches it.
-  useEffect(() => { void loadGraph(); }, [loadGraph]);
-
   useEffect(() => { void loadMermaid(); }, [loadMermaid]);
 
   /** Called by ScanBar when a scan stops running. Re-reads everything a scan
    *  can have changed - which is all of it except the config. */
   const onScanFinished = useCallback(() => {
     void loadScan();
-    void loadGraph();
     void loadGroups();
     void loadMermaid();
     void loadBilling();
     void loadOverview();
-  }, [loadScan, loadGraph, loadGroups, loadMermaid, loadBilling, loadOverview]);
+  }, [loadScan, loadGroups, loadMermaid, loadBilling, loadOverview]);
 
   const rows: Row[] = scan?.rows ?? [];
 
@@ -164,7 +148,7 @@ export default function App() {
   const onGroupsChanged = () => { void loadGroups(); void loadScan(); void loadOverview(); };
 
   // What the agent is asked about: the checkbox selection, else the focused
-  // resource (e.g. a clicked graph node), else nothing.
+  // resource (a clicked link in the Connections column), else nothing.
   const resourceKeys: string[] =
     selected.size > 0 ? [...selected] : focusKey ? [focusKey] : [];
 
@@ -235,19 +219,6 @@ export default function App() {
             ) : (
               <FirstRun />
             )
-          ) : tab === "graph" ? (
-            graph && scan ? (
-              <GraphPanel
-                graph={graph}
-                rows={rows}
-                serviceMeta={serviceMeta}
-                allNodes={allNodes}
-                onAllNodesChange={setAllNodes}
-                onPickNode={setFocusKey}
-              />
-            ) : (
-              <FirstRun />
-            )
           ) : tab === "architecture" ? (
             scan ? (
               <ArchitecturePanel
@@ -264,7 +235,7 @@ export default function App() {
           ) : config ? (
             <SettingsPage
               config={config}
-              onSaved={() => { void loadConfig(); void loadGraph(); }}
+              onSaved={() => { void loadConfig(); }}
             />
           ) : (
             <p className="empty">Settings could not be read — see the message above.</p>

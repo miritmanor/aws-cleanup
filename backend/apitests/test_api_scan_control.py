@@ -285,13 +285,13 @@ class ConfigTests(ApiTestCase):
         response = self.client.request(
             "PUT", "/api/config",
             json={"connection_types": {"amplify.apigateway.name-match": "off"},
-                  "graph_all_nodes": True})
+                  "authoritative_only": True})
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertTrue(body["graph_all_nodes"])
+        self.assertTrue(body["authoritative_only"])
         states = {ct["id"]: ct["state"] for ct in body["connection_types"]}
         self.assertEqual(states["amplify.apigateway.name-match"], "off")
-        self.assertEqual(self.read_config()["graph_all_nodes"], True)
+        self.assertEqual(self.read_config()["authoritative_only"], True)
 
     def test_assume_role_and_role_name_round_trip(self):
         """The Settings page can set assume_role and role_name, like audit_config.json."""

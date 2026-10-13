@@ -31,7 +31,6 @@ export function SettingsPage({ config, onSaved }: Props) {
           (config.raw.connection_types as Record<string, ConnectionState>) ?? {},
         authoritative_only: config.authoritative_only,
         graph_in_html: config.graph_in_html,
-        graph_all_nodes: config.graph_all_nodes,
         bubbles_in_html: config.bubbles_in_html,
         bubbles_default_metric: config.bubbles_default_metric,
         snapshot_file: config.snapshot_file,

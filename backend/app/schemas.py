@@ -296,7 +296,6 @@ class ConfigResponse(BaseModel):
     exists: bool
     authoritative_only: bool
     graph_in_html: bool
-    graph_all_nodes: bool
     bubbles_in_html: bool
     bubbles_default_metric: str
     snapshot_file: str
@@ -322,7 +321,6 @@ class ConfigUpdate(StrictModel):
         default_factory=dict)
     authoritative_only: bool = False
     graph_in_html: bool = True
-    graph_all_nodes: bool = False
     # Carried through because PUT replaces the whole file.
     bubbles_in_html: bool = True
     bubbles_default_metric: str = "resource_count"

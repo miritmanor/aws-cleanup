@@ -15,6 +15,7 @@ COLUMN_OF = {
     "EKSCluster": COMPUTE,
     "SQSQueue": MESSAGING, "SNSTopic": MESSAGING, "EventBridgeBus": MESSAGING,
     "KinesisStream": MESSAGING, "FirehoseStream": MESSAGING, "MSKCluster": MESSAGING,
+    "CloudWatchLogGroup": MESSAGING,
     "S3Bucket": DATA, "EFSFileSystem": DATA, "RDSInstance": DATA,
     "ElastiCacheCluster": DATA, "OpenSearchDomain": DATA,
     "OpenSearchServerlessCollection": DATA, "RedshiftCluster": DATA,
