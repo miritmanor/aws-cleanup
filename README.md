@@ -195,17 +195,6 @@ not line up is listed as one of four things:
 Each finding says how many resources of each type the report actually holds,
 so "AWS charged me and this table is empty" is visible rather than inferred.
 
-**`EC2 - Other` does not accuse you of having a NAT gateway.** When the
-usage-type breakdown attributes effectively all of the charge to things the
-report does hold (EBS volumes, snapshots, Elastic IPs), the category is listed
-under *Accounted for* with that breakdown, and the report says outright that
-there is no sign of a NAT gateway. Only unexplained money keeps it as a
-finding, and then it says how much.
-
-Services costing less than `0.01` over the window are counted but not listed —
-AWS itself rounds those to `0.00`, and six of them buried the one line that
-mattered.
-
 ## Interpreting the output
 
 AWS itself limits how much of this can be known, and the reports are honest
