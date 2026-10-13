@@ -48,7 +48,7 @@ class EntryPointTests(unittest.TestCase):
         self.assertTrue(callable(run), "run resolved to the module, not the function")
 
     def test_the_cli_parses_its_flags(self):
-        cli = _load_entry_point("aws_resource_audit.py")
+        cli = _load_entry_point("aws_cleanup.py")
         args = cli.build_parser().parse_args(
             ["--regions", "us-east-1", "--no-cost", "--profile", "aws-audit"])
         self.assertEqual(args.regions, ["us-east-1"])
@@ -59,7 +59,7 @@ class EntryPointTests(unittest.TestCase):
         """With no credentials the real entry point must fail at authentication, proving
         everything before it (imports, config, paths) ran."""
         result = subprocess.run(
-            [sys.executable, "aws_resource_audit.py", "--regions", "us-east-1", "--no-cost",
+            [sys.executable, "aws_cleanup.py", "--regions", "us-east-1", "--no-cost",
              "--profile", "aws-audit"],
             cwd=REPO, capture_output=True, text=True, timeout=120,
             # Only credential lookup is redirected; HOME stays real.
@@ -74,7 +74,7 @@ class EntryPointTests(unittest.TestCase):
     def test_profile_is_required(self):
         """No silent fallback to boto3's default chain: --profile is required."""
         result = subprocess.run(
-            [sys.executable, "aws_resource_audit.py", "--regions", "us-east-1"],
+            [sys.executable, "aws_cleanup.py", "--regions", "us-east-1"],
             cwd=REPO, capture_output=True, text=True, timeout=120,
             env=_no_credentials_env(),
         )
@@ -85,7 +85,7 @@ class EntryPointTests(unittest.TestCase):
     def test_the_removed_output_dir_flag_fails_loudly(self):
         """A removed flag is an error, not silently accepted."""
         result = subprocess.run(
-            [sys.executable, "aws_resource_audit.py", "--profile", "aws-audit", "--output-dir", "out"],
+            [sys.executable, "aws_cleanup.py", "--profile", "aws-audit", "--output-dir", "out"],
             cwd=REPO, capture_output=True, text=True, timeout=120,
             env=_no_credentials_env(),
         )
@@ -112,7 +112,7 @@ class ReportEntryPointTests(unittest.TestCase):
     def test_it_renders_a_snapshot_with_no_credentials(self):
         """The end-to-end claim: a real snapshot on disk, the real entry point,
         no AWS reachable, and six rendered files at the end of it."""
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         with tempfile.TemporaryDirectory() as tmp:
             # Where the renderer will look, from the same function it uses.
             scan_dir = os.path.normpath(os.path.join(tmp, audit.Settings.output_dir))
@@ -142,7 +142,7 @@ class ReportEntryPointTests(unittest.TestCase):
 
     def test_the_library_render_prints_no_file_list(self):
         """The web app calls render() too, and its users cannot open these paths."""
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         lines = []
         with tempfile.TemporaryDirectory() as tmp:
             settings = audit.Settings(output_dir=tmp)
@@ -160,7 +160,7 @@ class ReportEntryPointTests(unittest.TestCase):
         self.assertNotIn("aws_regenerate_report.py", printed)
 
     def test_it_says_what_to_do_when_there_is_no_snapshot(self):
-        """The likeliest first run: aws_regenerate_report.py before aws_resource_audit.py has ever run."""
+        """The likeliest first run: aws_regenerate_report.py before aws_cleanup.py has ever run."""
         with tempfile.TemporaryDirectory() as tmp:
             result = subprocess.run(
                 [sys.executable, os.path.join(REPO, "aws_regenerate_report.py")],
@@ -170,7 +170,7 @@ class ReportEntryPointTests(unittest.TestCase):
             combined = result.stdout + result.stderr
             self.assertNotEqual(result.returncode, 0)
             self.assertNotIn("Traceback", combined, combined)
-            self.assertIn("Run aws_resource_audit.py first", combined)
+            self.assertIn("Run aws_cleanup.py first", combined)
 
 
 class LibraryRaisesCliExitsTests(unittest.TestCase):
@@ -210,7 +210,7 @@ class LibraryRaisesCliExitsTests(unittest.TestCase):
 
         self.assertEqual(offenders, [],
                          "the library must raise AuditError and let the caller decide; "
-                         "only aws_resource_audit.py and aws_regenerate_report.py may end the process:\n  "
+                         "only aws_cleanup.py and aws_regenerate_report.py may end the process:\n  "
                          + "\n  ".join(offenders))
 
 

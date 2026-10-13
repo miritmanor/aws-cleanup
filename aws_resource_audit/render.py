@@ -7,7 +7,6 @@ from .analyze.billing_coverage import assess_billing_coverage
 from .analyze.cost import attribute_costs
 from .analyze.group_audit import audit_groups
 from .analyze.architecture import architecture_graph, project_architecture
-from .analyze.graph import contract_graph
 from .console import say, set_quiet
 from .analyze.project_summary import KIND_PROJECT, summarize_projects
 from .analyze.service_summary import summarize_services
@@ -30,14 +29,11 @@ from .snapshot import read_snapshot
 
 
 def _say_graph_stats(stats):
-    """The graph summary line, printed on this side because contraction is."""
+    """The graph summary line, printed at render so a re-render reports it too."""
     say(f"Graph: {stats['nodes']} node(s), {stats['edges']} edge(s) - "
         f"{stats['grouping_edges']} grouping, {stats['report_only_edges']} report-only, "
         f"{stats['attribute_edges']} shared-attribute, {stats['dangling_edges']} dangling"
         + (f" ({stats['merged']} duplicate detection(s) merged)" if stats["merged"] else ""))
-    if stats.get("hidden_nodes"):
-        say(f"       {stats['hidden_nodes']} supporting resource(s) contracted away, "
-            f"{stats['bridged_edges']} link(s) redrawn through them")
 
 
 def render_outputs(snapshot, paths, settings):
@@ -60,16 +56,11 @@ def render_outputs(snapshot, paths, settings):
                                   coverage_entries=snapshot.coverage)
     billing_coverage = assess_billing_coverage(
         snapshot.billing, coverage_entries=snapshot.coverage, rows=rows)
-    # Contracted here so "graph_all_nodes" is a re-render. The Graph tab may show every
-    # resource; the Diagram tab and .mmd draw the architecture graph instead.
     overview = summarize_projects(rows, remembered=remembered)
 
-    graph = snapshot.graph
-    if graph and not settings.graph_all_nodes:
-        graph = contract_graph(graph)
     diagram_graph = architecture_graph(snapshot.graph or {}, rows)
-    if graph.get("stats"):
-        _say_graph_stats(graph["stats"])
+    if (snapshot.graph or {}).get("stats"):
+        _say_graph_stats(snapshot.graph["stats"])
 
     # One .mmd per project, from the same functions the API uses. Projects only:
     # a diagram of what nobody owns is not an architecture.
@@ -96,7 +87,7 @@ def render_outputs(snapshot, paths, settings):
 
     write_json(rows, paths["json"])
 
-    generate_html_report(rows, paths["html"], graph=graph if settings.graph_in_html else None,
+    generate_html_report(rows, paths["html"],
                          diagram_graph=diagram_graph if settings.graph_in_html else None,
                          generated_at=snapshot.scanned_at,
                          coverage=snapshot.coverage,

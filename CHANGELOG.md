@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The agent no longer fails on newer OpenAI models (e.g. `gpt-5.6-luna`) with "Function tools with reasoning_effort are not supported". OpenAI requests now use the Responses API. Rebuild the image to pick this up.
+- The Graph tab is removed from the web app and the HTML report. Use the Architecture tab (Diagram in the report) for the application's shape and the Connections column for every link. The `graph_all_nodes` setting no longer does anything: delete it from `audit_config.json` (a file that still has it loads with a warning). `graph_in_html` now turns the report's Diagram view on or off.
+- The CLI's scan command is renamed from `aws_resource_audit.py` to `aws_cleanup.py`. Flags are unchanged.
+- The architecture diagram now shows a CloudWatch log group when it forwards events (a subscription filter to Lambda, Kinesis, Firehose or OpenSearch), with "logs to" and "forwards to" lines. Log groups that only receive logs are still left out. Regenerate or reload to see it; no re-scan needed.
 - Reports, the snapshot and the config files are now always read and written as UTF-8. Before, the CLI on Windows used the local code page, which could fail on non-ASCII names.
 - A resource on a bill that cannot be split per resource now shows which bill, its total and how many resources share it, e.g. "shared 'EC2 - Other' in us-east-1: 2.47 USD, 7 resources", instead of "unallocated (shared bill)". Its Cost notes give the amount, how AWS splits that bill and which resources share it; why it is not divided is in the "Why some resources show no cost" section. The web app's Resources tab now has the Cost notes column. Regenerate or reload to see it; no re-scan needed.
 - In the Resources tab, "Add to existing project…" now lists every project, including ones you have not named. Adding resources no longer stops the project from picking up new resources on later scans.

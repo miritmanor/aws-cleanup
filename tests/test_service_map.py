@@ -108,7 +108,7 @@ class ReportCategoryTests(unittest.TestCase):
 
 
 class StructuralCategoryTests(unittest.TestCase):
-    """The graph draws by AWS category: STRUCTURAL_SERVICES is held to that rule here,
+    """STRUCTURAL_SERVICES follows AWS category, and is held to that rule here,
     since config.py cannot import SERVICE_META."""
 
     # The application's categories; not Security/Identity, Management & Governance or

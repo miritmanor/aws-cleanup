@@ -28,7 +28,7 @@ def print_outputs(paths, settings, after_scan):
     say("\nOpen the report:")
     for kind, hint in files:
         if kind == "html" and settings.graph_in_html:
-            hint += " (+ dependency graph)"
+            hint += " (+ architecture diagram)"
         say(f"  {os.path.abspath(paths[kind])}   {hint}")
     here = os.path.dirname(os.path.abspath(__file__))
     say(f"\nWhat the messages above mean, and what to do about them: "

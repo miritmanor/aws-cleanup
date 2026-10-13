@@ -232,7 +232,7 @@ def read_snapshot(path):
     """Read a snapshot, or raise AuditError naming the file and saying to run a scan."""
     if not os.path.exists(path):
         raise AuditError(
-            f"{path}: no scan snapshot here. Run aws_resource_audit.py first - "
+            f"{path}: no scan snapshot here. Run aws_cleanup.py first - "
             "it writes the snapshot this renders from. If your scan wrote "
             "somewhere else, check "
             "'output_dir' and 'snapshot_file' in audit_config.json.")
@@ -253,7 +253,7 @@ def read_snapshot(path):
         raise AuditError(
             f"{path}: snapshot schema version {version!r}, this build reads "
             f"{SCHEMA_VERSION} and knows no way to upgrade it. Re-run "
-            "aws_resource_audit.py to write a current one.")
+            "aws_cleanup.py to write a current one.")
 
     rows = data.get("rows")
     if not isinstance(rows, list):

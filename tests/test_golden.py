@@ -25,7 +25,7 @@ class GoldenRenderTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.rows, cls.contracted, cls.full, cls.notes = corpus.build()
+        cls.rows, cls.full, cls.notes = corpus.build()
         cls.billing = corpus.billing()
         cls.coverage = corpus.coverage_entries()
         cls.cost_report = audit.attribute_costs(
@@ -63,17 +63,17 @@ class GoldenRenderTests(unittest.TestCase):
 
     def test_html(self):
         self.assertMatchesGolden("report.html", audit.render_html_report(
-            self.rows, graph=self.contracted, coverage=self.coverage,
+            self.rows, coverage=self.coverage,
             diagram_graph=audit.architecture_graph(self.full, self.rows),
             billing_coverage=self.billing_coverage,
             cost_report=self.cost_report,
             overview=self.overview()))
 
-    def test_html_without_the_graph_panel(self):
-        """graph=None is a separate render path: it drops the CDN script tag and
-        every graph asset, so it can break on its own."""
+    def test_html_without_the_diagram_panel(self):
+        """diagram_graph=None is a separate render path: it drops the CDN script tag and
+        every diagram asset, so it can break on its own."""
         self.assertMatchesGolden("report_nograph.html", audit.render_html_report(
-            self.rows, graph=None, coverage=self.coverage,
+            self.rows, diagram_graph=None, coverage=self.coverage,
             billing_coverage=self.billing_coverage,
             cost_report=self.cost_report,
             overview=self.overview()))
@@ -81,7 +81,7 @@ class GoldenRenderTests(unittest.TestCase):
     def test_html_without_the_project_overview(self):
         """overview=None omits the overview panel, its CSS and its script."""
         page = audit.render_html_report(
-            self.rows, graph=None, coverage=self.coverage,
+            self.rows, coverage=self.coverage,
             billing_coverage=self.billing_coverage,
             cost_report=self.cost_report)
         self.assertNotIn("bubblesWrap", page)
@@ -120,7 +120,7 @@ class SnapshotRoundTripTests(GoldenRenderTests):
 
     @classmethod
     def setUpClass(cls):
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "aws_scan.json")
             # scanned_at is the pinned clock, which is also what now() returns
@@ -133,7 +133,6 @@ class SnapshotRoundTripTests(GoldenRenderTests):
         cls.snapshot = snapshot
         cls.rows = snapshot.rows
         cls.full = snapshot.graph
-        cls.contracted = audit.contract_graph(snapshot.graph)
         cls.notes = snapshot.grouping
         # Re-derived from the snapshot exactly as render_outputs() does.
         cls.billing = snapshot.billing
@@ -163,7 +162,7 @@ class CorpusCoverageTests(unittest.TestCase):
 
     def test_the_corpus_covers_every_service(self):
         """A new collector must appear in the goldens."""
-        rows, _, _, _ = corpus.build()
+        rows, _, _ = corpus.build()
         self.assertEqual(sorted({r["service"] for r in rows}), sorted(ALL_SERVICES))
 
     def test_the_corpus_service_list_matches_the_collector_guard(self):
@@ -174,7 +173,7 @@ class CorpusCoverageTests(unittest.TestCase):
 
     def test_the_corpus_exercises_the_awkward_cases(self):
         """Each distinct output branch still appears in the corpus."""
-        rows, contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         connections = " ".join(audit.render_connections(r) for r in rows)
 
         self.assertIn("DANGLING ->", connections)
@@ -188,13 +187,6 @@ class CorpusCoverageTests(unittest.TestCase):
         self.assertTrue(any(c.startswith("shared '") for c in costs))
         self.assertTrue(any(n["kind"] == "stub" for n in full["nodes"]),
                         "no dangling stub node in the graph")
-        self.assertTrue(any(e.get("bridged") for e in contracted["edges"]),
-                        "no bridged edge - the one link whose endpoints' "
-                        "connections columns never mention each other, and the "
-                        "single deliberate exception to graph/column agreement")
-        self.assertTrue(contracted["stats"]["hidden_nodes"],
-                        "contraction hid nothing, so the contracted golden "
-                        "is the same graph as the full one")
 
 
 if __name__ == "__main__":

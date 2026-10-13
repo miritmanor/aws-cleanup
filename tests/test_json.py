@@ -13,7 +13,7 @@ from aws_resource_audit.present.json import render_json, serialize_rows
 
 class PublicSchemaTests(unittest.TestCase):
     def test_only_the_declared_fields_are_emitted(self):
-        rows, _, _, _ = corpus.build()
+        rows, _, _ = corpus.build()
         for row in serialize_rows(rows):
             self.assertEqual(tuple(row), audit.ROW_FIELDS)
 
@@ -31,12 +31,12 @@ class PublicSchemaTests(unittest.TestCase):
 
     def test_the_pipeline_no_longer_needs_to_clean_up_after_itself(self):
         """Rows keep their internal fields through the pipeline; nothing strips them."""
-        rows, _, _, _ = corpus.build()
+        rows, _, _ = corpus.build()
         self.assertTrue(any("_edges" in r for r in rows))
         self.assertTrue(any(r.get("_references") for r in rows))
 
     def test_render_json_is_valid_and_round_trips(self):
-        rows, _, _, _ = corpus.build()
+        rows, _, _ = corpus.build()
         parsed = json.loads(render_json(rows))
         self.assertEqual(len(parsed), len(rows))
         self.assertEqual(parsed[0]["resource_id"], rows[0]["resource_id"])

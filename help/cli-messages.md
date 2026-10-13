@@ -81,10 +81,9 @@ project. Edit or remove the entry in `results/aws_project_groups.json`.
 
 ## Graph and audit
 
-**N supporting resource(s) contracted away**
-IAM roles, log groups, security groups and similar are hidden from the graph
-and their links drawn through. Set `"graph_all_nodes": true` in
-`audit_config.json` and run `aws_regenerate_report.py` to draw them.
+**'graph_all_nodes' no longer does anything**
+That setting only affected the Graph tab, which was removed. Delete the line
+from `audit_config.json`.
 
 **Audit: N oversized project(s), …**
 The grouping pass checking itself. Details are in `results/grouping_audit.md`.

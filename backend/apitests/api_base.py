@@ -43,7 +43,7 @@ class ApiTestCase(unittest.TestCase):
 
     def write_snapshot(self):
         """The golden corpus written as a real snapshot where output_paths() puts it."""
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         paths = audit.output_paths(audit.Settings(output_dir=self.data_dir))
         audit.write_snapshot(
             paths["snapshot"], rows, full, notes,

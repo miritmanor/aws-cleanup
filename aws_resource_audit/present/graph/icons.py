@@ -55,6 +55,7 @@ SERVICE_ICONS = {
     "EventBridgeBus": "eventbridge",
     "LoadBalancer": "elb",
     "CognitoUserPool": "cognito",
+    "CloudWatchLogGroup": "cloudwatch",
 }
 
 # Shipped ahead of use, so adding a type is a line

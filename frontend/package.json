@@ -11,13 +11,11 @@
     "gen:api": "openapi-typescript http://127.0.0.1:8000/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
-    "cytoscape": "^3.30.2",
     "mermaid": "^11.17.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/cytoscape": "^3.21.8",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

@@ -25,7 +25,7 @@ class SnapshotSchemaTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.rows, _contracted, cls.full, cls.notes = corpus.build()
+        cls.rows, cls.full, cls.notes = corpus.build()
 
     def test_the_public_schema_survives_intact(self):
         stored = snapshot_row(self.rows[0])
@@ -61,7 +61,7 @@ class SnapshotRoundTripTests(unittest.TestCase):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmpdir.cleanup)
         self.path = os.path.join(self.tmpdir.name, "aws_scan.json")
-        rows, _contracted, full, notes = corpus.build()
+        rows, full, notes = corpus.build()
         write_snapshot(self.path, rows, full, notes, account="123456789012",
                        regions=["us-east-1", "eu-west-1"],
                        scanned_at=datetime(2026, 6, 1, 12, tzinfo=timezone.utc))
@@ -95,11 +95,11 @@ class SnapshotRoundTripTests(unittest.TestCase):
         self.assertTrue(tagged, "corpus has no tagged rows; this proves nothing")
         self.assertIsInstance(tagged[0]["tags"], dict)
 
-    def test_the_graph_is_stored_uncontracted(self):
-        """The full graph is stored, so graph_all_nodes is a re-render."""
+    def test_the_graph_is_stored_whole(self):
+        """Every scanned resource is a graph node, so the diagrams are a re-render."""
         snapshot = read_snapshot(self.path)
-        contracted = audit.contract_graph(snapshot.graph)
-        self.assertGreater(len(snapshot.graph["nodes"]), len(contracted["nodes"]))
+        resources = [n for n in snapshot.graph["nodes"] if n["kind"] == "resource"]
+        self.assertEqual(len(resources), len(snapshot.rows))
 
     def test_grouping_notes_survive_for_the_audit(self):
         snapshot = read_snapshot(self.path)
@@ -120,7 +120,7 @@ class AtomicWriteTests(unittest.TestCase):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmpdir.cleanup)
         self.path = os.path.join(self.tmpdir.name, "aws_scan.json")
-        self.rows, _contracted, self.graph, self.notes = corpus.build()
+        self.rows, self.graph, self.notes = corpus.build()
 
     def _write(self):
         write_snapshot(self.path, self.rows, self.graph, self.notes,
@@ -195,7 +195,7 @@ class UnreadableSnapshotTests(unittest.TestCase):
         with self.assertRaises(AuditError) as ctx:
             read_snapshot(os.path.join(self.tmpdir.name, "absent.json"))
         message = str(ctx.exception)
-        self.assertIn("aws_resource_audit.py", message)
+        self.assertIn("aws_cleanup.py", message)
         self.assertIn("audit_config.json", message)
 
     def test_malformed_json_is_reported_as_such(self):
@@ -212,7 +212,7 @@ class UnreadableSnapshotTests(unittest.TestCase):
         """A newer schema version is refused rather than half-rendered."""
         with self.assertRaises(AuditError) as ctx:
             read_snapshot(self._write({"schema_version": SCHEMA_VERSION + 1, "rows": []}))
-        self.assertIn("Re-run aws_resource_audit.py", str(ctx.exception))
+        self.assertIn("Re-run aws_cleanup.py", str(ctx.exception))
 
     def test_an_old_cost_figure_is_not_carried_forward_as_an_attribution(self):
         """Version 6 to 7: the old even-split cost becomes unavailable, with a re-scan hint."""

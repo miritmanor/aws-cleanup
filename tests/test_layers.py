@@ -219,7 +219,7 @@ class TheCoreDoesNotKnowAboutTheWebAppTests(unittest.TestCase):
     FORBIDDEN = {"backend", "fastapi", "pydantic", "uvicorn", "starlette", "sqlalchemy"}
 
     # The CLI scripts, outside the package, listed by hand.
-    ENTRY_POINTS = ("aws_resource_audit.py", "aws_regenerate_report.py")
+    ENTRY_POINTS = ("aws_cleanup.py", "aws_regenerate_report.py")
 
     def _package_files(self):
         for root, _dirs, names in os.walk(PACKAGE_ROOT):

@@ -125,14 +125,6 @@ class ScanPayloadTests(ApiTestCase):
                 self.assertFalse(key.startswith("_"),
                                  f"internal field {key} reached the client")
 
-    def test_the_graph_is_contracted_by_default(self):
-        """contract_graph runs on the render side so that "draw everything" is a
-        query parameter rather than a re-scan."""
-        contracted = self.client.get("/api/graph").json()
-        every = self.client.get("/api/graph", params={"all_nodes": True}).json()
-        self.assertLess(len(contracted["nodes"]), len(every["nodes"]))
-        self.assertIn("stats", contracted)
-
     def test_service_meta_is_served_not_duplicated(self):
         """Every service in the scan has a colour in the served table."""
         meta = self.client.get("/api/service-meta").json()
