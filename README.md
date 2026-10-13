@@ -18,8 +18,10 @@ It never deletes anything. It tells you what it found, how sure it is, and why.
 
 ## Quick start
 
-Needs Python 3.9+ and an AWS profile (ideally one that assumes the role in
-[`iam/`](iam/README.md)).
+Needs Python 3.9+ and an AWS profile. Scan through the read-only role in
+[`iam/`](iam/README.md): AWS itself then refuses anything but the reads the role
+lists, whatever the code does. A profile with wider permissions also works, but
+then you are trusting the code rather than the role.
 
 ```bash
 git clone https://github.com/miritmanor/aws-cleanup.git && cd aws-cleanup
@@ -112,6 +114,17 @@ scan at a time, no authentication, bound to `127.0.0.1`. Credentials arrive as
 a single read-only Docker secret sourced from `AUDIT_AWS_CREDENTIALS_FILE` on
 the host (default `~/.aws-audit/credentials`); the app will not start without
 that file, and changing it needs `up --force-recreate` rather than `up`.
+Put only the base identity from [`iam/README.md`](iam/README.md) in that file:
+one that can do nothing except assume the read-only role.
+
+**The agent is optional and off by default.** It answers questions about the
+scan using an LLM. To turn it on, set `AUDIT_AGENT_PROVIDER` to `openai`,
+`anthropic` or `bedrock` and `AUDIT_LLM_API_KEY_FILE` to your key file in
+`.env`, then `docker compose up --build`. It then sends scan rows, passages from
+documents you upload, and your questions to that provider. Every account id,
+resource id, ARN, name, tag value, project name, IP and email address is
+replaced by a token first, and the reply you read has the real values put back.
+The provider still sees resource types, regions, dates and costs.
 
 No AWS config file reaches the container, so a profile there has no default
 region. Before the first scan a blank Regions box scans `us-east-1`; after it,
@@ -123,27 +136,19 @@ Handing a script `sts:AssumeRole` or IAM credentials is a real ask, so here's
 what's true about this one and how to verify it yourself rather than take our
 word for it:
 
-- **Read-only by construction, not by promise.** Every AWS call is
-  `Describe*`/`List*`/`Get*` — inventory reads, nothing that creates,
-  modifies, or deletes a resource. The one exception is opt-in and impossible
-  to trigger by accident: `--tag-groups` writes a `Project=<name>` tag, and
-  even that runs in dry-run mode unless you also pass `--confirm`. Verify it
-  yourself: `aws_resource_audit/collect/` (everything that talks to AWS
-  during a scan) contains no `tag_resources`/`create_*`/`delete_*`/`put_*`/
-  `modify_*`/`update_*` call at all — the only such call in the whole package
-  is `tag_resources` in [`naming/tagging.py`](aws_resource_audit/naming/tagging.py),
-  which `run()` reaches only from `--tag-groups`.
-- **A least-privilege IAM role ships with the repo**: its permission list is
-  exactly the read actions the collectors call — not the AWS-managed
-  `ReadOnlyAccess` policy, which covers every AWS service. Deploy
-  [`iam/aws-audit-role.yaml`](iam/aws-audit-role.yaml) and the identity you scan
-  with never holds more than that; see [`iam/README.md`](iam/README.md) for the
-  two-identity setup (a bare `sts:AssumeRole`-only base identity, and the narrow
-  role it assumes). `--tag-groups --confirm` deliberately fails through this
-  role — the role backing routine scans can't write, on purpose.
-- **No network calls except to AWS's own APIs.** No telemetry, no phone-home,
-  no third-party endpoint. `aws_resource_audit/collect/` is the only place
-  that talks to the network, and it only talks to `boto3`.
+- **Read-only, enforced by AWS.** The role in
+  [`iam/aws-audit-role.yaml`](iam/aws-audit-role.yaml) names every action the
+  scan calls (each one a `Describe`, `List` or `Get`) and nothing else, with no
+  wildcards. IAM refuses anything not on that list. `tests/test_iam_role.py`
+  fails if the code calls an action the role does not grant, or the role grants
+  one the code does not call. The only write in the package is
+  `--tag-groups --confirm` (dry run without `--confirm`), and the role cannot do
+  it.
+- **Check it in CloudTrail.** AWS records every call the role makes. After a
+  scan, open CloudTrail → Event history, filter by User name
+  `aws-resource-audit` and set Read-only to `false`. The list should be empty.
+- **No network calls except to AWS.** No telemetry and no third-party
+  endpoint, unless you turn on the web app's agent (see [Web app](#web-app)).
 - **No dependency beyond `boto3`** for the CLI — nothing else is on the
   network's attack surface or in the supply chain for the path that actually
   touches your account. (The optional web app adds FastAPI/React, but it's

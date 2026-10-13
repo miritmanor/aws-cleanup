@@ -20,8 +20,10 @@ with the synthetic test corpus in `tests/corpus.py` instead.
 
 ## What the tool can touch
 
-- A scan only reads (`Describe*` / `List*` / `Get*`), plus one or two chargeable
-  Cost Explorer requests unless you pass `--no-cost`.
+- A scan only reads: each action is named in the role (`Describe`/`List`/`Get`),
+  plus one or two chargeable Cost Explorer requests unless you pass `--no-cost`.
 - The only write is `--tag-groups --confirm`, which adds `Project=<name>` tags.
 - [`iam/aws-audit-role.yaml`](iam/aws-audit-role.yaml) is the least-privilege
   role to scan with; it cannot write at all.
+- The web app's agent is off by default. When on, it sends scan data to the chosen
+  LLM provider with every identifier replaced by a token.

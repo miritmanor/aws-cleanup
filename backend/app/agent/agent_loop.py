@@ -11,6 +11,7 @@ from langchain.agents import create_agent
 from langgraph.checkpoint.memory import MemorySaver
 
 from .. import deps, stores
+from ..privacy.reveal_stream import RevealStream
 from ..store import SnapshotStore
 from . import PAYLOAD_LOGGER, index
 from .llm import get_chat_model
@@ -38,7 +39,7 @@ def _new_agent():
     document_index = index.get_index()
     tools = [
         make_query_resources_tool(snapshot_store),
-        make_search_documents_tool(document_index),
+        make_search_documents_tool(document_index, snapshot_store),
     ]
     checkpointer = MemorySaver()
     agent = create_agent(
@@ -121,12 +122,16 @@ async def run_turn(session_id: str, message: str, resource_keys: list[str]) -> A
     _last_active[session_id] = datetime.now(timezone.utc)
 
     context = _resolve_resource_context(snapshot_store, resource_keys)
-    full_message = f"{context}Question: {message}" if context else message
+    # The question is masked too: it may name a resource, project or account.
+    pseudonymizer, _rows = snapshot_store.get_masked_view()
+    question = pseudonymizer.mask_text(message)
+    full_message = f"{context}Question: {question}" if context else question
+    revealer = RevealStream(pseudonymizer)
 
     config = {"configurable": {"thread_id": session_id}}
 
     # %-args throughout, never f-strings: a tool result here is the whole masked
-    # row set, and it must not even be BUILT unless DEBUG is on.
+    # row set, and it must not even be BUILT unless DEBUG is on. Logged as the model saw it.
     payload.debug("turn %s question: %s", session_id, full_message)
 
     reply = []
@@ -142,7 +147,9 @@ async def run_turn(session_id: str, message: str, resource_keys: list[str]) -> A
                 text = event["data"]["chunk"].text
                 if text:
                     reply.append(text)
-                    yield text
+                    shown = revealer.feed(text)
+                    if shown:
+                        yield shown
             elif kind == "on_chat_model_start":
                 # The full input the model receives (system prompt, history, tool results).
                 payload.debug("turn %s -> model: %r",
@@ -156,6 +163,9 @@ async def run_turn(session_id: str, message: str, resource_keys: list[str]) -> A
             elif kind == "on_tool_end":
                 payload.debug("turn %s tool %s output: %r", session_id,
                               event.get("name"), event["data"].get("output"))
+        tail = revealer.flush()
+        if tail:
+            yield tail
         completed = True
     finally:
         # In a finally, so a turn cut short (client disconnect) still logs what it had.

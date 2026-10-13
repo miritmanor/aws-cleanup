@@ -52,6 +52,15 @@ disagree say so plainly instead of choosing one without comment. If no \
 document matches, say nothing was found rather than filling the gap.
 """
 
+_TOKENS_NOTE = """\
+Every identifier you see is a token standing for a real value you are not \
+shown: RES- a resource id or ARN, NAME- a resource name, PROJ- a project, \
+ACCT- an AWS account, TAG- a tag value, ID- any other identifier (an IP \
+address, a host name, an email). The same value always has the same token. \
+Write tokens exactly as given, never shortened or reformatted: the user sees \
+each one replaced by its real value. Do not guess what a token stands for.
+"""
+
 
 def build_system_prompt() -> str:
     """The base prompt plus live thresholds from aws_resource_audit.config."""
@@ -62,4 +71,4 @@ def build_system_prompt() -> str:
         cw_months=CW_LOOKBACK_DAYS / 30,
     )
     return (_BASE_PROMPT + "\n" + thresholds + "\n" + _CAVEAT_NOTE
-            + "\n" + _DOCUMENTS_NOTE)
+            + "\n" + _DOCUMENTS_NOTE + "\n" + _TOKENS_NOTE)

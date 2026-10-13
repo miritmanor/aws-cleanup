@@ -1,5 +1,5 @@
-"""The agent's two tools, built by factories wired at startup. query_resources reads
-only masked rows; search_documents reads the user's uploaded paperwork."""
+"""The agent's two tools, built by factories wired at startup. Both return only masked
+text: query_resources reads masked rows, search_documents masks each hit."""
 
 import logging
 from typing import Optional
@@ -27,16 +27,16 @@ def make_query_resources_tool(snapshot_store):
         'tier' and 'why_tier' (runtime vs. deployment, and why), 'why_grouped'
         (why it landed in its project group), 'notes' (caveats - always check
         this before asserting a resource is unused) and 'connections'
-        (resolved links to other resources). Account ids are already masked
-        in every field.
+        (resolved links to other resources). Every identifier is a token
+        (RES-..., NAME-..., PROJ-..., ACCT-..., TAG-..., ID-...).
 
         service: exact AWS resource type as scanned, e.g. "Lambda", "S3Bucket".
         region: AWS region, e.g. "us-east-1".
-        project_group: the inferred project name a resource was clustered into.
+        project_group: the project name token a resource was clustered into.
         tier: "runtime" or "deployment".
         stale: true for resources flagged stale (including "STALE (INFERRED)"),
             false for active ones.
-        resource_id: exact resource id to look up one specific resource.
+        resource_id: exact resource id token to look up one specific resource.
         """
         rows = snapshot_store.get_masked_rows()
         results = []
@@ -67,14 +67,14 @@ def make_query_resources_tool(snapshot_store):
     return query_resources
 
 
-def make_search_documents_tool(document_index):
+def make_search_documents_tool(document_index, snapshot_store):
     @tool
     def search_documents(query: str) -> list[dict]:
         """Search the documents the user uploaded about their own AWS
         account - architecture write-ups, runbooks, inventory spreadsheets,
         handover notes, ticket exports - for passages relevant to `query`.
         Returns the matching passages, each with the name of the document it
-        came from. Account ids are already masked.
+        came from. Identifiers in them are tokens, as in query_resources.
 
         Use this for what the account is FOR: what an application does, who
         owns it, whether something was meant to be temporary, why a resource
@@ -86,6 +86,9 @@ def make_search_documents_tool(document_index):
         rather than picking a side silently. An empty result means nothing
         in the uploaded documents matched - not that no document exists.
         """
-        return search_documents_index(document_index, query)
+        # Searched with the real values (the index is local), sent back masked.
+        pseudonymizer, _rows = snapshot_store.get_masked_view()
+        hits = search_documents_index(document_index, pseudonymizer.reveal(query))
+        return pseudonymizer.mask_value(hits)
 
     return search_documents

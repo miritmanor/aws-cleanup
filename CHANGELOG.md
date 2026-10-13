@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The web app can be deployed to AWS (ECS Fargate) in your own account, from a release's files with no clone or build, or from source with `deploy/ecs/ecs-up.sh`. It is reached through an encrypted tunnel at `http://127.0.0.1:8080` and has no public address. Every resource is tagged `Project=aws-cleanup`. See `deploy/ecs/README.md`.
+- The web app's agent is now off by default. To use it, set `AUDIT_AGENT_PROVIDER` (`openai`, `anthropic` or `bedrock`) in `.env`, then `docker compose up --build`.
+- The agent no longer sends account ids, resource ids, ARNs, names, tag values, project names, IP addresses or email addresses to the LLM provider. Each is replaced by a token such as `RES-3f9a…`, and the reply you read shows the real values again. The key behind the tokens is `agent_pseudonym.key` in the data volume. This includes your question and passages from uploaded documents.
+- `iam/aws-audit-role.yaml` now names every action exactly, with no wildcards. It no longer grants `cloudtrail:ListTrails`, `cloudwatch:ListMetrics` or `iam:GenerateCredentialReport`, which nothing called. Redeploy the stack to apply it.
 - The web app can run from published images instead of building them: set `AUDIT_BACKEND_IMAGE` and `AUDIT_FRONTEND_IMAGE` in `.env` (full image references with tag), then `docker compose pull && docker compose up`. Without them, `docker compose up --build` works as before; the images are now tagged `aws-cleanup-backend:local` and `aws-cleanup-frontend:local`.
 - The agent no longer fails on newer OpenAI models (e.g. `gpt-5.6-luna`) with "Function tools with reasoning_effort are not supported". OpenAI requests now use the Responses API, and its replies show as text instead of "[object Object]". Rebuild the image to pick this up.
 - The Graph tab is removed from the web app and the HTML report. Use the Architecture tab (Diagram in the report) for the application's shape and the Connections column for every link. The `graph_all_nodes` setting no longer does anything: delete it from `audit_config.json` (a file that still has it loads with a warning). `graph_in_html` now turns the report's Diagram view on or off.

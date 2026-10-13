@@ -14,8 +14,8 @@ WORKDIR /srv
 COPY pyproject.toml requirements.txt ./
 COPY backend/pyproject.toml ./backend/
 
-# The agent's chat provider, or none to leave the agent out (docker-compose.yml passes it).
-ARG AUDIT_AGENT_PROVIDER=openai
+# The agent's chat provider; none (the default) leaves the agent out. docker-compose.yml passes it.
+ARG AUDIT_AGENT_PROVIDER=none
 # Also ENV: app/agent/install.py reads it to know what this image holds.
 ENV AUDIT_AGENT_PROVIDER=${AUDIT_AGENT_PROVIDER}
 
@@ -44,6 +44,9 @@ RUN pylint aws_resource_audit backend/app
 COPY .gitignore aws_cleanup.py aws_regenerate_report.py cli_output.py ./
 COPY tests ./tests
 COPY tools ./tools
+# Read by test_iam_role and test_ecs_template; only the test stage has them.
+COPY iam ./iam
+COPY deploy ./deploy
 COPY help/cli-messages.md ./help/
 COPY backend/apitests ./backend/apitests
 # -b holds back a passing test's printed output, so the log shows only failures.

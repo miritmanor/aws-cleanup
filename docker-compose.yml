@@ -15,9 +15,9 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       args:
-        # The agent's provider: openai, anthropic, bedrock, or none to build without the
-        # agent. Set it in .env; a change needs `docker compose up --build`.
-        AUDIT_AGENT_PROVIDER: ${AUDIT_AGENT_PROVIDER:-openai}
+        # The agent is off unless named here: openai, anthropic or bedrock. It sends
+        # masked scan data to that provider. Set it in .env, then `docker compose up --build`.
+        AUDIT_AGENT_PROVIDER: ${AUDIT_AGENT_PROVIDER:-none}
     environment:
       AUDIT_DATA_DIR: /data
       # Credentials arrive as a read-only Docker secret (see `secrets:` below).

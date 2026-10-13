@@ -114,8 +114,9 @@ export function AgentDocuments() {
           <p className="hint">
             What the agent reads besides the scan — architecture notes,
             runbooks, handover docs. PDF, DOCX, XLSX, CSV, Markdown and plain
-            text, up to 25 MB each. Account ids are masked out before the
-            model sees them. A name that already exists is replaced. Every
+            text, up to 25 MB each. Account ids, resource ids, names, IP and
+            email addresses are replaced by tokens before the model sees a
+            passage. A name that already exists is replaced. Every
             change rebuilds the index — a few seconds, the first one longer
             while the embedding model loads.
           </p>
