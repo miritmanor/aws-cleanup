@@ -195,7 +195,7 @@ class UnreadableSnapshotTests(unittest.TestCase):
         with self.assertRaises(AuditError) as ctx:
             read_snapshot(os.path.join(self.tmpdir.name, "absent.json"))
         message = str(ctx.exception)
-        self.assertIn("aws_resource_audit.py", message)
+        self.assertIn("aws_cleanup.py", message)
         self.assertIn("audit_config.json", message)
 
     def test_malformed_json_is_reported_as_such(self):
@@ -212,7 +212,7 @@ class UnreadableSnapshotTests(unittest.TestCase):
         """A newer schema version is refused rather than half-rendered."""
         with self.assertRaises(AuditError) as ctx:
             read_snapshot(self._write({"schema_version": SCHEMA_VERSION + 1, "rows": []}))
-        self.assertIn("Re-run aws_resource_audit.py", str(ctx.exception))
+        self.assertIn("Re-run aws_cleanup.py", str(ctx.exception))
 
     def test_an_old_cost_figure_is_not_carried_forward_as_an_attribution(self):
         """Version 6 to 7: the old even-split cost becomes unavailable, with a re-scan hint."""

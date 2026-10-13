@@ -15,7 +15,7 @@ def build_parser():
     return argparse.ArgumentParser(
         description="Render the AWS inventory report from the last scan's snapshot",
         epilog="No flags, and no AWS calls. Output directory and snapshot name "
-               "are settings in audit_config.json; run aws_resource_audit.py "
+               "are settings in audit_config.json; run aws_cleanup.py "
                "to produce a snapshot in the first place.")
 
 

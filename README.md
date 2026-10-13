@@ -6,7 +6,7 @@ A read-only auditor for a personal or small AWS account. It inventories resource
 across regions, pulls whatever "last used" signal each service actually exposes,
 groups resources into projects, attributes the bill where it honestly can, and
 flags stale or orphaned candidates for cleanup — via a CLI
-(`aws_resource_audit.py` / `aws_regenerate_report.py`) or a local web app
+(`aws_cleanup.py` / `aws_regenerate_report.py`) or a local web app
 (`docker compose up`).
 
 It never deletes anything. It tells you what it found, how sure it is, and why.
@@ -72,7 +72,7 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt          # boto3, the only dependency
 
 # scan: minutes, ~$0.01-$0.02 (Cost Explorer; see "What a scan costs")
-python3 aws_resource_audit.py --all-regions --profile <your-profile>
+python3 aws_cleanup.py --all-regions --profile <your-profile>
 
 # re-render the last scan: free, instant, no AWS calls
 python3 aws_regenerate_report.py
@@ -87,20 +87,7 @@ looks wrong. Start with `results/aws_inventory.html`. The `.drawio` files open i
 draw.io (diagrams.net) with its own AWS icons, every box and line editable; the
 `.mmd` shows placeholder icons outside this tool.
 
-### Flags
-
-All seven are on `aws_resource_audit.py`; `aws_regenerate_report.py`
-deliberately has none. The dividing line is that **a flag is a decision you
-make for this run** — where to look, whose credentials, whether to pay for the
-cost lookup — while anything standing about the account is configuration.
-
-| Flag | What it does |
-|---|---|
-| `--all-regions` / `--regions` | Scan scope. With neither, a scan covers the regions saved by earlier scans of the same account (`aws_active_regions.json`), or the profile's default region if there are none. An `--all-regions` scan is what refreshes that list. |
-| `--profile` | AWS named profile. **Required** — there is no fallback to whatever `boto3.Session()` finds, so a scan can never run as an unintended identity by accident. |
-| `--no-cost` | Skip the chargeable `ce:GetCostAndUsage` call(s) entirely — not "fetch and discard". Cost enrichment runs by default; see "What a scan costs". |
-| `--debug` | Print the resolved connection-type table at startup, plus the Lambda env-var dump used for dependency inference. Also sets the log level to DEBUG — see below. |
-| `--tag-groups` | Write a `Project=<name>` tag to AWS resources. Dry-run unless `--confirm` is also passed. The only flag that writes to AWS. |
+Run `python3 aws_cleanup.py --help` to see the flags.
 
 ### Projects and their names
 
@@ -124,42 +111,6 @@ member key; the next run claims that member's project and fills in the rest.
 To add resources to a project, select them in the Resources tab and use **Add to
 existing project…**. To combine two projects, use **Merge into…** on the
 Projects tab. Forgetting a project's name undoes both.
-
-### Logging
-
-Two channels, and they are not the same thing. The progress lines a scan prints
-are the UI — they go to stdout and are unchanged. *Logging* is the separate
-record of what went wrong: a WARNING or ERROR wherever something was swallowed,
-and DEBUG for per-resource detail. It goes to **stderr**, so it never interleaves
-with the progress line being filled in beside it.
-
-The level is `AUDIT_LOG_LEVEL` (`DEBUG`/`INFO`/`WARNING`/`ERROR`/`CRITICAL`),
-which applies to the CLI, `aws_regenerate_report.py` and the web app alike.
-There is no flag for it: `--debug` already selects DEBUG for a scan. A bad value
-complains and falls back to INFO rather than stopping the run.
-
-```bash
-AUDIT_LOG_LEVEL=DEBUG python3 aws_resource_audit.py --profile audit
-```
-
-For the web app, set it under `services.backend.environment` in
-`docker-compose.yml` and read it with `docker compose logs -f backend`.
-
-At DEBUG the backend also logs the agent's **raw** LLM traffic — the prompt as
-the model receives it, the reply, the RAG hits, and every tool call with its
-result. Worth knowing before you turn it on: none of that is masked. Account ids
-are rewritten in the *documents* corpus, but your own typed question never is,
-so anything you pasted into the chat box appears in the log verbatim. It is off
-unless you ask for it. To keep DEBUG everywhere else but silence just that, drop
-a `logging.json` on the data volume:
-
-```json
-{"version": 1, "incremental": true,
- "loggers": {"app.agent.payload": {"level": "INFO"}}}
-```
-
-Where records go at all is one dict in `aws_resource_audit/logsetup.py`; that
-file is also where a log-to-file handler would be added.
 
 ### Configuration: `audit_config.json`
 
@@ -229,88 +180,7 @@ No AWS config file reaches the container, so a profile there has no default
 region. Before the first scan a blank Regions box scans `us-east-1`; after it,
 the box is filled in with the regions that scan found resources in.
 
-#### The agent's API key
-
-Optional. Without one the app runs exactly as described above and the "Ask the
-agent" panel — and the documents inside it — are not shown at all. There is
-nothing to create and nothing to switch off.
-
-To turn the agent on, put your key in a file and name that file in `.env`
-beside `docker-compose.yml`:
-
-```bash
-printf 'sk-...' > ~/.aws-audit/llm_api_key
-echo "AUDIT_LLM_API_KEY_FILE=$HOME/.aws-audit/llm_api_key" >> .env
-docker compose up --force-recreate
-```
-
-The whole file is the key — no section, no prefix. It reaches the container as
-a second read-only Docker secret, the same mechanism as the credentials above
-and for the same reasons; `.env` holds only the path. Changing the key needs
-`up --force-recreate` rather than `up`. (`.env` is gitignored.)
-
-The provider is `openai` unless `.env` says otherwise. To change it, set
-`AUDIT_AGENT_PROVIDER` (`openai`, `anthropic`, `bedrock`, or `none` to leave
-the agent out), name a model of that provider, and rebuild:
-
-```bash
-echo "AUDIT_AGENT_PROVIDER=anthropic" >> .env
-docker compose up -d --build
-docker compose exec backend sh -c 'echo "{\"model\": \"<model id>\"}" > /data/agent_config.json'
-```
-
-Bedrock needs no key of its own: it uses the AWS credentials above.
-
-## Report columns
-
-Every output — CSV, JSON, HTML, Markdown — carries the same columns, defined by
-`ROW_FIELDS` in `aws_resource_audit/rows.py`.
-
-**Identity**
-
-| Column | What it holds |
-|---|---|
-| `service` | The resource type this script assigns, e.g. `LambdaFunction`, `S3Bucket`. |
-| `region` | The region it was found in, or `global` for IAM and other account-wide types. An S3 bucket has its own region. |
-| `resource_id` | The native AWS identifier, or the ARN where that is the identifier. |
-| `arn` | The full ARN where AWS exposes one, empty otherwise — most EC2-adjacent types have none. |
-| `account` | The account the resource belongs to. Taken from its ARN when it has one, otherwise from the scanned identity. |
-| `partition` | `aws`, or `aws-cn` / `aws-us-gov`. Read from the scanning identity's own ARN. |
-| `resource_key` | The canonical identity, `partition:type:account:scope:id`. Always present, unique, and what references are matched against. Join on this. |
-| `name` | The display name. Not an identifier — names are not unique, and two regions can hold the same one. |
-| `description` | A short, type-specific summary (instance type, engine version, runtime) built from data already fetched. Not a substitute for reading the real config. |
-| `tags` | Raw tags as `Key=Value; Key=Value`. Only as good as your tagging discipline. |
-
-**Activity**
-
-| Column | What it holds |
-|---|---|
-| `created` | Creation time where AWS exposes one. |
-| `last_used` | The best activity signal available for that resource type. Blank means none was found — see `notes`. |
-| `last_used_days` | Days since `last_used`, or since `created` when `inferred` is true. |
-| `inferred` | True when `last_used` is not a real usage signal and the creation or modification date stood in for one. |
-| `flag` | `ACTIVE`, `STALE`, or `UNKNOWN`, derived from `activity` below. `STALE` means measured inactivity, not age. `UNKNOWN` means no usable telemetry — most often that AWS publishes none for that resource type. |
-| `activity` | **How use was established, or why it could not be.** `used (observed)`, `no activity (measured)`, `no datapoints`, `no telemetry for this type`, or `activity lookup FAILED`, with the metric and window. The distinction that matters: a resource measured idle and a resource nobody could ask about look identical in `flag` alone. |
-| `notes` | Per-resource detail, including any failed lookup. **Always read this before concluding a resource is idle.** |
-
-**Connections and grouping**
-
-| Column | What it holds |
-|---|---|
-| `connections` | What the resource is wired to: VPC, subnets, security groups, IAM role, attachment targets, and every detected cross-service link. Built only from services this script scans, so an empty value is a hint of an orphan, not proof. |
-| `project_group` | The project's name, default or assigned, or empty. Two projects can share a name — filter on `project_id`. |
-| `project_id` | Stable identity: `tag:orders`, `rule:moonpie`, `deployment:<key>`, or `group:<id>` once a name is assigned or resources are hand-picked. Does not change when unrelated resources are added. |
-| `membership` | `assigned` (belongs to one project), `shared` (genuinely used by several, so assigned to none), `ambiguous`, or `unassigned`. |
-| `shared_with` | For a shared resource, the projects that use it. Its cost is not charged to any one of them. |
-| `project_candidates` | Projects that could own it, where nothing settles the question. |
-| `environment` | `Environment`/`Env` tag. Recorded, never grouped on — dev and prod resources belong to the same application. |
-| `component` | `Service` tag. A part of a project, not a project. |
-| `grouping_method` | `tag`, `rule`, `deployment`, `inferred`, `named`, or the membership state when unassigned. |
-| `why_grouped` | The specific shared attribute or resolved link that placed the row in its project. Grouping is never unexplained. A hand-picked row says so, and keeps the evidence it overrode. |
-| `tier` | `runtime` or `deployment` — whether the resource serves traffic or is build and deployment machinery. A separate question from which project owns it. |
-| `why_tier` | The rule that decided the tier. Empty when no rule fired and the tier is `runtime` by default. |
-
-### What a scan costs
+## What a scan costs
 
 One `ce:GetCostAndUsage` request (~$0.01), grouped by service **and** region so
 that a single-region scan cannot absorb the whole account's spending. A second
@@ -328,7 +198,7 @@ crosses an account. The observation time is shown next to the figures.
 `--no-cost` makes neither request. The report then says **not queried**
 everywhere a cost would be, which is deliberately not the same as zero.
 
-### Where the money went that the report will not attribute
+## Where the money went that the report will not attribute
 
 A scan attributes a bill to resources only when it can do so honestly: the
 charge is attributed to a region, every resource type billing into that category
@@ -337,7 +207,7 @@ not collect. Otherwise the money stays in an **unallocated** bucket, listed in
 `grouping_audit.md` with the reason. Attributed plus unallocated always
 reconciles to the total.
 
-### What you are paying for that the report does not cover
+## What you are paying for that the report does not cover
 
 `grouping_audit.md`, the top of the HTML report, and the web app all carry the
 same section, which answers one question: **is AWS charging me for anything
@@ -365,22 +235,6 @@ finding, and then it says how much.
 Services costing less than `0.01` over the window are counted but not listed —
 AWS itself rounds those to `0.00`, and six of them buried the one line that
 mattered.
-
-**Cost and risk**
-
-| Column | What it holds |
-|---|---|
-| `billing` | What it costs to *keep* the resource, which is a different question from whether it is stale: `cost` (charged just for existing), `usage` (charged per request, idle is free), `indirect` (free itself, but what it holds is billed), or `free`. A stale free resource is clutter; a stale billed one is money. |
-| `billing_note` | Why that category applies, e.g. "billed per provisioned GB whether or not it is attached." |
-| `est_monthly_cost_usd` | **Despite the name, not a monthly forecast**: an even share of what AWS charged for that service *in that region* over the last 30 days — charges already incurred. Empty whenever the scan will not stand behind a figure, which is often. The name is kept so older exports and scripts keep working. |
-| `cost` | What kind of figure the cell beside it is: `estimated share`, `unallocated (shared bill)` (real money the scan deliberately will not divide), `unknown`, or `not queried`. A blank cost cell with `unknown` here means this tool cannot tell you, **not** that the resource is free. `measured` exists in the schema and is produced by nothing — per-resource cost needs a data export this tool does not create. |
-| `cost_notes` | Why the figure is what it is, or why there is none. |
-| `risk_if_removed` | A `HIGH`/`MEDIUM`/`LOW`/`UNKNOWN` triage heuristic combining the staleness flag with whether any connections resolved. Computed after all edges are resolved, so it reflects links that exist rather than links merely referenced. A starting point, not a delete/keep verdict. |
-
-The `flag` column carries extra suffixes for IAM roles, such as
-`+ NO SCANNED CONSUMER` and `ACCESS ANALYZER: CONFIRMED UNUSED`. They are
-defined, with the reasoning for each, in
-`aws_resource_audit/collect/resources/identity.py`.
 
 ## Interpreting the output
 
@@ -420,7 +274,7 @@ about it rather than rounding up to a verdict:
 
 Two front ends over one core, and the core knows about neither:
 
-- **The CLI** is two programs joined by a file. `aws_resource_audit.py` scans
+- **The CLI** is two programs joined by a file. `aws_cleanup.py` scans
   AWS and writes `aws_scan.json`; `aws_regenerate_report.py` reads it and writes
   every report with no AWS calls. A scan renders through the same function.
 - **The web app** (`backend/` FastAPI + `frontend/` React, in Docker) serves the

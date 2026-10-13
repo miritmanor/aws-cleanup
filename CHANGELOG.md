@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The scan script is renamed from `aws_resource_audit.py` to `aws_cleanup.py`. Flags are unchanged.
 - Reports, the snapshot and the config files are now always read and written as UTF-8. Before, the CLI on Windows used the local code page, which could fail on non-ASCII names.
 - A resource on a bill that cannot be split per resource now shows which bill, its total and how many resources share it, e.g. "shared 'EC2 - Other' in us-east-1: 2.47 USD, 7 resources", instead of "unallocated (shared bill)". Its Cost notes give the amount, how AWS splits that bill and which resources share it; why it is not divided is in the "Why some resources show no cost" section. The web app's Resources tab now has the Cost notes column. Regenerate or reload to see it; no re-scan needed.
 - In the Resources tab, "Add to existing project…" now lists every project, including ones you have not named. Adding resources no longer stops the project from picking up new resources on later scans.
