@@ -41,7 +41,7 @@ FROM base AS test
 RUN pip install --no-cache-dir "./backend[dev]"
 # Lint before the tests: any pylint message fails the build. Config: pyproject.toml.
 RUN pylint aws_resource_audit backend/app
-COPY .gitignore aws_resource_audit.py aws_regenerate_report.py cli_output.py ./
+COPY .gitignore aws_cleanup.py aws_regenerate_report.py cli_output.py ./
 COPY tests ./tests
 COPY tools ./tools
 COPY help/cli-messages.md ./help/

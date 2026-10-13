@@ -280,7 +280,7 @@ class TierSchemaTests(unittest.TestCase):
             with self.assertRaises(audit.AuditError) as caught:
                 audit.read_snapshot(path)
         message = str(caught.exception)
-        self.assertIn("aws_resource_audit.py", message)
+        self.assertIn("aws_cleanup.py", message)
         self.assertIn(str(audit.SCHEMA_VERSION), message)
 
     def test_a_version_2_snapshot_is_upgraded_rather_than_refused(self):
