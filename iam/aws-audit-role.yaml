@@ -248,7 +248,8 @@ Resources:
                   - cognito-idp:ListUserPools
                   - cognito-idp:DescribeUserPool
                   - access-analyzer:ListAnalyzers
-                  - access-analyzer:ListFindingsV2
+                  # The ListFindingsV2 API is authorized by the ListFindings action.
+                  - access-analyzer:ListFindings
                   - sts:GetCallerIdentity
                 Resource: '*'
               # Separate so the one chargeable call (~$0.01/scan; skipped with

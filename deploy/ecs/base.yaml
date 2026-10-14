@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  aws-cleanup web app on ECS - base stack. THIS STACK HOLDS THE APP'S DATA (last
+  scan, saved project names, merges, settings): deleting it deletes them, with no
+  undo. Create it once and keep it; take the app stack up and down instead.
+  See deploy/ecs/README.md in github.com/miritmanor/aws-cleanup.
+
+Parameters:
+  AppName:
+    Type: String
+    Default: aws-cleanup
+    AllowedPattern: '^[a-z][a-z0-9-]{1,30}$'
+    ConstraintDescription: lowercase letters, digits and hyphens, 2-31 characters.
+    Description: >
+      Prefix for every stack and resource name, and the value of the Project tag.
+      The app stack must use the same AppName.
+
+  CreateImageRepositories:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: >
+      true only when you build the images yourself (deploy/ecs/ecs-up.sh sets it).
+      The published images on ghcr.io need no repositories.
+
+Conditions:
+  WantRepositories: !Equals [!Ref CreateImageRepositories, 'true']
+
+Resources:
+  # /data for the backend: snapshot, outputs, audit_config.json, saved names.
+  FileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      ThroughputMode: elastic
+      FileSystemTags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Sub ${AppName}-data
+
+  # uid/gid 10001 is the "audit" user the backend image runs as.
+  AccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystem
+      PosixUser:
+        Uid: '10001'
+        Gid: '10001'
+      RootDirectory:
+        Path: /audit-data
+        CreationInfo:
+          OwnerUid: '10001'
+          OwnerGid: '10001'
+          Permissions: '0750'
+      AccessPointTags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Sub ${AppName}-data
+
+  BackendRepository:
+    Type: AWS::ECR::Repository
+    Condition: WantRepositories
+    Properties:
+      RepositoryName: !Sub ${AppName}-backend
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EmptyOnDelete: true
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules": [{"rulePriority": 1, "description": "Keep the last 10 images",
+          "selection": {"tagStatus": "any", "countType": "imageCountMoreThan", "countNumber": 10},
+          "action": {"type": "expire"}}]}
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+  FrontendRepository:
+    Type: AWS::ECR::Repository
+    Condition: WantRepositories
+    Properties:
+      RepositoryName: !Sub ${AppName}-frontend
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EmptyOnDelete: true
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules": [{"rulePriority": 1, "description": "Keep the last 10 images",
+          "selection": {"tagStatus": "any", "countType": "imageCountMoreThan", "countNumber": 10},
+          "action": {"type": "expire"}}]}
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+Outputs:
+  FileSystemId:
+    Value: !Ref FileSystem
+    Export:
+      Name: !Sub ${AppName}-FileSystemId
+  FileSystemArn:
+    Value: !GetAtt FileSystem.Arn
+    Export:
+      Name: !Sub ${AppName}-FileSystemArn
+  AccessPointId:
+    Value: !Ref AccessPoint
+    Export:
+      Name: !Sub ${AppName}-AccessPointId
+  AccessPointArn:
+    Value: !GetAtt AccessPoint.Arn
+    Export:
+      Name: !Sub ${AppName}-AccessPointArn
+  BackendRepositoryUri:
+    Condition: WantRepositories
+    Value: !GetAtt BackendRepository.RepositoryUri
+  FrontendRepositoryUri:
+    Condition: WantRepositories
+    Value: !GetAtt FrontendRepository.RepositoryUri

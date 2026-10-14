@@ -1,0 +1,174 @@
+name: Release
+
+# Pushing a tag vX.Y.Z publishes both images to ghcr.io and a GitHub release with the
+# deployment templates. RELEASING.md says how; deploy/ecs/README.md how to use it.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prefix: ${{ steps.version.outputs.prefix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        name: The tag's version has a CHANGELOG.md section
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if ! grep -Eq "^## ${version//./\\.}([: ]|$)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## ${version}' section"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "prefix=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+  # Each CPU type on its own runner, so nothing is emulated. The backend's Dockerfile
+  # runs pylint and the test suites; a failure stops the release here.
+  build:
+    needs: check
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [backend, frontend]
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.image }}/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          build-args: ${{ matrix.image == 'backend' && 'AUDIT_AGENT_PROVIDER=none' || '' }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.check.outputs.version }}
+          provenance: false
+          outputs: type=image,name=${{ needs.check.outputs.prefix }}/aws-cleanup-${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+      - name: Save the digest
+        run: echo "${{ steps.build.outputs.digest }}" > "digest-${{ matrix.image }}-${{ matrix.arch }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.image }}-${{ matrix.arch }}
+          path: digest-${{ matrix.image }}-${{ matrix.arch }}
+          retention-days: 1
+
+  # One multi-architecture image per name, tagged with the version and latest, attested.
+  publish:
+    needs: [check, build]
+    strategy:
+      matrix:
+        image: [backend, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      NAME: ${{ needs.check.outputs.prefix }}/aws-cleanup-${{ matrix.image }}
+      VERSION: ${{ needs.check.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digest-${{ matrix.image }}-*
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Combine both CPU types under one name
+        run: |
+          sources=""
+          for f in digest-${{ matrix.image }}-*; do sources="$sources ${NAME}@$(cat "$f")"; done
+          # shellcheck disable=SC2086
+          docker buildx imagetools create -t "${NAME}:${VERSION}" -t "${NAME}:latest" $sources
+      - id: digest
+        name: The combined image's digest
+        run: |
+          digest="$(docker buildx imagetools inspect "${NAME}:${VERSION}" --format '{{json .Manifest}}' | jq -r .digest)"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+          echo "${NAME}@${digest}" > "image-${{ matrix.image }}"
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.NAME }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.image }}
+          path: image-${{ matrix.image }}
+          retention-days: 1
+
+  # The templates point at the images by digest, so a release runs exactly its own build.
+  release:
+    needs: [check, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: image-*
+          merge-multiple: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build the release files
+        run: |
+          mkdir dist
+          python tools/build_ecs_template.py --output dist/aws-cleanup-app.yaml \
+            --backend-image "$(cat image-backend)" --frontend-image "$(cat image-frontend)"
+          cp deploy/ecs/base.yaml dist/aws-cleanup-base.yaml
+          cp deploy/ecs/ecs-connect.sh dist/ecs-connect.sh
+          pip install cfn-lint
+          cfn-lint dist/aws-cleanup-base.yaml dist/aws-cleanup-app.yaml
+          (cd dist && sha256sum aws-cleanup-base.yaml aws-cleanup-app.yaml ecs-connect.sh > SHA256SUMS)
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="$VERSION" '
+            index($0, "## " v) == 1 && (length($0) == length(v) + 3 || substr($0, length(v) + 4, 1) ~ /[: ]/) { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+      # A re-run replaces the files on an existing release instead of failing.
+      - name: Create or update the release
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --verify-tag \
+              --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi

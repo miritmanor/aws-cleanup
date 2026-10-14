@@ -1,0 +1,385 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  aws-cleanup web app on ECS - app stack: network, cluster, roles, task and service.
+  Safe to delete and create again; the data lives in the base stack. Reach the app
+  with ecs-connect.sh. See deploy/ecs/README.md in github.com/miritmanor/aws-cleanup.
+
+# SOURCE, not deployable as is: tools/build_ecs_template.py adds the task role's read-only
+# policy from iam/aws-audit-role.yaml (its one source) at the GENERATED marker below.
+
+Parameters:
+  AppName:
+    Type: String
+    Default: aws-cleanup
+    AllowedPattern: '^[a-z][a-z0-9-]{1,30}$'
+    ConstraintDescription: lowercase letters, digits and hyphens, 2-31 characters.
+    Description: >
+      Prefix for every name, and the value of the Project tag. Must match the base
+      stack's AppName.
+
+  BackendImage:
+    Type: String
+    Description: The backend image, e.g. ghcr.io/miritmanor/aws-cleanup-backend@sha256:...
+
+  FrontendImage:
+    Type: String
+    Description: The frontend image, e.g. ghcr.io/miritmanor/aws-cleanup-frontend@sha256:...
+
+  CpuArchitecture:
+    Type: String
+    Default: ARM64
+    AllowedValues: [ARM64, X86_64]
+    Description: >
+      Must match the images. Published images have both; images you built yourself
+      have your build machine's type (ecs-up.sh sets it).
+
+  Cpu:
+    Type: String
+    Default: '512'
+    AllowedValues: ['256', '512', '1024', '2048', '4096']
+    Description: CPU units (1024 = 1 vCPU). Fargate allows only some Cpu/Memory pairs.
+
+  Memory:
+    Type: String
+    Default: '1024'
+    Description: >
+      MiB. Valid with Cpu 256: 512-2048. 512: 1024-4096. 1024: 2048-8192.
+      2048: 4096-16384. 4096: 8192-30720.
+
+  VpcCidr:
+    Type: String
+    Default: 10.42.0.0/24
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/(1[6-9]|2[0-4])$'
+    ConstraintDescription: an IPv4 CIDR block from /16 to /24.
+    Description: The app's own VPC. Split into two public subnets.
+
+Resources:
+  # Network: its own VPC, so it never touches existing ones. No NAT gateway: the task's
+  # public IP is for outbound calls only; the security group allows nothing in.
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Ref AppName
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Ref AppName
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  SubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Select [0, !Cidr [!Ref VpcCidr, 2, 7]]
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Sub ${AppName}-a
+
+  SubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCidr, 2, 7]]
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Sub ${AppName}-b
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Ref AppName
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetARoutes:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetA
+      RouteTableId: !Ref RouteTable
+
+  SubnetBRoutes:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetB
+      RouteTableId: !Ref RouteTable
+
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: aws-cleanup task. No inbound rules; outbound only.
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+          Description: AWS APIs in every scanned region, image registry, logs, SSM
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Sub ${AppName}-task
+
+  EfsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: aws-cleanup data. NFS from the task only.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref TaskSecurityGroup
+          Description: NFS from the aws-cleanup task
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Sub ${AppName}-data
+
+  MountTargetA:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !ImportValue
+        Fn::Sub: ${AppName}-FileSystemId
+      SubnetId: !Ref SubnetA
+      SecurityGroups: [!Ref EfsSecurityGroup]
+
+  MountTargetB:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !ImportValue
+        Fn::Sub: ${AppName}-FileSystemId
+      SubnetId: !Ref SubnetB
+      SecurityGroups: [!Ref EfsSecurityGroup]
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref AppName
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${AppName}
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+  # Used by ECS before the app starts: pull the images, write the logs.
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+  # The app's own credentials: boto3 in the backend picks them up with no keys stored.
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: aws-cleanup task. Read-only scan permissions from iam/aws-audit-role.yaml.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        # ECS Exec: the channel ecs-connect.sh's port forward runs over.
+        - PolicyName: ecs-exec
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+                Resource: '*'
+        - PolicyName: efs-data
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - elasticfilesystem:ClientMount
+                  - elasticfilesystem:ClientWrite
+                Resource: !ImportValue
+                  Fn::Sub: ${AppName}-FileSystemArn
+                Condition:
+                  StringEquals:
+                    elasticfilesystem:AccessPointArn: !ImportValue
+                      Fn::Sub: ${AppName}-AccessPointArn
+        # GENERATED: the read-only policy from iam/aws-audit-role.yaml
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Ref AppName
+      RequiresCompatibilities: [FARGATE]
+      NetworkMode: awsvpc
+      Cpu: !Ref Cpu
+      Memory: !Ref Memory
+      RuntimePlatform:
+        CpuArchitecture: !Ref CpuArchitecture
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Volumes:
+        - Name: data
+          EFSVolumeConfiguration:
+            FilesystemId: !ImportValue
+              Fn::Sub: ${AppName}-FileSystemId
+            TransitEncryption: ENABLED
+            AuthorizationConfig:
+              AccessPointId: !ImportValue
+                Fn::Sub: ${AppName}-AccessPointId
+              IAM: ENABLED
+      ContainerDefinitions:
+        - Name: backend
+          Image: !Ref BackendImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8000
+          MountPoints:
+            - SourceVolume: data
+              ContainerPath: /data
+          # The same check as docker-compose.yml.
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 30
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: backend
+        # One task shares one network interface, so the backend is at 127.0.0.1.
+        - Name: frontend
+          Image: !Ref FrontendImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 80
+          Environment:
+            - Name: BACKEND_HOST
+              Value: 127.0.0.1
+          DependsOn:
+            - ContainerName: backend
+              Condition: HEALTHY
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: frontend
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+  # One task, never two: the old one stops before the new one starts, so only one
+  # backend ever writes /data (the scan lock lives in the backend's memory).
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: [MountTargetA, MountTargetB, DefaultRoute, SubnetARoutes, SubnetBRoutes]
+    Properties:
+      ServiceName: !Ref AppName
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 0
+        MaximumPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups: [!Ref TaskSecurityGroup]
+          Subnets: [!Ref SubnetA, !Ref SubnetB]
+      Tags:
+        - Key: Project
+          Value: !Ref AppName
+
+Outputs:
+  Connect:
+    Description: Open the app at http://127.0.0.1:8080 (ecs-connect.sh is a release file).
+    Value: !Sub AWS_REGION=${AWS::Region} AUDIT_APP_NAME=${AppName} ./ecs-connect.sh
+  WithoutTheScript1FindTask:
+    Description: Without the script, step 1 of 3 - prints the task ARN.
+    Value: !Sub aws ecs list-tasks --region ${AWS::Region} --cluster ${Cluster} --service-name ${AppName} --query taskArns[0] --output text
+  WithoutTheScript2FindRuntimeId:
+    Description: Step 2 of 3 - prints the runtime ID. Replace TASK_ARN.
+    Value: !Sub aws ecs describe-tasks --region ${AWS::Region} --cluster ${Cluster} --tasks TASK_ARN --query "tasks[0].containers[?name=='frontend'].runtimeId" --output text
+  WithoutTheScript3Tunnel:
+    Description: Step 3 of 3 - TASK_ID is the last part of the task ARN. Then open http://127.0.0.1:8080.
+    Value: !Sub aws ssm start-session --region ${AWS::Region} --target ecs:${Cluster}_TASK_ID_RUNTIME_ID --document-name AWS-StartPortForwardingSession --parameters '{"portNumber":["80"],"localPortNumber":["8080"]}'
+  LogGroup:
+    Description: Both containers' logs.
+    Value: !Ref LogGroup
