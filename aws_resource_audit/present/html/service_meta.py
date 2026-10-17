@@ -6,6 +6,7 @@ from ...aws_services import service_of
 
 # Category and colour per service, for the report and graph. Categories are AWS's own
 # (pinned to tools/aws_service_coverage.csv by a test), with four deliberate overrides.
+# Colours are AWS's icon palette, except three categories whose AWS colours collide.
 SERVICE_META = {
     "EC2Instance":                {"color": "#ED7100", "category": "Compute"},
     "ReservedInstance":           {"color": "#ED7100", "category": "Compute"},

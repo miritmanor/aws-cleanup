@@ -68,6 +68,7 @@ CE_SERVICE_MAP = {
 
 # Cost Explorer service -> (types this scan collects for it, types it bills that are
 # not collected). A billed service with no entry is reported as unsupported.
+# A non-empty gap list also triggers the second, chargeable Cost Explorer request.
 BILLING_COVERAGE = {
     "Amazon Elastic Compute Cloud - Compute": (
         ("EC2Instance", "ReservedInstance", "SpotInstanceRequest"), ()),

@@ -14,7 +14,8 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-# At start nginx writes conf.d/default.conf from this, substituting only ${BACKEND_*}.
+# At start nginx writes conf.d/default.conf from this, substituting only ${BACKEND_*},
+# so nginx's own $host and $uri can never be replaced by a same-named variable.
 COPY frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
 # "backend" is the Compose service name; on ECS both containers share a task, so 127.0.0.1.
 ENV BACKEND_HOST=backend \

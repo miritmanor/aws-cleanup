@@ -86,5 +86,5 @@ ARN_RESOLVABLE_TARGETS = (
 )
 
 # Types whose name is unique across all of AWS, so a reference to one matches it in any
-# region, whatever the connection type's target_scope. See docs/decisions/0062.
+# region, whatever the connection type's target_scope.
 GLOBALLY_NAMED_TARGETS = ("S3Bucket",)

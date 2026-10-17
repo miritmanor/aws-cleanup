@@ -11,6 +11,8 @@ NOT_IN_SCAN_HINT = ("A member key looks like '<service>:<region>:<resource_id>' 
                     "one from the table.")
 
 
+# Never move a resource from another saved name unasked. A tagged one is refused: a
+# real AWS tag is account state, and the next scan would contradict the pick.
 def check_addable(groups, rows, keys, exclude_gid=None):
     """Raise EditRefused if any of `keys` is listed by another saved name, missing from
     the scan, or in a project by its own AWS tag. Empty `rows` skips the scan checks."""

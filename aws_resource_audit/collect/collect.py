@@ -128,6 +128,8 @@ def collect_all(session, regions, *, no_cost=False, report=None, step=0,
         errors = [r for r in rows if r.get("flag") == "ERROR"]
         found = [r for r in rows if r.get("flag") != "ERROR"]
         failed_lookups += len(errors)
+        # Error rows stop here: stored, they were counted as resources and drawn as nodes,
+        # so a denied account read as a 31-resource one.
         # One coverage entry per resource type, so coverage can be asked about a type.
         for service, status, error in _collector_outcomes(found, errors):
             coverage.record(coverage.INVENTORY, status, operation=label,

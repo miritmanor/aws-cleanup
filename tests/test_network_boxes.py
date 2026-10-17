@@ -93,7 +93,7 @@ class RenderTests(NetworkFixture):
 
 class RegionBoxTests(unittest.TestCase):
     def test_a_bucket_sits_in_its_region_and_cloudfront_in_the_global_box(self):
-        """Decision 0062: a bucket has a region, as AWS's own diagrams draw it."""
+        """A bucket has a region, as AWS's own diagrams draw it."""
         bucket = make_row("S3Bucket", "assets", region="eu-west-1")
         cdn = make_row("CloudFrontDistribution", "E1", region="global")
         graph = {"network": {"placement": {}, "vpcs": {}, "subnets": {}},

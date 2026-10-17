@@ -60,6 +60,8 @@ def open_index(persist_dir: str):
     )
 
 
+# A full rebuild, not a diff: tracking chunk ids per file across restarts, if done
+# wrong, serves deleted documents. The corpus is a handful of files.
 def rebuild_index(store, doc_store: DocumentStore) -> int:
     """Re-embed the whole corpus into `store`; returns the chunk count. Deletes first,
     so a failed rebuild leaves an empty index, never a half-old one."""

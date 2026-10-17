@@ -1,6 +1,8 @@
 """Effective membership: the naming passes in their one correct order (reclaim, match,
 manual overrides, merges). Called only by entry points: render, SnapshotStore, run."""
 
+# Never import tagging.py here: it calls AWS, and render.py reaches this module.
+# NoAwsFromTheRendererTests fails if it does.
 from ..rows import member_key
 from .group_names import (
     apply_manual_group_overrides,

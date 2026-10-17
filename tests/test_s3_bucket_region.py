@@ -1,4 +1,4 @@
-"""An S3 bucket is recorded in its own region (decision 0062): links still reach it from
+"""An S3 bucket is recorded in its own region: links still reach it from
 any region, the per-region S3 bill is split across it, and saved names follow it."""
 
 import json

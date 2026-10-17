@@ -125,6 +125,8 @@ def _broad_buckets(amounts):
                   if total > ZERO and BILLING_COVERAGE.get(name, ((), ()))[1])
 
 
+# No flag for this request: what "EC2 - Other" holds (often a forgotten NAT gateway)
+# is always worth the extra ~$0.01.
 def _collect_usage_types(ce, start, end, amounts):
     """What is inside the buckets this tool refuses to divide, by usage type. A second
     chargeable request, made only when such a bucket exists; failure is non-fatal."""

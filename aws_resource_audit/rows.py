@@ -67,6 +67,8 @@ def add_edge(row, target_id, rel, evidence, *, conn_type, confidence=None,
         "target_region": target_region,
         # Kept as evidence: an alias pinned to a version reads different env vars than $LATEST.
         "target_qualifier": target_qualifier,
+        # A miss is dropped if this row's link of that type resolved. Prefer it to
+        # assert_exists=False, which would also hide a genuinely missing target.
         "superseded_by": superseded_by,
     })
 

@@ -288,6 +288,8 @@ def architecture_graph(graph, all_rows):
                       "scanned_nodes": len(nodes)}}
 
 
+# Scoped after building, so a grant through a role outside the project survives. Network
+# boxes are project-only: nesting them with project boxes account-wide is unreadable.
 def project_architecture(arch_graph, scan_graph, all_rows, project_id):
     """One project's architecture plus what it touches, with its network placement
     attached as "network" so the renderers can draw Region > VPC > subnet boxes."""

@@ -1,5 +1,5 @@
 """Saved member keys for S3 buckets, moved to the region the bucket is recorded in now.
-Buckets were once recorded as "global"; see docs/decisions/0062."""
+Buckets were once recorded as "global"."""
 
 from ..rows import member_key
 

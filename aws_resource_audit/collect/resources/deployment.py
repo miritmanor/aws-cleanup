@@ -184,6 +184,8 @@ def _eb_service_bucket(app_arn, region):
     return f"elasticbeanstalk-{region}-{account}" if account else None
 
 
+# Admissible only because AWS defines both the bucket name and the path. Never extend
+# this to reading folder names in other buckets: that is a name heuristic.
 def _service_bucket_holds_application(s3, bucket, app_name):
     """True/False if the bucket holds this application's folder, None on a failed
     lookup. A MaxKeys=1 probe for a path we named; never reads other keys."""

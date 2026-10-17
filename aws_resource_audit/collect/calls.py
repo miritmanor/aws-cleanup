@@ -36,6 +36,8 @@ def error_code(err):
     return type(err).__name__
 
 
+# Returned, not raised. tests/test_safe_call.py fails if a result is read without an
+# __error__ check, which is what keeps a failed call from reading as "none found".
 class CallFailed(dict):
     """What safe_call returns when AWS refuses: still {"__error__": text}, so
     every existing check works, plus the code and what kind of failure it was."""
