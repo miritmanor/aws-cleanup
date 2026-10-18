@@ -139,6 +139,27 @@ Rules for account data:
 - **Messages to the user**: an error message may name the user's own resource;
   it must not echo a credential or a raw botocore exception that contains one.
 
+**Nothing committed may contain secrets, PII or user-specific data.** The
+repo is public, and a value pushed once stays in its history. Check every
+file the commit would add or change, not only code: docs, skills, agent
+prompts, config, CI files, test fixtures and golden files.
+
+- **Secrets**: as defined above, plus passwords, private keys, `.env`
+  contents and tokens in URLs.
+- **PII**: people's names, email addresses, phone numbers, user names.
+- **User-specific data**: real account ids, ARNs, resource ids and names, tag
+  values, IP addresses, host names, absolute paths containing a home
+  directory (`/Users/<name>/`, `/home/<name>/`), and output copied from a
+  real scan or log.
+- **Local files**: anything kept out by `.gitignore` on purpose (`CLAUDE.md`,
+  `.claude/settings*.json`, `results/`, `runtime/`) that the commit
+  force-adds or un-ignores.
+
+Scan the diff and the new files for these, for example with
+`git diff HEAD | grep -nE 'AKIA|ASIA|[0-9]{12}|arn:aws|@|/Users/|/home/'`,
+then read each hit. A placeholder in a documented format (`123456789012`,
+`example.com`) is fine. Any real value is a **Must fix**, even in a comment.
+
 ### 6. Tests
 
 - Every behaviour change has a test. For each new or changed branch, name
@@ -159,7 +180,8 @@ Rules for account data:
 - If `tests/golden/` changed, it was regenerated with `UPDATE_GOLDEN=1`, not
   edited, and every line of its diff is explained by the change.
 
-Run the core suite: `python3 -m unittest discover -b -s .`. Report the
+Execute the unit tests as `tests/README.md` describes (it also covers an
+import error from a missing SDK, which is not a test failure). Report the
 result. The backend suite and `tsc` run only in Docker (`docker compose build`);
 if the change touches `backend/` or `frontend/`, say they were not run here.
 
@@ -201,7 +223,8 @@ Then the findings, most severe first, numbered so the user can pick them:
 ```
 
 Severity: **Must fix** is wrong output, a crash, a security hole, a secret or
-unmasked identifier leaving the machine, or a rule in `AGENTS.md` broken.
+unmasked identifier leaving the machine, a secret, PII or user-specific value
+in a committed file, or a rule in `AGENTS.md` broken.
 **Should fix** is a missing log, a missing test, an error handled badly.
 **Minor** is everything else worth saying.
 

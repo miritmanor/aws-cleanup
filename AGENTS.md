@@ -67,6 +67,15 @@ Usage, flags and configuration: [README.md](README.md). Tests:
   its README). When a decision changes, update its record; when it no longer
   applies, delete it.
 
+## Building a feature
+
+- New functionality follows the `build-feature` skill
+  ([`.agents/skills/build-feature/SKILL.md`](.agents/skills/build-feature/SKILL.md)):
+  requirements, design, implement, review, plan tests, write tests, review
+  tests and coverage, final review. It stops once, after the requirements, to
+  agree the scope and whether a design document is needed; then it runs
+  through to one final report.
+
 ## Before you edit
 
 - Traps that would silently corrupt output are documented **in the code**, at
@@ -97,3 +106,6 @@ Usage, flags and configuration: [README.md](README.md). Tests:
 - [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md) — known rough edges.
 - [`iam/aws-audit-role.yaml`](iam/aws-audit-role.yaml) and
   [`iam/README.md`](iam/README.md) — the read permissions a scan needs.
+- [`.claude/agents/`](.claude/agents/) — Claude Code subagents: `architect`
+  (architecture reviews and design decisions, read-only) and `tester`
+  (writes tests, reviews tests and coverage).
