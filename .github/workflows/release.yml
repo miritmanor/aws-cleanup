@@ -1,7 +1,7 @@
 name: Release
 
-# Pushing a tag vX.Y.Z publishes both images to ghcr.io and a GitHub release with the
-# deployment templates. RELEASING.md says how; deploy/ecs/README.md how to use it.
+# A new tag vX.Y.Z (usually made by creating the release in GitHub's UI) publishes both
+# images, the deployment files and notes, then files CHANGELOG.md's Unreleased under X.Y.Z.
 on:
   push:
     tags: ["v*"]
@@ -22,13 +22,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: version
-        name: The tag's version has a CHANGELOG.md section
+        name: CHANGELOG.md has notes for this version
         run: |
           version="${GITHUB_REF_NAME#v}"
-          if ! grep -Eq "^## ${version//./\\.}([: ]|$)" CHANGELOG.md; then
-            echo "::error::CHANGELOG.md has no '## ${version}' section"
-            exit 1
-          fi
+          python3 - "$version" <<'PY'
+          import sys
+          sys.path.insert(0, "tools")
+          from changelog_release import release_notes
+          if not release_notes(open("CHANGELOG.md").read(), sys.argv[1]):
+              print(f"::error::CHANGELOG.md has nothing under '## Unreleased' (or '## {sys.argv[1]}')")
+              sys.exit(1)
+          PY
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "prefix=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
@@ -156,19 +160,47 @@ jobs:
           pip install cfn-lint
           cfn-lint dist/aws-cleanup-base.yaml dist/aws-cleanup-app.yaml
           (cd dist && sha256sum aws-cleanup-base.yaml aws-cleanup-app.yaml ecs-connect.sh > SHA256SUMS)
-      - name: Release notes from CHANGELOG.md
+      - name: Release notes from CHANGELOG.md, as it was at the tag
         run: |
-          awk -v v="$VERSION" '
-            index($0, "## " v) == 1 && (length($0) == length(v) + 3 || substr($0, length(v) + 4, 1) ~ /[: ]/) { found = 1; next }
-            found && /^## / { exit }
-            found { print }
-          ' CHANGELOG.md > notes.md
-      # A re-run replaces the files on an existing release instead of failing.
+          python3 - "$VERSION" > notes.md <<'PY'
+          import sys
+          sys.path.insert(0, "tools")
+          from changelog_release import release_notes
+          print(release_notes(open("CHANGELOG.md").read(), sys.argv[1]))
+          PY
+      # A release made in the UI keeps its title, and its notes unless they were left empty.
+      # A re-run replaces the files instead of failing.
       - name: Create or update the release
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+            if [ -z "$(gh release view "$GITHUB_REF_NAME" --json body --jq .body)" ]; then
+              gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+            fi
           else
             gh release create "$GITHUB_REF_NAME" dist/* --verify-tag \
               --title "$GITHUB_REF_NAME" --notes-file notes.md
           fi
+      # Last, so CHANGELOG.md names a version only once it is published. A re-run finds
+      # the section already there and commits nothing.
+      - name: File the released entries under the version in CHANGELOG.md on main
+        run: |
+          git fetch --no-tags origin main
+          git checkout -B changelog-release FETCH_HEAD
+          python3 - "$VERSION" notes.md <<'PY'
+          import sys
+          sys.path.insert(0, "tools")
+          from changelog_release import finalize
+          text = open("CHANGELOG.md").read()
+          with open("CHANGELOG.md", "w") as f:
+              f.write(finalize(text, sys.argv[1], open(sys.argv[2]).read()))
+          PY
+          if git diff --quiet CHANGELOG.md; then
+            echo "CHANGELOG.md already has '## ${VERSION}'; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "CHANGELOG: ${VERSION} released" CHANGELOG.md
+          git push origin HEAD:main \
+            || { echo "::error::Could not push to main. If a branch rule blocks it, let GitHub Actions bypass it (RELEASING.md)."; exit 1; }

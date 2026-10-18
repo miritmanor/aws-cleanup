@@ -7,6 +7,8 @@ on:
       - deploy/ecs/**
       - iam/**
       - tools/build_ecs_template.py
+      - tools/changelog_release.py
+      - tests/test_changelog_release.py
       - tests/test_ecs_template.py
       - tests/test_iam_role.py
       - .github/workflows/ecs-templates.yml
@@ -17,6 +19,8 @@ on:
       - deploy/ecs/**
       - iam/**
       - tools/build_ecs_template.py
+      - tools/changelog_release.py
+      - tests/test_changelog_release.py
       - tests/test_ecs_template.py
       - tests/test_iam_role.py
       - .github/workflows/ecs-templates.yml
@@ -44,4 +48,4 @@ jobs:
         working-directory: deploy/ecs
         run: shellcheck -x ./*.sh
       - name: Tests
-        run: python -m unittest -v tests.test_ecs_template tests.test_iam_role
+        run: python -m unittest -v tests.test_ecs_template tests.test_iam_role tests.test_changelog_release
