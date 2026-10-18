@@ -62,6 +62,8 @@ RESULTS_DIRNAME = "results"
 RUNTIME_DIRNAME = "runtime"
 
 
+# run()/render() accept one, as a server cannot chdir per request. No validation here:
+# settings that come from a user must go through load_settings().
 @dataclass
 class Settings:
     """Everything audit_config.json can say. Defaults here ARE the no-config

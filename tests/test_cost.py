@@ -355,7 +355,7 @@ class AccountWideTests(unittest.TestCase):
         self.assertEqual(report.allocated, Decimal("0"))
 
     def test_an_old_snapshots_global_bucket_is_not_zero_when_s3_is_billed_by_region(self):
-        """Snapshots before decision 0062 record buckets as global; unplaced, not free."""
+        """Older snapshots record buckets as global; unplaced, not free."""
         s3 = "Amazon Simple Storage Service"
         cells = attributed([make_row("S3Bucket", "b1", region="global")],
                            bill((s3, "us-east-1", "5.00")), GLOBAL)

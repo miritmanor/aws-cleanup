@@ -1,5 +1,5 @@
 """Embeddings for the document index: a local open-source model, so no key and no
-per-query cost. Chroma's own ONNX copy of it, so no torch (docs/decisions/0063)."""
+per-query cost. Chroma's own ONNX copy of it, so no torch (docs/decisions/agent/0063)."""
 
 
 def get_embeddings():

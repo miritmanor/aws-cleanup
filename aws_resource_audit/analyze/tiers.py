@@ -59,7 +59,8 @@ DEPLOYMENT_BUCKET_CONN_TYPES = {
 
 
 # Bucket names AWS generates for itself, in a documented format no person would choose.
-# The one rule reading a name; it fires last. Kept SHORT.
+# The one rule reading a name; it fires last. Add a format only once seen in a real
+# account (SAM, CDK are not yet). Not re-run at render: the rules above need scan data.
 AWS_MANAGED_BUCKET_NAMES = (
     (re.compile(r"^cf-templates-[0-9a-z]{8,}-[a-z]{2}(?:-[a-z]+)+-\d$"),
      "CloudFormation generated this bucket to stage templates uploaded to it - "
@@ -104,7 +105,8 @@ def _aws_managed_bucket(row):
     return None
 
 
-# Empty: a default verdict has no reason worth reading.
+# No rule fired: runtime, since a wrong "deployment" hides a live resource and a wrong
+# "runtime" costs one look. Empty, so a default reads apart from a rule that fired.
 DEFAULT_WHY_TIER = ""
 
 

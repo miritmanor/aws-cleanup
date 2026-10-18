@@ -62,10 +62,11 @@ documents/
 node_modules/
 *.tsbuildinfo
 
-# Private notes and local assistant config, kept out of the public repo.
-/docs/
+# Local assistant config, kept out of the public repo.
 CLAUDE.md
-.claude/
+.claude/*
+!.claude/skills
+!.claude/agents/
 
 # Editors and OS
 .DS_Store

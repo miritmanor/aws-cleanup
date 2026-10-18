@@ -6,6 +6,8 @@ import os
 
 PROVIDER_ENV = "AUDIT_AGENT_PROVIDER"
 NONE = "none"
+# Off by default: on, it sends masked scan data to a third party. backend/Dockerfile and
+# docker-compose.yml default to none too; keep the three the same.
 DEFAULT_PROVIDER = NONE
 
 # Each provider's LangChain package: the only one the image installs for it.

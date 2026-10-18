@@ -6,6 +6,9 @@ import sys
 
 logger = logging.getLogger(__name__)
 
+# Lines state what happened, never a flag or output path: both front ends show them.
+# Remedies go in help/cli-messages.md and frontend/public/scan-messages.html.
+
 # Set by run() from --debug. Diagnostics are per-resource detail that would
 # drown the normal output, so they are off unless asked for.
 VERBOSE = False

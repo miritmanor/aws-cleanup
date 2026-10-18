@@ -59,6 +59,8 @@ def _region_status(entries, service, region):
     return "complete"
 
 
+# Even then the money stays undivided: an even share pays an 8 GB snapshot like a
+# 30 GB one, and an AMI is billed through its snapshots, so both would be paid.
 def _gaps_disproven(breakdown):
     """True when AWS's usage-type split puts (almost) nothing in uncollected kinds."""
     uncollected = sum((amount for _label, amount, collected in breakdown

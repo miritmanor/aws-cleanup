@@ -7,6 +7,8 @@ from ..billing import ZERO
 from ..config import BILLING_FINDING_MIN_AMOUNT
 from ..coverage import INCOMPLETE_STATUSES, INVENTORY
 
+# Derived from scans, not a "detect regions" step: a partial one misses regions holding
+# only uncovered types. Resource Explorer, the tagging API and the bill each miss some.
 ACCOUNT_WIDE = "global"
 
 

@@ -39,6 +39,8 @@ _BUCKET_WHY = {
                       "a project."),
 }
 
+# No cost field: most of a small bill is never divided, so a project figure is near
+# zero, and one kept but not drawn would still be read from the API.
 @dataclass
 class ProjectSummary:
     """One circle's worth of facts."""

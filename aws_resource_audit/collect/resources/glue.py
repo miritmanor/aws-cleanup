@@ -1,5 +1,5 @@
 """AWS Glue jobs and crawlers. Both bill per DPU-hour only while they run.
-Dev endpoints are not scanned: AWS retired them."""
+Dev endpoints are not scanned: AWS retired the API on 2026-04-01 (Glue 0.9/1.0 EOL)."""
 
 from ...config import RETRY_CONFIG
 from ...collect import raw_capture

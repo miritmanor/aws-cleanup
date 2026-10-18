@@ -1,9 +1,32 @@
 # Tests
 
+Two suites:
+
+- **Unit tests**: this directory, the core package. Run from the repo root:
+
+  ```bash
+  python3 -m unittest discover -b -s .     # whole suite, ~5s, no AWS calls; -b hides passing tests' output
+  python3 -m unittest tests.test_connections_network
+  ```
+
+- **Integration tests**: `backend/apitests/`, the web app's API over the core.
+  See [Backend](#backend) below.
+
+### When the unit tests will not start
+
+`ModuleNotFoundError: No module named 'botocore'` (or `boto3`) means the
+Python running the tests has no AWS SDK. It is an environment problem, not a
+test failure. Use the repo's `.venv` if it exists; otherwise create one
+outside the repo and run the suite with its Python:
+
 ```bash
-python3 -m unittest discover -b -s .     # whole suite, ~3s, no AWS calls; -b hides passing tests' output
-python3 -m unittest tests.test_connections_network
+python3 -m venv "$TMPDIR/audit-venv"
+"$TMPDIR/audit-venv/bin/pip" install boto3
+"$TMPDIR/audit-venv/bin/python" -m unittest discover -b -s .
 ```
+
+If `pip` fails with `SSLCertVerificationError` inside a sandbox, add
+`--use-deprecated=legacy-certs`.
 
 Driven by mock AWS payloads via `fakes.py`. The clock is pinned in
 `__init__.py` (`FROZEN_NOW`), which is what makes rendered output comparable

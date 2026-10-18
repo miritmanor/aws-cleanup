@@ -17,7 +17,8 @@ dependencies = ["boto3>=1.26"]
 include = ["aws_resource_audit*"]
 namespaces = false
 
-# pylint gates the backend image build (backend/Dockerfile). See docs/decisions/0067.
+# pylint gates the backend image build (backend/Dockerfile): any message fails it, so
+# pylint is pinned in backend's [dev] extra and an upgrade is a deliberate change.
 [tool.pylint.main]
 # Optional agent packages: the image holds one provider, or none.
 ignored-modules = ["langchain", "langchain_core", "langchain_text_splitters", "langgraph",

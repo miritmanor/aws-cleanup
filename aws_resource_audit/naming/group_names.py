@@ -85,6 +85,8 @@ def claim_row(row, gid, name):
     row["grouping_method"] = "named"
 
 
+# Must stay idempotent: the overridden rows are saved in the snapshot and every later
+# read overrides them again, so a non-idempotent version would nest the marker.
 def _mark_manual(why):
     """Prepend the manual marker, keeping what the scan detected. Idempotent."""
     segments = [s for s in (why or "").split(" | ") if s and s != MANUAL_WHY]
