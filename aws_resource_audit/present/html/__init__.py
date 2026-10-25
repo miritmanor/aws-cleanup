@@ -1,8 +1,7 @@
 """The HTML report: render_html_report substitutes rows, the diagram and panel
-assets into HTML_TEMPLATE (see template.py), plus AWS console deep links."""
+assets into HTML_TEMPLATE (see template.py). Console links: console_links.py."""
 
 import json
-import urllib.parse
 from html import escape as esc
 
 from ...config import COST_LOOKBACK_DAYS, now
@@ -17,6 +16,7 @@ from ..cost import (
     service_entry_lines,
 )
 from .brand import APP_NAME, FAVICON_DATA_URI, TAGLINE
+from .console_links import build_console_url
 from ..bubbles import BUBBLES_CSS, BUBBLES_JS, BUBBLES_PANEL
 from ..format import display_row
 from ..graph.diagram import DIAGRAM_CSS, DIAGRAM_HEAD, DIAGRAM_JS, diagram_panel
@@ -25,75 +25,6 @@ from ..graph.views import VIEW_CSS, VIEW_JS, VIEW_SWITCH
 from .template import HTML_TEMPLATE, SERVICE_META
 
 
-def build_console_url(row):
-    """Best-effort AWS Console deep link for a resource, or "" when no reliable
-    pattern exists."""
-    svc, region, rid = row["service"], row.get("region", ""), row["resource_id"]
-    q = urllib.parse.quote(rid, safe="")
-    if svc == "EC2Instance":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#InstanceDetails:instanceId={q}"
-    if svc == "EBSVolume":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#VolumeDetails:volumeId={q}"
-    if svc == "ElasticIP":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#Addresses:"
-    if svc == "RDSInstance":
-        return f"https://{region}.console.aws.amazon.com/rds/home?region={region}#database:id={q};is-cluster=false"
-    if svc == "LambdaFunction":
-        return f"https://{region}.console.aws.amazon.com/lambda/home?region={region}#/functions/{q}"
-    if svc == "LoadBalancer":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#LoadBalancers:search={q}"
-    if svc == "DynamoDBTable":
-        return f"https://{region}.console.aws.amazon.com/dynamodbv2/home?region={region}#table?name={q}"
-    if svc == "S3Bucket":
-        return f"https://s3.console.aws.amazon.com/s3/buckets/{q}"
-    if svc == "IAMRole":
-        return f"https://us-east-1.console.aws.amazon.com/iam/home#/roles/details/{q}"
-    if svc == "IAMUser":
-        return f"https://us-east-1.console.aws.amazon.com/iam/home#/users/details/{q}"
-    if svc == "IAMPolicy":
-        # resource_id is the policy's ARN (see collect_iam) - the IAM console
-        # keys its policy detail page off the full ARN, not the policy name.
-        return f"https://us-east-1.console.aws.amazon.com/iam/home#/policies/details/{q}?section=permissions"
-    if svc == "IAMGroup":
-        return f"https://us-east-1.console.aws.amazon.com/iam/home#/groups/details/{q}"
-    if svc == "CloudFormationStack":
-        return f"https://{region}.console.aws.amazon.com/cloudformation/home?region={region}#/stacks/stackinfo?stackId={q}"
-    if svc == "ElasticBeanstalkEnvironment":
-        return f"https://{region}.console.aws.amazon.com/elasticbeanstalk/home?region={region}#/environment/dashboard?environmentId={q}"
-    if svc == "ElasticBeanstalkApplication":
-        return f"https://{region}.console.aws.amazon.com/elasticbeanstalk/home?region={region}#/application/overview?applicationName={q}"
-    if svc == "CloudWatchLogGroup":
-        return f"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/{q}"
-    if svc == "CloudWatchAlarm":
-        return f"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#alarmsV2:"
-    if svc == "APIGatewayRestApi":
-        return f"https://{region}.console.aws.amazon.com/apigateway/main/apis/{q}/resources?region={region}"
-    if svc == "APIGatewayV2Api":
-        return f"https://{region}.console.aws.amazon.com/apigateway/main/apis/{q}/routes?region={region}"
-    if svc == "AmplifyApp":
-        return f"https://{region}.console.aws.amazon.com/amplify/home?region={region}#/{q}"
-    if svc == "CognitoUserPool":
-        return f"https://{region}.console.aws.amazon.com/cognito/v2/idp/user-pools/{q}/users?region={region}"
-    if svc == "CloudTrailTrail":
-        return f"https://{region}.console.aws.amazon.com/cloudtrail/home?region={region}#/configuration"
-    # EC2 hash routes; where no detail page exists, a pre-filtered list page.
-    if svc == "LaunchTemplate":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#LaunchTemplateDetails:launchTemplateId={q}"
-    if svc == "AMI":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#ImageDetails:imageId={q}"
-    if svc == "EBSSnapshot":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#SnapshotDetails:snapshotId={q}"
-    if svc == "SecurityGroup":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#SecurityGroup:groupId={q}"
-    if svc == "NetworkInterface":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#NetworkInterface:networkInterfaceId={q}"
-    if svc == "KeyPair":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#KeyPairs:search={q}"
-    if svc == "ReservedInstance":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#ReservedInstances:search={q}"
-    if svc == "SpotInstanceRequest":
-        return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#SpotInstances:search={q}"
-    return ""
 def render_coverage_banner(coverage):
     """The "what this scan could not see" banner, above the table, or "" if none."""
     gaps = [e for e in (coverage or []) if e.get("status") != "complete"]
