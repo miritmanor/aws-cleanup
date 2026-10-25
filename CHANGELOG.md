@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Every resource type's ID now links to its page in the AWS console, in the web app and the HTML report. Before, about 60 types added after the first release (Route 53 hosted zones, VPCs, SQS queues, ECS services and others) showed the ID as plain text. A few types with no addressable detail page (ElastiCache, Network Firewall, Route 53 Resolver endpoints, X-Ray) link to their service's list page. Rows for failed lookups no longer link to a resource named "ERROR". Regenerate or reload to see it; no re-scan needed.
 - The web app can be deployed to AWS (ECS Fargate) in your own account, from a release's files with no clone or build, or from source with `deploy/ecs/ecs-up.sh`. It is reached through an encrypted tunnel at `http://127.0.0.1:8080` and has no public address. Every resource is tagged `Project=aws-cleanup`. See `deploy/ecs/README.md`.
 - The web app's agent is now off by default. To use it, set `AUDIT_AGENT_PROVIDER` (`openai`, `anthropic` or `bedrock`) in `.env`, then `docker compose up --build`.
 - The agent no longer sends account ids, resource ids, ARNs, names, tag values, project names, IP addresses or email addresses to the LLM provider. Each is replaced by a token such as `RES-3f9a…`, and the reply you read shows the real values again. The key behind the tokens is `agent_pseudonym.key` in the data volume. This includes your question and passages from uploaded documents.

@@ -50,7 +50,11 @@ Every new AWS resource type follows the same steps. The coverage guards in
    `iam/aws-audit-role.yaml`. `tests/test_iam_role.py` fails otherwise. Without
    it a scan passes under `ReadOnlyAccess` and reports the type as `ERR` under
    the deployed role.
-8. **Tests** — one collector test in its family file, one test per new
+8. **Console link** — a `CONSOLE_URLS` entry in `present/html/console_links.py`;
+   a URL built from more than the row's own fields also needs an
+   `_EXTRA_FIELDS` entry. `ConsoleLinkTests` fails without it, and the
+   ID shows as plain text in the report and the web app.
+9. **Tests** — one collector test in its family file, one test per new
    connection type (asserted in all three states), and the type in
    `ALL_SERVICES` plus the denial-handling case list.
 
