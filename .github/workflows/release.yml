@@ -138,6 +138,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     env:
       VERSION: ${{ needs.check.outputs.version }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -181,12 +182,14 @@ jobs:
             gh release create "$GITHUB_REF_NAME" dist/* --verify-tag \
               --title "$GITHUB_REF_NAME" --notes-file notes.md
           fi
-      # Last, so CHANGELOG.md names a version only once it is published. A re-run finds
-      # the section already there and commits nothing.
-      - name: File the released entries under the version in CHANGELOG.md on main
+      # Last, so CHANGELOG.md names a version only once published. A pull request, as Actions
+      # cannot bypass main's rule; a re-run updates an open one, or finds nothing to commit.
+      - name: Open a pull request filing the released entries under the version in CHANGELOG.md
+        env:
+          BRANCH: changelog-${{ needs.check.outputs.version }}
         run: |
           git fetch --no-tags origin main
-          git checkout -B changelog-release FETCH_HEAD
+          git checkout -B "$BRANCH" FETCH_HEAD
           python3 - "$VERSION" notes.md <<'PY'
           import sys
           sys.path.insert(0, "tools")
@@ -202,5 +205,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "CHANGELOG: ${VERSION} released" CHANGELOG.md
-          git push origin HEAD:main \
-            || { echo "::error::Could not push to main. If a branch rule blocks it, let GitHub Actions bypass it (RELEASING.md)."; exit 1; }
+          git push --force origin "HEAD:refs/heads/${BRANCH}"
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            echo "A pull request from ${BRANCH} is already open; updated its branch."
+            exit 0
+          fi
+          gh pr create --base main --head "$BRANCH" --title "CHANGELOG: ${VERSION} released" \
+            --body "Moves the entries released in ${GITHUB_REF_NAME} from Unreleased to ## ${VERSION}. Opened by the Release workflow." \
+            || { echo "::error::Could not open the pull request. Allow GitHub Actions to create pull requests (RELEASING.md)."; exit 1; }
