@@ -10,7 +10,6 @@ from ...config import RETRY_CONFIG
 from ...staleness import days_ago, flag_from_activity
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 
 
 def collect_sqs_queues(session, region):
@@ -70,7 +69,6 @@ def collect_sqs_queues(session, region):
             arn=attrs.get("QueueArn", ""),
         )
         # A queue has no describe payload - get_queue_attributes IS the resource.
-        raw_capture.record("SQSQueue", region, name, attrs)
 
         # The redrive policy is a JSON *string* inside the attribute map.
         redrive = parse_policy_document(attrs.get("RedrivePolicy"))
@@ -146,8 +144,6 @@ def collect_sns_topics(session, region):
                          if unlinkable else ""),
             arn=arn,
         )
-        raw_capture.record("SNSTopic", region, name,
-                           {"Attributes": attrs, "Subscriptions": subscriptions})
         for sub in subscriptions:
             endpoint = sub.get("Endpoint")
             if sub.get("Protocol") not in ("lambda", "sqs") or not endpoint:

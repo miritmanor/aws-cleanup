@@ -1,4 +1,4 @@
-"""run() end to end with AWS faked: rows collected and analysed, debug dumps in runtime/,
+"""run() end to end with AWS faked: rows collected and analysed,
 snapshot and outputs in results/, rendered through the file."""
 
 import importlib
@@ -55,7 +55,6 @@ def _session_with_one_instance_and_one_bucket():
             "InstanceType": "t3.micro", "State": {"Name": "running"},
             "LaunchTime": fakes.recent(),
             "Tags": [{"Key": "Name", "Value": "web-server"}],
-            "OnlyInTheRawCapture": "no column selects this",
         }]}]},
     })
     session._clients["s3"] = _PermissiveClient("s3", {
@@ -105,29 +104,9 @@ class RunPipelineTests(unittest.TestCase):
             self.assertEqual(os.path.basename(os.path.dirname(path)),
                              audit.RESULTS_DIRNAME, kind)
 
-    def test_the_debug_dumps_land_in_runtime(self):
-        for kind in ("raw_capture", "normalized_scan_results"):
-            path = self.paths[kind]
-            self.assertTrue(os.path.exists(path), kind)
-            self.assertEqual(os.path.basename(os.path.dirname(path)),
-                             audit.RUNTIME_DIRNAME, kind)
-
-    def test_the_raw_capture_holds_what_no_column_selected(self):
-        """The raw capture holds fields the row has no column for."""
-        with open(self.paths["raw_capture"]) as handle:
-            captured = [json.loads(line) for line in handle if line.strip()]
-        instances = [c for c in captured if c["service"] == "EC2Instance"]
-        self.assertEqual(len(instances), 1)
-        self.assertEqual(instances[0]["resource_id"], "i-0abc")
-        self.assertEqual(instances[0]["raw"]["OnlyInTheRawCapture"],
-                         "no column selects this")
-
-    def test_the_normalized_dump_is_the_rows_before_analysis(self):
-        with open(self.paths["normalized_scan_results"]) as handle:
-            dump = json.load(handle)
-        self.assertIn("captured_at", dump)
-        ids = {r["resource_id"] for r in dump["rows"]}
-        self.assertEqual(ids, {r["resource_id"] for r in self.snapshot.rows})
+    def test_nothing_is_written_outside_results(self):
+        """Only results/ exists: no debug dump of rows or raw AWS data."""
+        self.assertEqual(os.listdir(self.tmp.name), [audit.RESULTS_DIRNAME])
 
     def test_it_returned_the_snapshot_it_wrote(self):
         """run() returns what is on disk, not the in-memory rows."""

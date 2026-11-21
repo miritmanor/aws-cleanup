@@ -2,7 +2,6 @@
 Dev endpoints are not scanned: AWS retired the API on 2026-04-01 (Glue 0.9/1.0 EOL)."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call
 from ...rows import add_edge, error_row, new_row
@@ -44,7 +43,6 @@ def collect_glue_jobs(session, region):
             description=join_nonempty([(job.get("Command") or {}).get("Name", ""),
                                        job.get("GlueVersion", ""),
                                        f"last run {state.lower()}" if state else ""], ", "))
-        raw_capture.record("GlueJob", region, name, job)
         add_edge(row, _role(job.get("Role")), "runs as", "job Role",
                  conn_type="gluejob.iamrole.role", target_service="IAMRole")
         add_edge(row, _bucket((job.get("Command") or {}).get("ScriptLocation")), "loads its script from",
@@ -75,7 +73,6 @@ def collect_glue_crawlers(session, region):
             description=join_nonempty([f"database {crawler.get('DatabaseName', '?')}",
                                        "scheduled" if scheduled else "on demand",
                                        f"last crawl {last.get('Status', '').lower()}" if last else ""], ", "))
-        raw_capture.record("GlueCrawler", region, name, crawler)
         add_edge(row, _role(crawler.get("Role")), "runs as", "crawler Role",
                  conn_type="gluecrawler.iamrole.role", target_service="IAMRole")
         for target in (crawler.get("Targets") or {}).get("S3Targets", []):

@@ -12,7 +12,6 @@ from ...staleness import days_ago, flag_stale
 from ...collect.calls import safe_call
 from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 
 
 def collect_cloudtrail_trails(session, region):
@@ -44,8 +43,6 @@ def collect_cloudtrail_trails(session, region):
                  "CloudTrail DescribeTrails CloudWatchLogsLogGroupArn",
                  conn_type="cloudtrail.loggroup.arn", target_service=log_group_service)
         rows.append(row)
-        raw_capture.record("CloudTrailTrail", region,
-                           trail.get("TrailARN", name), trail)
     return rows
 
 
@@ -106,7 +103,6 @@ def collect_cloudwatch_log_groups(session, region):
                     connections=join_nonempty(connections_parts),
                     arn=lg.get("arn", ""),
                 )
-                raw_capture.record("CloudWatchLogGroup", region, name, lg)
                 # Only AWS-enforced names become edges; log groups outlive their source,
                 # so a missing one is not reported as DANGLING.
                 add_edge(row, group_match_id, "collects logs from",
@@ -144,8 +140,6 @@ def collect_cloudwatch_alarms(session, region):
                     description=alarm.get("AlarmDescription", "") or "",
                     arn=alarm.get("AlarmArn", ""),
                 ))
-                raw_capture.record("CloudWatchAlarm", region,
-                                   alarm.get("AlarmArn", name), alarm)
     except (ClientError, BotoCoreError) as e:
         rows.append(error_row("CloudWatchAlarm", region, "ERROR", str(e)))
     return rows
@@ -171,8 +165,6 @@ def collect_xray_config(session, region):
                 "after 30 days regardless of this config - check if the filter's target service still exists",
                 arn=g.get("GroupARN", ""),
             ))
-            raw_capture.record("XRayGroup", region,
-                               g.get("GroupARN", g["GroupName"]), g)
 
     rules_resp = safe_call(xray.get_sampling_rules)
     if "__error__" in rules_resp:
@@ -190,6 +182,4 @@ def collect_xray_config(session, region):
                 "X-Ray exposes no true last-used signal for sampling rules (only last-modified); "
                 "check whether the associated service still exists",
             ))
-            raw_capture.record("XRaySamplingRule", region,
-                               rule.get("RuleARN", rule.get("RuleName", "")), r)
     return rows

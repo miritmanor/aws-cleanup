@@ -285,8 +285,6 @@ from .settings import (
     CONFIG_FILENAME,
     OUTPUT_FILENAMES,
     RESULTS_DIRNAME,
-    RUNTIME_DIRNAME,
-    RUNTIME_FILENAMES,
     Settings,
     load_settings,
     output_paths,

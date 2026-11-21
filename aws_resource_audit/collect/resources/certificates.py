@@ -3,7 +3,6 @@ nothing uses, one expired, or an imported one about to expire that will not rene
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...rows import add_edge, error_row, new_row
@@ -52,7 +51,6 @@ def collect_acm_certificates(session, region):
                                        f"expires {cert['NotAfter']:%Y-%m-%d}" if cert.get("NotAfter") else "",
                                        f"{len(cert.get('SubjectAlternativeNames', []))} name(s)"], ", "),
             arn=arn)
-        raw_capture.record("ACMCertificate", region, cid, cert)
         for user in users:
             target, service = probable_resource_id_from_arn(user)
             if service in ("LoadBalancer", "CloudFrontDistribution", "APIGatewayDomainName"):

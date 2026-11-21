@@ -6,7 +6,6 @@ import re
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, parse_aws_ts_string, safe_call
 from ...rows import error_row, new_row
 from ...staleness import days_ago
@@ -21,11 +20,10 @@ _ON = ("ENABLED", "ENABLING")
 _SUSPENDED = ("SUSPENDED", "SUSPENDING", "DISABLING")
 
 
-def _row(service, region, rid, name, created, flag, notes, raw, **kwargs):
+def _row(service, region, rid, name, created, flag, notes, **kwargs):
     hint = BILLS_WHILE_ENABLED if flag == ENABLED_FLAG else None
     row = new_row(service, region, rid, name, created, None, days_ago(created), True,
                   flag, notes, cost_hint=hint, **kwargs)
-    raw_capture.record(service, region, rid, raw)
     return row
 
 
@@ -41,8 +39,7 @@ def collect_guardduty_detectors(session, region):
             logger.warning("GuardDuty detector %s in %s: details unreadable, status UNKNOWN - %s",
                            detector_id, region, detail["__error__"])
             rows.append(_row("GuardDutyDetector", region, detector_id, detector_id, None, "UNKNOWN",
-                             f"{_NOTES}Detector details could not be read: {detail['__error__']} ",
-                             {"DetectorId": detector_id}))
+                             f"{_NOTES}Detector details could not be read: {detail['__error__']} "))
             continue
         enabled = detail.get("Status") == "ENABLED"
         features = [f["Name"] for f in detail.get("Features") or [] if f.get("Status") == "ENABLED"]
@@ -50,7 +47,7 @@ def collect_guardduty_detectors(session, region):
             "GuardDutyDetector", region, detector_id, detector_id,
             parse_aws_ts_string(detail.get("CreatedAt")),
             ENABLED_FLAG if enabled else "STALE (suspended - not billing)",
-            _NOTES + "Billed per volume of logs and events analysed. ", detail,
+            _NOTES + "Billed per volume of logs and events analysed. ",
             tags=dict(detail.get("Tags") or {}),
             description=join_nonempty([f"{len(features)} feature(s) on"] + features, ", ")))
     return rows
@@ -78,7 +75,7 @@ def collect_security_hub(session, region):
         logger.warning("Security Hub in %s: enabled standards unreadable - %s", region, std_error)
         notes += f"Enabled standards could not be read: {std_error} "
     row = _row("SecurityHubHub", region, arn, "Security Hub",
-               parse_aws_ts_string(hub.get("SubscribedAt")), ENABLED_FLAG, notes, hub,
+               parse_aws_ts_string(hub.get("SubscribedAt")), ENABLED_FLAG, notes,
                description=join_nonempty([f"{len(standards)} standard(s)"] + sorted(
                    _standard_name(s.get("StandardsArn")) for s in standards), ", "),
                arn=arn)
@@ -108,7 +105,7 @@ def collect_inspector(session, region):
             continue  # never enabled, or fully disabled: nothing bills
         rows.append(_row(
             "InspectorAccount", region, "inspector", "Inspector", None, flag,
-            _NOTES + "Billed per instance, image and function scanned each month. ", account,
+            _NOTES + "Billed per instance, image and function scanned each month. ",
             description=join_nonempty([status] + enabled_types, ", "),
             account=account.get("accountId") or None))
     return rows
@@ -125,7 +122,7 @@ def collect_macie(session, region):
     enabled = resp.get("status") == "ENABLED"
     row = _row("MacieAccount", region, "macie", "Macie", resp.get("createdAt"),
                ENABLED_FLAG if enabled else "STALE (paused - not billing)",
-               _NOTES + "Billed per bucket monitored and per GB inspected. ", resp,
+               _NOTES + "Billed per bucket monitored and per GB inspected. ",
                description=resp.get("status", ""))
     return [row]
 
@@ -141,6 +138,5 @@ def collect_detective_graphs(session, region):
         # arn:aws:detective:<region>:<account>:graph:<id>
         rows.append(_row("DetectiveGraph", region, arn, re.split(r"[:/]", arn)[-1],
                          graph.get("CreatedTime"), ENABLED_FLAG,
-                         _NOTES + "Billed per GB of data ingested into the behavior graph. ",
-                         graph, arn=arn))
+                         _NOTES + "Billed per GB of data ingested into the behavior graph. ", arn=arn))
     return rows

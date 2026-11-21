@@ -8,7 +8,6 @@ from ...config import RETRY_CONFIG
 from ...staleness import days_ago, flag_stale
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 
 
 def collect_amplify_apps(session, region):
@@ -35,7 +34,6 @@ def collect_amplify_apps(session, region):
                     "Most recent branch/production updateTime used as activity proxy (last deploy or config change)",
                     tags=tags, description=app.get("description", ""),
                 ))
-                raw_capture.record("AmplifyApp", region, app_id, app)
     except (ClientError, BotoCoreError) as e:
         rows.append(error_row("AmplifyApp", region, "ERROR", str(e)))
     return rows
@@ -62,8 +60,6 @@ def collect_cloudformation_stacks(session, region):
                     description=stack.get("TemplateDescription", ""),
                     arn=stack.get("StackId", ""),
                 )
-                raw_capture.record("CloudFormationStack", region,
-                                   stack.get("StackId", name), stack)
                 # A nested stack names its parent, so the root is not left looking orphaned.
                 if stack.get("ParentId"):
                     add_edge(row, stack["ParentId"], "nested under",
@@ -144,7 +140,6 @@ def collect_elastic_beanstalk_environments(session, region):
             created, updated, ref_days, True, flag, notes,
             tags=tags, description=env.get("Description", ""),
         )
-        raw_capture.record("ElasticBeanstalkEnvironment", region, env_id, env)
 
         for instance in env_resources.get("Instances", []):
             add_edge(row, instance.get("Id"), "runs on",
@@ -250,7 +245,6 @@ def collect_elastic_beanstalk_applications(session, region):
             flag_stale(ref_days, None, True), notes,
             tags=tags, description=app.get("Description", ""),
         )
-        raw_capture.record("ElasticBeanstalkApplication", region, name, app)
 
         bundle_buckets = _source_bundle_buckets(eb, name)
         if bundle_buckets is None:

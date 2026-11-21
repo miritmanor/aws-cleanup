@@ -2,7 +2,6 @@
 Node groups are summarised on the cluster; their Auto Scaling groups are linked."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call
 from ...rows import add_edge, error_row, new_row
@@ -51,7 +50,6 @@ def collect_eks_clusters(session, region):
                                        f"{len(groups)} node group(s)",
                                        f"{len(profiles)} Fargate profile(s)"], ", "),
             vpc_id=(cluster.get("resourcesVpcConfig") or {}).get("vpcId"), arn=cluster.get("arn", ""))
-        raw_capture.record("EKSCluster", region, name, cluster)
         network = cluster.get("resourcesVpcConfig") or {}
         for subnet_id in network.get("subnetIds", []):
             add_edge(row, subnet_id, "runs in subnet", "cluster resourcesVpcConfig.subnetIds",

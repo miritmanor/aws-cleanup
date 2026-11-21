@@ -3,7 +3,6 @@ each ($1 a key, $0.40 a secret, $0.05 a parameter), "forgot to delete" clutter i
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...rows import add_edge, error_row, new_row
@@ -53,7 +52,6 @@ def collect_kms_keys(session, region):
             "check what uses it first. ", tags=tags,
             description=join_nonempty([state, meta.get("KeySpec", ""), meta.get("Description", "")], ", "),
             arn=meta.get("Arn", ""))
-        raw_capture.record("KMSKey", region, kid, meta)
         rows.append(row)
     return rows
 
@@ -89,7 +87,6 @@ def collect_secrets(session, region):
             flag_stale(days_ago(accessed) if accessed else None, days_ago(created), accessed is None),
             notes, tags=tags_to_dict(secret.get("Tags", [])),
             description=(secret.get("Description") or "")[:70], arn=secret.get("ARN", ""))
-        raw_capture.record("Secret", region, name, secret)
         add_edge(row, _key_id(secret.get("KmsKeyId")), "is encrypted with key", "secret KmsKeyId",
                  conn_type="secret.kmskey.encryption", target_service="KMSKey")
         rotation_fn, _svc = probable_resource_id_from_arn(secret.get("RotationLambdaARN") or "")
@@ -130,7 +127,6 @@ def collect_ssm_parameters(session, region):
                                        f"changed {days_ago(modified)}d ago" if modified else "",
                                        (param.get("Description") or "")[:60]], ", "),
             arn=param.get("ARN", ""))
-        raw_capture.record("SSMParameter", region, name, param)
         add_edge(row, _key_id(param.get("KeyId")), "encrypted with", "parameter KeyId",
                  conn_type="ssmparameter.kmskey.encryption", target_service="KMSKey")
         rows.append(row)

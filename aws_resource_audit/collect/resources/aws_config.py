@@ -5,7 +5,6 @@ import logging
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, safe_call
 from ...rows import error_row, new_row
 from ...text import join_nonempty
@@ -79,7 +78,6 @@ def collect_config_recorders(session, region):
                 recorder.get("servicePrincipal", ""),
                 f"delivers to s3://{buckets[0]}" if buckets else ""], ", "),
             cost_hint=hint, arn=recorder.get("arn", ""))
-        raw_capture.record("ConfigRecorder", region, name, recorder)
         rows.append(row)
     return rows
 
@@ -111,6 +109,5 @@ def collect_config_rules(session, region):
             description=join_nonempty([rule.get("Description", ""), source.get("Owner", ""),
                                        source.get("SourceIdentifier", "")], ", "),
             cost_hint=hint, arn=rule.get("ConfigRuleArn", ""))
-        raw_capture.record("ConfigRule", region, name, rule)
         rows.append(row)
     return rows

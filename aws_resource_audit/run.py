@@ -3,12 +3,9 @@ Settings and progress may be passed in for non-CLI callers; argument parsing liv
 
 import functools
 import logging
-import json
-import os
 from datetime import datetime, timezone
 
 from . import config, console
-from .collect import raw_capture
 from .collect.auth_guard import AuthGuard
 from .collect.regions import get_regions
 from .collect.collect import collect_all, total_collection_steps
@@ -36,19 +33,6 @@ from .snapshot import read_snapshot, write_snapshot
 from .console import say
 
 logger = logging.getLogger(__name__)
-
-
-def _write_debug_json(path, payload):
-    """A best-effort runtime/ debug dump: a failed write must never lose a finished
-    scan. default=str, since nothing reads it back."""
-    try:
-        with open(path, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2, default=str)
-    except (OSError, TypeError, ValueError) as e:               # noqa: BLE001
-        # console.warn already mirrors the message into logging; this adds the
-        # traceback, which only DEBUG wants.
-        logger.debug("writing %s failed", path, exc_info=True)
-        console.warn(f"could not write {os.path.basename(path)} ({e}); continuing")
 
 
 def _say_cost(billing, analysis):
@@ -159,21 +143,12 @@ def _scan(args, settings, paths, progress, should_stop):
     _report(phase="start", account=ident.get("Account"), regions=regions,
             step=0, total=total_steps)
 
-    # Collectors write one raw line per resource as they go, so a crash keeps what it had.
-    raw_capture.start(paths["raw_capture"])
-    try:
-        collection = collect_all(session, regions, no_cost=args.no_cost,
-                                 report=_report, step=step,
-                                 should_stop=should_stop, check_auth=check_auth)
-    finally:
-        raw_capture.close()
+    collection = collect_all(session, regions, no_cost=args.no_cost,
+                             report=_report, step=step,
+                             should_stop=should_stop, check_auth=check_auth)
     check_auth()
 
     normalized_scan_results = collection.normalized_scan_results
-    _write_debug_json(paths["normalized_scan_results"], {
-        "captured_at": config.now().isoformat(),
-        "rows": normalized_scan_results,
-    })
 
     say()
     # Nothing past here talks to AWS; steps are reported by name.

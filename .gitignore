@@ -28,7 +28,7 @@ credentials
 
 # ---------------------------------------------------------------------------
 # Scan output: REAL ACCOUNT DATA (account ids, ARNs, resource names).
-# Every name in OUTPUT_FILENAMES and RUNTIME_FILENAMES (settings.py) must be listed here.
+# Every name in OUTPUT_FILENAMES (settings.py) must be listed here.
 # ---------------------------------------------------------------------------
 aws_inventory.csv
 aws_inventory.html

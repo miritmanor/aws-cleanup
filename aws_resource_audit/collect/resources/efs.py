@@ -2,7 +2,6 @@
 Activity is CloudWatch ClientConnections; mount targets place it in subnets."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
 from ...rows import add_edge, error_row, new_row
@@ -45,7 +44,6 @@ def collect_efs_file_systems(session, region):
                                        fs.get("ThroughputMode", "")], ", "),
             arn=fs.get("FileSystemArn", ""), activity=evidence,
             vpc_id=(targets[0].get("VpcId") if targets else None))
-        raw_capture.record("EFSFileSystem", region, fid, fs)
         for target in targets:
             add_edge(row, target.get("SubnetId"), "has a mount target in subnet",
                      "MountTargets.SubnetId", conn_type="efs.subnet.placement",

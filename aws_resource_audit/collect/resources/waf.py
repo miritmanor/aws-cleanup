@@ -2,7 +2,6 @@
 front of a load balancer, API stage or CloudFront distribution."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, safe_call
 from ...rows import add_edge, error_row, new_row
 
@@ -33,7 +32,6 @@ def _acl_row(region, acl, protected, flag):
         "A web ACL bills about $5/month plus $1 per rule and a charge per million requests, "
         "whether or not anything is associated with it. ",
         description=(acl.get("Description") or "")[:70], arn=acl.get("ARN", ""))
-    raw_capture.record("WAFWebACL", region, name, acl)
     for kind, target in protected:
         if kind == "APPLICATION_LOAD_BALANCER":
             add_edge(row, target, "protects", "ListResourcesForWebACL",

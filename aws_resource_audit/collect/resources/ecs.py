@@ -2,7 +2,6 @@
 its current task definition names the images, role and network it runs with."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...collect.uri_refs import ecr_repository_from_image
@@ -28,7 +27,6 @@ def _service_row(elbv2, region, cluster_name, svc, task_def):
         description=join_nonempty([svc.get("launchType", ""), f"{running}/{desired} running",
                                    f"cluster {cluster_name}"], ", "),
         arn=svc.get("serviceArn", ""))
-    raw_capture.record("ECSService", region, f"{cluster_name}/{name}", svc)
     add_edge(row, cluster_name, "runs in cluster", "service clusterArn",
              conn_type="ecsservice.ecscluster.membership", target_service="ECSCluster")
     network = (svc.get("networkConfiguration") or {}).get("awsvpcConfiguration") or {}
@@ -111,7 +109,6 @@ def collect_ecs(session, region):
             description=f"{cluster.get('activeServicesCount', 0)} service(s), "
                         f"{cluster.get('runningTasksCount', 0)} running task(s), "
                         f"{len(instances)} container instance(s)")
-        raw_capture.record("ECSCluster", region, name, cluster)
         for instance_id in instances:
             add_edge(row, instance_id, "runs tasks on", "DescribeContainerInstances ec2InstanceId",
                      conn_type="ecscluster.ec2instance.container-instance", target_service="EC2Instance")

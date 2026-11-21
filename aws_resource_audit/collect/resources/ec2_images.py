@@ -7,7 +7,6 @@ from ...staleness import days_ago, flag_stale
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 from .ec2_usage import usage_is_complete
 
 
@@ -39,7 +38,6 @@ def collect_launch_templates(session, region, usage=None):
             "leaves no trace here.",
             tags=tags, description=f"{t.get('LatestVersionNumber')} version(s)",
         )
-        raw_capture.record("LaunchTemplate", region, t["LaunchTemplateId"], t)
         # Only the default version: what a plain launch uses.
         ver = safe_call(ec2.describe_launch_template_versions,
                         LaunchTemplateId=t["LaunchTemplateId"], Versions=[str(default_ver)])
@@ -117,7 +115,6 @@ def collect_amis(session, region, usage=None):
                 f"{len(snapshot_ids)} snapshot(s)",
             ]),
         )
-        raw_capture.record("AMI", region, image_id, img)
         for sid in snapshot_ids:
             add_edge(row, sid, "backed by snapshot", "AMI BlockDeviceMappings",
                      conn_type="ami.ebssnapshot.block-device", target_service="EBSSnapshot")
@@ -171,7 +168,6 @@ def collect_ebs_snapshots(session, region, usage=None):
             description=f"{size}GiB, tier {s.get('StorageTier', 'standard')}: {s.get('Description', '')[:60]}",
             cost_hint=None if backs_ami else "unattached",
         )
-        raw_capture.record("EBSSnapshot", region, sid, s)
         # A deleted source volume is expected for an old backup, so this must
         # not raise DANGLING - assert_exists stays False.
         add_edge(row, s.get("VolumeId"), "snapshot of volume", "snapshot VolumeId",

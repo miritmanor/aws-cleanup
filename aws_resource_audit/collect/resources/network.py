@@ -4,7 +4,6 @@ the rest of the account sits in. All free except the NAT gateway."""
 import logging
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
 from ...staleness import days_ago, flag_from_activity
@@ -54,7 +53,6 @@ def collect_vpcs(session, region, usage=None):
             _in_use_flag(usage, "vpc_ids", vid, "default VPC" if default else ""), notes,
             tags=tags, description=vpc.get("CidrBlock", ""), vpc_id=vid,
             aws_default=default)
-        raw_capture.record("VPC", region, vid, vpc)
         rows.append(row)
     return rows
 
@@ -77,7 +75,6 @@ def collect_subnets(session, region, usage=None):
             description=join_nonempty([subnet.get("CidrBlock", ""), zone], " "),
             connections=f"AZ={zone}" if zone else "", vpc_id=subnet.get("VpcId"),
             aws_default=subnet.get("DefaultForAz", False))
-        raw_capture.record("Subnet", region, sid, subnet)
         add_edge(row, subnet.get("VpcId"), "is in VPC", "Subnet VpcId",
                  conn_type="subnet.vpc.placement", target_service="VPC")
         rows.append(row)
@@ -110,7 +107,6 @@ def collect_route_tables(session, region):
             tags=tags, description="main" if main else f"{len(subnets)} subnet(s)",
             connections=join_nonempty([f"routes to {g}" for g in gateways], ", "),
             vpc_id=table.get("VpcId"), aws_default=main)
-        raw_capture.record("RouteTable", region, rid, table)
         add_edge(row, table.get("VpcId"), "is in VPC", "RouteTable VpcId",
                  conn_type="routetable.vpc.placement", target_service="VPC")
         for subnet_id in subnets:
@@ -142,7 +138,6 @@ def collect_internet_gateways(session, region):
             "InternetGateway", region, gid, _name(tags, gid), "", "", None, True,
             "ACTIVE (attached to a VPC)" if vpc_ids else "STALE (not attached to any VPC)",
             _FREE, tags=tags, vpc_id=vpc_ids[0] if vpc_ids else None)
-        raw_capture.record("InternetGateway", region, gid, gateway)
         for vpc_id in vpc_ids:
             add_edge(row, vpc_id, "attached to VPC", "InternetGateway Attachments.VpcId",
                      conn_type="internetgateway.vpc.attachment", target_service="VPC")
@@ -183,7 +178,6 @@ def collect_nat_gateways(session, region):
             flag_from_activity(evidence, days_ago(created)), notes, tags=tags,
             description=join_nonempty([nat.get("ConnectivityType", ""), nat.get("State", "")], " "),
             vpc_id=nat.get("VpcId"), activity=evidence)
-        raw_capture.record("NatGateway", region, nid, nat)
         add_edge(row, nat.get("SubnetId"), "sits in subnet", "NatGateway SubnetId",
                  conn_type="natgateway.subnet.placement", target_service="Subnet")
         for address in nat.get("NatGatewayAddresses", []):
@@ -236,7 +230,6 @@ def collect_vpc_endpoints(session, region):
             not (evidence and evidence.used), flag, notes, tags=tags,
             description=join_nonempty([kind, ep.get("ServiceName", ""), ep.get("State", "")], " "),
             vpc_id=ep.get("VpcId"), activity=evidence)
-        raw_capture.record("VpcEndpoint", region, eid, ep)
         add_edge(row, ep.get("VpcId"), "is in VPC", "VpcEndpoint VpcId",
                  conn_type="vpcendpoint.vpc.placement", target_service="VPC")
         for subnet_id in subnets:

@@ -26,7 +26,7 @@ others needs `ListConfigurationRecorders` plus one lookup each.
 
 ## Existing mechanisms reused
 
-`safe_call`/`paged` and the coverage ledger, `new_row`/`error_row`, `raw_capture`,
+`safe_call`/`paged` and the coverage ledger, `new_row`/`error_row`,
 the `cost_hint` → `compute_risk(extra_hint=)` seam, `CE_SERVICE_MAP`/`BILLING_COVERAGE`
 (decision 0037), `SERVICE_META`, `CONSOLE_URLS`.
 

@@ -86,7 +86,6 @@ Modules at the package root that every layer speaks:
   record of what owns what. `amplify.py` does the same for Amplify.
 - `cost.py` makes the Cost Explorer request and caches it: one request, plus a
   second only when a bucket needs explaining (`collect/cost.py`).
-- `raw_capture.py` writes the per-resource raw AWS dump. Nothing reads it back.
 
 ### `analyze/` — what the facts mean, no AWS ever
 

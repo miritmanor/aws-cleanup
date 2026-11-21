@@ -3,7 +3,6 @@ cluster bills with no traffic at all; Firehose bills only for data it moves."""
 
 from ... import activity, coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
@@ -43,7 +42,6 @@ def collect_kinesis_streams(session, region):
             description=join_nonempty([mode.lower(), f"{stream.get('OpenShardCount', '?')} shard(s)",
                                        f"{stream.get('RetentionPeriodHours', '?')}h retention"], ", "),
             arn=stream.get("StreamARN", ""), activity=evidence)
-        raw_capture.record("KinesisStream", region, name, stream)
         rows.append(row)
     return rows
 
@@ -109,7 +107,6 @@ def collect_firehose_streams(session, region):
             description=join_nonempty([description.get("DeliveryStreamType", ""),
                                        description.get("DeliveryStreamStatus", "")], ", "),
             arn=description.get("DeliveryStreamARN", ""), activity=evidence)
-        raw_capture.record("FirehoseStream", region, name, description)
         source = (description.get("Source") or {}).get("KinesisStreamSourceDescription") or {}
         stream, _svc = probable_resource_id_from_arn(source.get("KinesisStreamARN") or "")
         add_edge(row, stream, "reads from stream", "Source KinesisStreamARN",
@@ -166,7 +163,6 @@ def collect_msk_clusters(session, region):
             description=join_nonempty([kind.lower(), f"{brokers} broker(s)" if brokers else "",
                                        instance, cluster.get("State", "")], ", "),
             arn=cluster.get("ClusterArn", ""), activity=evidence)
-        raw_capture.record("MSKCluster", region, name, cluster)
         subnets, groups = _network(cluster)
         for subnet_id in subnets:
             add_edge(row, subnet_id, "has a broker in subnet", "BrokerNodeGroupInfo.ClientSubnets",

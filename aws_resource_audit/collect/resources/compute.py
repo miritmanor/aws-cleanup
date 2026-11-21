@@ -14,7 +14,6 @@ from ... import coverage
 from ...config import RETRY_CONFIG
 from ...staleness import days_ago, flag_from_activity
 from ...collect.calls import safe_call
-from ...collect import raw_capture
 from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
 from ...console import say
@@ -64,6 +63,18 @@ def _image_repository(lam, fn):
     resp = safe_call(lam.get_function, FunctionName=fn["FunctionName"])
     code = {} if "__error__" in resp else resp.get("Code", {})
     return ecr_repository_from_image(code.get("ImageUri") or code.get("ResolvedImageUri"))
+
+
+_BARE_NAME_EXPLAINED = "plain value, checked against resource names later (value not shown)"
+
+
+def _explain_candidates(candidates):
+    """How each candidate was found, for --debug. Env var values can be secrets, so an id
+    is shown only when it came out of an ARN or URL; a bare-name candidate IS the value."""
+    if not candidates:
+        return "NO CANDIDATE EXTRACTED"
+    return "; ".join(_BARE_NAME_EXPLAINED if conn_type == "lambda.any.env-var-bare-name"
+                     else f"{cid} ({how})" for cid, how, _, conn_type in candidates)
 
 
 def collect_lambda_functions(session, region, role_usage=None):
@@ -133,7 +144,6 @@ def collect_lambda_functions(session, region, role_usage=None):
                              conn_type="lambda.subnet.placement", target_service="Subnet")
                 add_edge(row, _image_repository(lam, fn), "runs image from", "GetFunction Code.ImageUri",
                          conn_type="lambda.ecrrepository.image", target_service="ECRRepository")
-                raw_capture.record("LambdaFunction", region, name, fn)
 
                 if console.VERBOSE:
                     say(f"    [explain] {name}: {len(all_env_configs)} config(s) "
@@ -145,8 +155,8 @@ def collect_lambda_functions(session, region, role_usage=None):
                     for var_key, var_value in env.items():
                         candidates = env_value_resource_candidates(var_value)
                         if console.VERBOSE:
-                            say(f"    [explain]   {qualifier}: {var_key}={var_value!r} -> "
-                                  f"{[c for c, _, _, _ in candidates] or 'NO CANDIDATE EXTRACTED'}", flush=True)
+                            say(f"    [explain]   {qualifier}: {var_key} -> "
+                                f"{_explain_candidates(candidates)}", flush=True)
                         for candidate, how, cand_service, cand_conn_type in candidates:
                             add_edge(row, candidate, "references (env var)",
                                      f"{qualifier} env var {var_key} - {how}",

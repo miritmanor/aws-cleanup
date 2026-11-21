@@ -10,7 +10,6 @@ from ...staleness import days_ago, flag_from_activity
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 from .ec2_usage import usage_is_complete
 
 logger = logging.getLogger(__name__)
@@ -76,7 +75,6 @@ def collect_ec2_instances(session, region, role_usage=None, usage=None):
                     add_edge(row, role_name, "runs as", "instance profile role",
                              conn_type="ec2.iamrole.instance-profile",
                              target_service="IAMRole")
-                    raw_capture.record("EC2Instance", region, iid, inst)
                     # The edge for the graph, and the registry entry for staleness.
                     sg_ids = [g["GroupId"] for g in inst.get("SecurityGroups", []) if g.get("GroupId")]
                     add_edge(row, inst.get("ImageId"), "launched from AMI", "instance ImageId",
@@ -195,7 +193,6 @@ def collect_ebs_volumes(session, region):
             flag, notes, tags=tags, description=description,
             cost_hint=cost_hint,
         )
-        raw_capture.record("EBSVolume", region, vid, vol)
         add_edge(row, attached_instance_id, "attached to",
                  f"EBS attachment ({attach_detail})" if attach_detail else "EBS attachment",
                  conn_type="ebsvolume.ec2.attachment", target_service="EC2Instance")
@@ -222,8 +219,6 @@ def collect_elastic_ips(session, region):
             tags=tags, description=addr.get("Domain", ""), connections=connections,
             cost_hint="unattached" if not associated else None,
         ))
-        raw_capture.record("ElasticIP", region,
-                           addr.get("AllocationId", addr.get("PublicIp")), addr)
     return rows
 
 
@@ -250,8 +245,6 @@ def collect_spot_instance_requests(session, region):
             tags=tags_to_dict(r.get("Tags", [])),
             description=f"spot price {r.get('SpotPrice', '?')}",
         )
-        raw_capture.record("SpotInstanceRequest", region,
-                           r["SpotInstanceRequestId"], r)
         add_edge(row, r.get("InstanceId"), "launched instance", "spot request InstanceId",
                  conn_type="spotrequest.ec2.instance-id",
                  assert_exists=live, target_service="EC2Instance")
@@ -302,6 +295,4 @@ def collect_reserved_instances(session, region, usage=None):
             description=f"fixed ${ri.get('FixedPrice', 0):.2f}, usage ${ri.get('UsagePrice', 0):.4f}/hr, "
                         f"scope {ri.get('Scope', '')}",
         ))
-        raw_capture.record("ReservedInstance", region,
-                           ri.get("ReservedInstancesId", itype), ri)
     return rows

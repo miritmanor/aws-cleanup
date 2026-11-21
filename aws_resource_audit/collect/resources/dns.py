@@ -3,7 +3,6 @@ Use comes from the free DNSQueries metric, published in us-east-1 for public zon
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, parse_aws_ts_string, safe_call, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
 from ...rows import add_edge, error_row, new_row
@@ -95,7 +94,6 @@ def collect_route53_hosted_zones(session, region="global"):
             last_used, days_ago(last_used), not (evidence and evidence.used), flag,
             _COST_NOTE + note, tags=tags, activity=evidence,
             description=f"{count} record set(s), {'private' if private else 'public'}")
-        raw_capture.record("Route53HostedZone", "global", zid, zone)
         records, _error = paged(route53, "list_resource_record_sets", "ResourceRecordSets",
                                 service="Route53HostedZone", HostedZoneId=zid)
         for record in records:
@@ -138,7 +136,6 @@ def collect_resolver_endpoints(session, region):
             tags={} if "__error__" in tags else tags_to_dict(tags.get("Tags", [])),
             description=join_nonempty([direction.lower(), f"{ips} IP address(es)", endpoint.get("Status", "")], ", "),
             vpc_id=endpoint.get("HostVPCId"), arn=endpoint.get("Arn", ""), activity=evidence)
-        raw_capture.record("Route53ResolverEndpoint", region, eid, endpoint)
         for subnet_id in _endpoint_subnets(client, eid):
             add_edge(row, subnet_id, "has an address in subnet", "ListResolverEndpointIpAddresses",
                      conn_type="resolverendpoint.subnet.placement", target_service="Subnet")

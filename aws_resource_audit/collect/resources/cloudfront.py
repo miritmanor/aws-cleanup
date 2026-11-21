@@ -5,7 +5,6 @@ import re
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
 from ...rows import add_edge, error_row, new_row
@@ -73,7 +72,6 @@ def collect_cloudfront_distributions(session, region="global"):
             tags=tags, description=join_nonempty([dist.get("DomainName", ""), dist.get("Status", ""),
                                                   "" if enabled else "disabled"], ", "),
             arn=dist.get("ARN", ""), activity=evidence)
-        raw_capture.record("CloudFrontDistribution", "global", did, dist)
         for origin in (dist.get("Origins") or {}).get("Items", []):
             _link_origin(row, origin.get("DomainName"))
         web_acl = dist.get("WebACLId") or ""

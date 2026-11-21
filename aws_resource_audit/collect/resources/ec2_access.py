@@ -6,7 +6,6 @@ from ...staleness import days_ago
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 from .ec2_usage import usage_is_complete
 
 
@@ -62,7 +61,6 @@ def collect_security_groups(session, region, usage=None):
             connections=f"VPC={g.get('VpcId', '')}" if g.get("VpcId") else "",
             vpc_id=g.get("VpcId"), aws_default=is_default,
         )
-        raw_capture.record("SecurityGroup", region, gid, g)
         rows.append(row)
     return rows
 
@@ -93,7 +91,6 @@ def collect_key_pairs(session, region, usage=None):
             tags=tags_to_dict(kp.get("Tags", [])),
             description=f"{kp.get('KeyPairId', '')} {kp.get('KeyFingerprint', '')[:20]}",
         ))
-        raw_capture.record("KeyPair", region, kname, kp)
     return rows
 
 
@@ -146,7 +143,6 @@ def collect_network_interfaces(session, region, usage=None):
             vpc_id=eni.get("VpcId"),
             cost_hint="unattached" if (status != "in-use" and not managed and not public_ip) else None,
         )
-        raw_capture.record("NetworkInterface", region, eid, eni)
         add_edge(row, instance_id, "attached to", "ENI Attachment.InstanceId",
                  conn_type="eni.ec2.attachment", target_service="EC2Instance")
         add_edge(row, eni.get("SubnetId"), "is in subnet", "ENI SubnetId",

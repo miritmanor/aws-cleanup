@@ -94,9 +94,6 @@ because the failure it catches is invisible at runtime.
   `ConfigStateWiringTests` is the one place joining config resolution to the gate
   inside `add_edge` — without it a configured `connection_types` entry can be
   silently ignored.
-- **`test_raw_capture_coverage.py`** — walks `collect/resources/*.py` and fails if
-  a function calls `new_row()` without `raw_capture.record()`. Nothing reads the
-  raw dump back, so a forgotten call ships correct reports and an incomplete dump.
 - **`test_entrypoint.py`** — `LibraryRaisesCliExitsTests`: `AuditError` is an
   `Exception` and **not** a `SystemExit`, and no module in the package contains a
   `raise SystemExit`, `sys.exit()` or `os._exit()`. The failure it prevents is one
@@ -154,8 +151,6 @@ because the failure it catches is invisible at runtime.
 - `test_snapshot.py` — what the snapshot may carry (it *selects*, so a future
   internal field cannot leak into it), and that a missing, stale or corrupt one
   produces a sentence naming the file and telling you to run a scan.
-- `test_raw_capture.py` — that the raw dump is written as it goes, describes
-  exactly one scan, and never costs a scan more than a line of notes when it fails.
 - `test_service_map.py` — `ReportCategoryTests` pins `SERVICE_META` categories to
   `tools/aws_service_coverage.csv`; `StructuralCategoryTests` pins
   `STRUCTURAL_SERVICES` to those categories. Neither is meaningful without the other.

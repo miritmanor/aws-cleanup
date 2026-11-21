@@ -146,7 +146,7 @@ there, and stopping would blame the wrong thing.
   - `run()` loads settings, opens the `ScanLog` and calls `_scan()`.
   - `_scan()` installs the guard on the session and checks it after
     `get_regions`, inside `collect_all`, and right after `collect_all`. That is
-    before `_write_debug_json`, `record_active_regions` and `write_snapshot`.
+    before `record_active_regions` and `write_snapshot`.
 - **`settings.py`**: `OUTPUT_FILENAMES["scan_log"] = "aws_scan_log.txt"`.
 
 ### analyze/

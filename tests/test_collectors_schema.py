@@ -337,7 +337,12 @@ class DebugLambdaEnvTests(unittest.TestCase):
                     "FunctionName": "orders-fn",
                     "FunctionArn": f"arn:aws:lambda:{REGION}:{ACCOUNT}:function:orders-fn",
                     "Runtime": "python3.11", "LastModified": aws_ts(recent()),
-                    "Environment": {"Variables": {"TABLE": "orders-table"}},
+                    "Environment": {"Variables": {
+                        "TABLE": "orders-table",
+                        "DB_URL": "postgres://app:hunter2@db.example.com/x"
+                                  f"?queue=arn:aws:sqs:{REGION}:{ACCOUNT}:jobs",
+                        "DOCS": "https://example.com/docs",
+                    }},
                 }]},
                 "list_tags": {"Tags": {}},
                 "list_aliases": {"Aliases": []},
@@ -355,11 +360,16 @@ class DebugLambdaEnvTests(unittest.TestCase):
             console.VERBOSE = original
 
     def test_on_prints_each_env_var_and_what_was_extracted(self):
+        lines = [line.strip() for line in self._run(True).splitlines()]
+        self.assertIn("[explain]   $LATEST: TABLE -> plain value, checked against "
+                      "resource names later (value not shown)", lines)
+        self.assertIn("[explain]   $LATEST: DB_URL -> jobs (ARN embedded in env var value)", lines)
+        self.assertIn("[explain]   $LATEST: DOCS -> NO CANDIDATE EXTRACTED", lines)
+
+    def test_on_never_prints_a_value(self):
         output = self._run(True)
-        self.assertIn("[explain]", output)
-        self.assertIn("TABLE", output)
-        self.assertIn("orders-table", output,
-                      "the diagnostic must show the value, not just the key")
+        for value in ("orders-table", "hunter2", "postgres://", "example.com"):
+            self.assertNotIn(value, output, "env var values can be secrets")
 
     def test_off_prints_nothing(self):
         self.assertEqual(self._run(False), "")
