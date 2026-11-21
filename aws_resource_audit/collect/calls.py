@@ -50,15 +50,19 @@ class CallFailed(dict):
         self.kind = coverage.classify_error(self.message, self.code)
 
 
-def safe_call(fn, *args, capability=coverage.CONFIGURATION, **kwargs):
-    """Call an AWS API, swallowing permission and availability errors into
-    {"__error__": ...}. Logs at DEBUG and records the failure in the coverage ledger."""
+def safe_call(fn, *args, capability=coverage.CONFIGURATION, absent_when=(), **kwargs):
+    """Call an AWS API; an error becomes {"__error__": ...}, logged at DEBUG and recorded in
+    the coverage ledger. absent_when: (error code, message fragment) pairs meaning "none"."""
     try:
         return fn(*args, **kwargs)
     except (ClientError, BotoCoreError) as e:
         logger.debug("%s failed: %s", getattr(fn, "__name__", fn), e,
                      exc_info=True)
         failed = CallFailed(e, getattr(fn, "__name__", ""))
+        # Some services answer "not enabled" with an error; for this call only, it means none.
+        if any(failed.code == code and fragment.lower() in failed.message.lower()
+               for code, fragment in absent_when):
+            failed.kind = coverage.COMPLETE
         coverage.record(capability, failed.kind, operation=failed.operation, error=failed.message)
         return failed
 

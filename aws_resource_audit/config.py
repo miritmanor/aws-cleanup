@@ -139,6 +139,9 @@ SUPPORTING_SERVICES = frozenset({
     # Not drawn: the environment is what runs; the application is only the version
     # container it was deployed from.
     "ElasticBeanstalkApplication",
+    # Account-level services that watch the account; nothing in an application calls them.
+    "ConfigRecorder", "ConfigRule", "GuardDutyDetector", "SecurityHubHub",
+    "InspectorAccount", "MacieAccount", "DetectiveGraph",
 })
 
 # --- Name-token grouping: when a word shared by two resource names is distinctive
@@ -275,6 +278,13 @@ SERVICE_BILLING = {
     "APIGatewayDomainName":       ("free",     "a custom domain name is free; requests bill on the API"),
     "CloudWatchAlarm":            ("cost",     "billed per alarm per month beyond the free allowance"),
     "CloudTrailTrail":            ("usage",    "one management-event trail is free; extra trails and data events are billed"),
+    "ConfigRecorder":             ("usage",    "billed per configuration item recorded while recording is on"),
+    "ConfigRule":                 ("usage",    "billed per rule evaluation while the recorder runs"),
+    "GuardDutyDetector":          ("usage",    "billed per volume of logs and events analysed while enabled"),
+    "SecurityHubHub":             ("usage",    "billed per security check and finding ingested while enabled"),
+    "InspectorAccount":           ("usage",    "billed per instance, image and function scanned each month"),
+    "MacieAccount":               ("usage",    "billed per bucket monitored and per GB inspected while enabled"),
+    "DetectiveGraph":             ("usage",    "billed per GB ingested into the behavior graph"),
     "AmplifyApp":                 ("usage",    "billed for build minutes and hosting traffic"),
     "CognitoUserPool":            ("usage",    "billed per monthly active user beyond the free tier"),
     "XRayGroup":                  ("usage",    "billed per trace recorded and scanned"),

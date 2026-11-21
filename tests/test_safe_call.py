@@ -44,6 +44,27 @@ class FailureKindTests(unittest.TestCase):
         result, _ledger = self._fail(client_error("NoSuchTagSet", message="The TagSet does not exist"))
         self.assertEqual(result.kind, cov.COMPLETE)
 
+    def test_absent_when_turns_a_matching_error_into_an_answer(self):
+        """Macie says "not enabled" with AccessDeniedException; no grant would change that."""
+        with cov.ledger_of() as ledger:
+            result = safe_call(_raises(client_error("AccessDeniedException", "Macie is not enabled.")),
+                               absent_when=(("AccessDeniedException", "not enabled"),))
+        self.assertEqual(result.kind, cov.COMPLETE)
+        self.assertIn("__error__", result, "still an error to the caller, which decides what it means")
+        self.assertEqual([e.status for e in ledger.entries], [cov.COMPLETE])
+
+    def test_absent_when_needs_both_the_code_and_the_message(self):
+        absent = (("AccessDeniedException", "not enabled"),)
+        for err in (client_error("AccessDeniedException", "not authorized to perform: macie2:Get"),
+                    client_error("AccessDenied", "Macie is not enabled.")):
+            with self.subTest(code=err.response["Error"]["Code"]):
+                result, _ledger = self._fail_with(err, absent)
+                self.assertEqual(result.kind, cov.DENIED)
+
+    def _fail_with(self, err, absent_when):
+        with cov.ledger_of() as ledger:
+            return safe_call(_raises(err), absent_when=absent_when), ledger
+
     def test_an_error_that_never_reached_aws_is_failed_with_its_class_name(self):
         result, _ledger = self._fail(EndpointConnectionError(endpoint_url="https://x"))
         self.assertEqual((result.code, result.kind), ("EndpointConnectionError", cov.FAILED))

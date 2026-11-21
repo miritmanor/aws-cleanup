@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A scan now reports AWS Config (recorders and rules), GuardDuty, Security Hub, Inspector, Macie and Detective in each region where they are turned on. They bill from the moment they are enabled. An enabled one shows as active, and its risk column says to check whether anyone reads its findings. A suspended or paused one shows as unused. A region where a service was never turned on gets no row. The deployed audit role needs the new read permissions: redeploy `iam/aws-audit-role.yaml`, then re-scan.
 - A scan no longer fails partway through when it runs longer than an hour with `assume_role` on. The role's credentials now renew themselves before they expire.
 - If AWS stops accepting the scan's credentials partway through, the scan now stops and saves nothing, and the previous results stay. This covers expired credentials, and a computer clock still behind AWS's after a retry. Before, the scan saved a result that was mostly failed lookups, replacing the good one.
 - A request refused because the computer's clock was briefly behind AWS's, as happens just after waking from sleep, is retried once after 15 seconds instead of failing.

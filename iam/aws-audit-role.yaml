@@ -219,6 +219,17 @@ Resources:
                   - apigateway:GET
                   - cloudtrail:DescribeTrails
                   - cloudtrail:GetTrailStatus
+                  - config:DescribeConfigurationRecorders
+                  - config:DescribeConfigurationRecorderStatus
+                  - config:DescribeDeliveryChannels
+                  - config:DescribeConfigRules
+                  - guardduty:ListDetectors
+                  - guardduty:GetDetector
+                  - securityhub:DescribeHub
+                  - securityhub:GetEnabledStandards
+                  - inspector2:BatchGetAccountStatus
+                  - macie2:GetMacieSession
+                  - detective:ListGraphs
                   - logs:DescribeLogGroups
                   - logs:DescribeLogStreams
                   - logs:DescribeSubscriptionFilters

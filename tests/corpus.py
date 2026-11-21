@@ -34,6 +34,8 @@ ALL_SERVICES = [
     "KinesisStream", "FirehoseStream", "MSKCluster", "GlueJob", "GlueCrawler",
     "TransitGateway", "VPNConnection", "ACMCertificate", "SSMParameter", "AppSyncApi",
     "OpenSearchServerlessCollection", "Route53ResolverEndpoint",
+    "ConfigRecorder", "ConfigRule", "GuardDutyDetector", "SecurityHubHub",
+    "InspectorAccount", "MacieAccount", "DetectiveGraph",
 ]
 
 # One representative id per service. Names are deliberately unalike, so no shared word
@@ -129,6 +131,13 @@ _BASELINE = {
     "WAFWebACL": ("edge-shield", "edge-shield"),
     "NetworkFirewall": ("perimeter-fw", "perimeter-fw"),
     "APIGatewayDomainName": ("hooks.widgetco.test", "hooks.widgetco.test"),
+    "ConfigRecorder": ("default", "default"),
+    "ConfigRule": ("s3-bucket-versioning-enabled", "s3-bucket-versioning-enabled"),
+    "GuardDutyDetector": ("12abc34d567e8fa901bc2d34e56789f0", "12abc34d567e8fa901bc2d34e56789f0"),
+    "SecurityHubHub": ("arn:aws:securityhub:us-east-1:111122223333:hub/default", "Security Hub"),
+    "InspectorAccount": ("inspector", "Inspector"),
+    "MacieAccount": ("macie", "Macie"),
+    "DetectiveGraph": ("arn:aws:detective:us-east-1:111122223333:graph:0baseline01", "0baseline01"),
 }
 
 # Global services get "global" as their region, exactly as the collectors emit.

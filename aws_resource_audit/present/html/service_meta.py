@@ -99,6 +99,13 @@ SERVICE_META = {
     "CloudWatchAlarm":            {"color": "#E7157B", "category": "Management & Governance"},
     "CloudWatchLogGroup":         {"color": "#E7157B", "category": "Management & Governance"},
     "CloudTrailTrail":            {"color": "#E7157B", "category": "Management & Governance"},
+    "ConfigRecorder":             {"color": "#E7157B", "category": "Management & Governance"},
+    "ConfigRule":                 {"color": "#E7157B", "category": "Management & Governance"},
+    "GuardDutyDetector":          {"color": "#DD344C", "category": "Security, Identity, & Compliance"},
+    "SecurityHubHub":             {"color": "#DD344C", "category": "Security, Identity, & Compliance"},
+    "InspectorAccount":           {"color": "#DD344C", "category": "Security, Identity, & Compliance"},
+    "MacieAccount":               {"color": "#DD344C", "category": "Security, Identity, & Compliance"},
+    "DetectiveGraph":             {"color": "#DD344C", "category": "Security, Identity, & Compliance"},
     "XRayGroup":                  {"color": "#2E4A7D", "category": "Developer Tools"},
     "XRaySamplingRule":           {"color": "#2E4A7D", "category": "Developer Tools"},
 }

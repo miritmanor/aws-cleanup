@@ -45,6 +45,8 @@ class SchemaAndFailureTests(unittest.TestCase):
         "KinesisStream", "FirehoseStream", "MSKCluster", "GlueJob", "GlueCrawler",
         "TransitGateway", "VPNConnection", "ACMCertificate", "SSMParameter", "AppSyncApi",
         "OpenSearchServerlessCollection", "Route53ResolverEndpoint",
+        "ConfigRecorder", "ConfigRule", "GuardDutyDetector", "SecurityHubHub",
+        "InspectorAccount", "MacieAccount", "DetectiveGraph",
     ]
 
     def test_collector_order_is_validated_at_import(self):
@@ -211,6 +213,14 @@ class SchemaAndFailureTests(unittest.TestCase):
              "CognitoUserPool"),
             (audit.collect_access_analyzer_unused_roles, "accessanalyzer", "list_analyzers",
              "IAMRoleUnusedAccessFinding"),
+            (audit.collect_config_recorders, "config", "describe_configuration_recorders",
+             "ConfigRecorder"),
+            (audit.collect_config_rules, "config", "describe_config_rules", "ConfigRule"),
+            (audit.collect_guardduty_detectors, "guardduty", "list_detectors", "GuardDutyDetector"),
+            (audit.collect_security_hub, "securityhub", "describe_hub", "SecurityHubHub"),
+            (audit.collect_inspector, "inspector2", "batch_get_account_status", "InspectorAccount"),
+            (audit.collect_macie, "macie2", "get_macie_session", "MacieAccount"),
+            (audit.collect_detective_graphs, "detective", "list_graphs", "DetectiveGraph"),
         ]
         for collector, service_name, operation, expected_service in cases:
             with self.subTest(service=expected_service):

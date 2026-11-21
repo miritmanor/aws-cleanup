@@ -168,6 +168,9 @@ explicitly (on the console and in the "Scan coverage" section of
 `grouping_audit.md`) rather than silently swallowed, so you can see exactly
 what it tried to read.
 
+Which AWS services a scan covers, and with which resource types, is listed in
+[`tools/aws_service_coverage.csv`](tools/aws_service_coverage.csv) (the `covered` column).
+
 ## What a scan costs
 
 Each scan makes one or two Cost Explorer requests, about $0.01 each. With

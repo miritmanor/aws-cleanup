@@ -1,6 +1,6 @@
 # Grouping audit
 
-103 resources scanned, 2 project(s).
+110 resources scanned, 2 project(s).
 
 ## Scan coverage
 

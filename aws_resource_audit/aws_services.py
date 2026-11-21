@@ -108,6 +108,15 @@ SERVICE_SLUGS = {
     "CloudWatchAlarm":            "cloudwatch",
     "CloudTrailTrail":            "cloudtrail",
     "CloudFormationStack":        "cloudformation",
+    "ConfigRecorder":             "config",
+    "ConfigRule":                 "config",
+
+    # Security services that bill per region while enabled
+    "GuardDutyDetector":          "guardduty",
+    "SecurityHubHub":             "security-hub",
+    "InspectorAccount":           "inspector",
+    "MacieAccount":               "macie",
+    "DetectiveGraph":             "detective",
 
     # Developer tools - AWS files X-Ray here rather than with the other
     # observability services, which is why tracing sits apart from CloudWatch
@@ -165,6 +174,12 @@ SERVICE_LABELS = {
     "cloudwatch": "CloudWatch",
     "cloudtrail": "CloudTrail",
     "cloudformation": "CloudFormation",
+    "config": "Config",
+    "guardduty": "GuardDuty",
+    "security-hub": "Security Hub",
+    "inspector": "Inspector",
+    "macie": "Macie",
+    "detective": "Detective",
     "xray": "X-Ray",
     "vpc": "VPC",
     "transit-gateway": "Transit Gateway",
