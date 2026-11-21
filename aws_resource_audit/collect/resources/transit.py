@@ -2,7 +2,6 @@
 VPN connection bills about $36/month for as long as it exists, used or not."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
 from ...rows import add_edge, error_row, new_row
@@ -53,7 +52,6 @@ def collect_transit_gateways(session, region):
             tags=tags, description=join_nonempty([gateway.get("Description", ""),
                                                   f"{len(attached)} attachment(s)"], ", "),
             arn=gateway.get("TransitGatewayArn", ""), activity=evidence)
-        raw_capture.record("TransitGateway", region, gid, gateway)
         for item in attached:
             if item.get("ResourceType") == "vpc":
                 add_edge(row, item.get("ResourceId"), "attaches VPC", "TransitGatewayAttachments",
@@ -85,7 +83,6 @@ def collect_vpn_connections(session, region):
             tags=tags, description=join_nonempty([vpn.get("State", ""), f"{tunnels_up} tunnel(s) up",
                                                   vpn.get("CustomerGatewayId", "")], ", "),
             activity=evidence)
-        raw_capture.record("VPNConnection", region, vid, vpn)
         add_edge(row, vpn.get("TransitGatewayId"), "connects through", "VpnConnection TransitGatewayId",
                  conn_type="vpnconnection.transitgateway.attachment", target_service="TransitGateway")
         rows.append(row)

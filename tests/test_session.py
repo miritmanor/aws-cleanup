@@ -2,12 +2,15 @@
 sts:AssumeRole branch, without real credentials."""
 
 import unittest
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest import mock
 
 from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
 
-from aws_resource_audit.collect.session import ROLE_SESSION_NAME, authenticated_session
+from aws_resource_audit.collect import role_credentials
+from aws_resource_audit.collect.role_credentials import ROLE_SESSION_NAME
+from aws_resource_audit.collect.session import authenticated_session
 from aws_resource_audit.errors import AuditError
 from aws_resource_audit.settings import ROLE_NAME_ENV, Settings
 
@@ -43,6 +46,7 @@ class AuthenticatedSessionTests(unittest.TestCase):
                     "AccessKeyId": "ASSUMEDKEY",
                     "SecretAccessKey": "ASSUMEDSECRET",
                     "SessionToken": "ASSUMEDTOKEN",
+                    "Expiration": datetime.now(timezone.utc) + timedelta(hours=1),
                 }
             }
         return session
@@ -103,12 +107,14 @@ class AuthenticatedSessionTests(unittest.TestCase):
             RoleArn=f"arn:aws:iam::{ACCOUNT}:role/AWS-audit-role",
             RoleSessionName=ROLE_SESSION_NAME,
         )
-        # The second Session() call is built from exactly the credentials
-        # AssumeRole returned, not the base profile's own.
+        # The second Session() is built on exactly the credentials AssumeRole
+        # returned, not the base profile's own, and they renew themselves.
         _, kwargs = session_cls.call_args_list[1]
-        self.assertEqual(kwargs["aws_access_key_id"], "ASSUMEDKEY")
-        self.assertEqual(kwargs["aws_secret_access_key"], "ASSUMEDSECRET")
-        self.assertEqual(kwargs["aws_session_token"], "ASSUMEDTOKEN")
+        creds = kwargs["botocore_session"].get_credentials()
+        self.assertEqual(creds.access_key, "ASSUMEDKEY")
+        self.assertEqual(creds.secret_key, "ASSUMEDSECRET")
+        self.assertEqual(creds.token, "ASSUMEDTOKEN")
+        self.assertEqual(creds.method, role_credentials.REFRESH_METHOD)
 
     def test_assume_role_failure_raises_naming_the_role_arn(self):
         base_ident = {"Account": ACCOUNT, "Arn": f"arn:aws:iam::{ACCOUNT}:user/aws-audit"}

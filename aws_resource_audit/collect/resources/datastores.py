@@ -3,7 +3,6 @@ exist, and all are classic "spun up for a trial, never deleted" resources."""
 
 from ... import activity, coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import epoch_seconds_to_dt, paged, safe_call, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
@@ -22,7 +21,7 @@ def _elasticache_tags(client, arn):
     return {} if "__error__" in resp else tags_to_dict(resp.get("TagList", []))
 
 
-def _cache_row(region, cid, name, created, evidence, notes, tags, description, arn, groups, raw,
+def _cache_row(region, cid, name, created, evidence, notes, tags, description, arn, groups,
                subnets=()):
     last_used = evidence.last_activity
     row = new_row(
@@ -30,7 +29,6 @@ def _cache_row(region, cid, name, created, evidence, notes, tags, description, a
         days_ago(last_used) if last_used else days_ago(created), not evidence.used,
         flag_from_activity(evidence, days_ago(created)), notes, tags=tags,
         description=description, arn=arn, activity=evidence)
-    raw_capture.record("ElastiCacheCluster", region, cid, raw)
     for subnet_id in subnets:
         add_edge(row, subnet_id, "runs in subnet", "cache subnet group",
                  conn_type="elasticache.subnet.placement", target_service="Subnet")
@@ -67,7 +65,7 @@ def collect_elasticache_clusters(session, region):
                            f"{cluster.get('NumCacheNodes', '?')} node(s)"], ", "),
             cluster.get("ARN", ""),
             [g["SecurityGroupId"] for g in cluster.get("SecurityGroups", []) if g.get("SecurityGroupId")],
-            cluster, subnet_groups.get(cluster.get("CacheSubnetGroupName"), [])))
+            subnet_groups.get(cluster.get("CacheSubnetGroupName"), [])))
     # Serverless caches are a separate listing; a denial there loses only them.
     caches, _error = paged(client, "describe_serverless_caches", "ServerlessCaches",
                            service="ElastiCacheCluster")
@@ -81,7 +79,7 @@ def collect_elasticache_clusters(session, region):
             + " Serverless: billed for stored data and compute used, with a minimum. ",
             _elasticache_tags(client, cache.get("ARN")),
             join_nonempty([cache.get("Engine", ""), "serverless"], ", "), cache.get("ARN", ""),
-            cache.get("SecurityGroupIds", []), cache, cache.get("SubnetIds", [])))
+            cache.get("SecurityGroupIds", []), cache.get("SubnetIds", [])))
     return rows
 
 
@@ -125,7 +123,6 @@ def _domain_row(client, cw, region, domain):
             domain.get("EngineVersion", ""), config.get("InstanceType", ""),
             f"{config.get('InstanceCount', '?')} instance(s)"], ", "),
         arn=arn, activity=evidence, vpc_id=vpc.get("VPCId"))
-    raw_capture.record("OpenSearchDomain", region, name, domain)
     for subnet_id in vpc.get("SubnetIds", []):
         add_edge(row, subnet_id, "runs in subnet", "VPCOptions.SubnetIds",
                  conn_type="opensearch.subnet.placement", target_service="Subnet")
@@ -178,7 +175,6 @@ def collect_opensearch_serverless_collections(session, region):
                                        collection.get("status", ""),
                                        "standby replicas" if redundant else "no standby"], ", "),
             arn=arn, activity=evidence)
-        raw_capture.record("OpenSearchServerlessCollection", region, row["resource_id"], collection)
         key, _svc = probable_resource_id_from_arn(collection.get("kmsKeyArn") or "")
         add_edge(row, key, "encrypted with", "collection kmsKeyArn",
                  conn_type="opensearchserverless.kmskey.encryption", target_service="KMSKey")

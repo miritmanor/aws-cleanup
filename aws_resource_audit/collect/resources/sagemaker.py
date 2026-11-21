@@ -5,7 +5,6 @@ from datetime import timedelta
 
 from ... import coverage
 from ...config import COST_LOOKBACK_DAYS, RETRY_CONFIG, now
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call
 from ...collect.cloudwatch import activity_note, cw_activity
@@ -50,7 +49,6 @@ def collect_sagemaker_endpoints(session, region):
             description=join_nonempty([endpoint.get("EndpointStatus", ""),
                                        f"{len(variants)} variant(s)"], ", "),
             arn=endpoint.get("EndpointArn", ""), activity=evidence)
-        raw_capture.record("SageMakerEndpoint", region, name, endpoint)
         rows.append(row)
     return rows
 
@@ -79,7 +77,6 @@ def collect_sagemaker_notebooks(session, region):
             tags=_tags(client, notebook.get("NotebookInstanceArn")),
             description=join_nonempty([notebook.get("InstanceType", ""), status], ", "),
             arn=notebook.get("NotebookInstanceArn", ""))
-        raw_capture.record("SageMakerNotebook", region, name, detail or notebook)
         add_edge(row, detail.get("SubnetId"), "runs in subnet", "notebook SubnetId",
                  conn_type="sagemakernotebook.subnet.placement", target_service="Subnet")
         role, _svc = probable_resource_id_from_arn(detail.get("RoleArn") or "")
@@ -125,7 +122,6 @@ def collect_sagemaker_studio_apps(session, region):
             tags=_tags(client, detail.get("AppArn")),
             description=join_nonempty([app.get("AppType", ""), size, app.get("Status", "")], ", "),
             arn=detail.get("AppArn", ""))
-        raw_capture.record("SageMakerStudioApp", region, rid, detail or app)
         rows.append(row)
     return rows
 
@@ -152,6 +148,5 @@ def collect_sagemaker_training_jobs(session, region):
             "finished; its model artifacts bill as S3 storage. ",
             tags=_tags(client, job.get("TrainingJobArn")), description=status,
             arn=job.get("TrainingJobArn", ""))
-        raw_capture.record("SageMakerTrainingJob", region, name, job)
         rows.append(row)
     return rows

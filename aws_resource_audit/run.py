@@ -1,13 +1,12 @@
 """The scan: collect from AWS, analyse, write the snapshot, then render through it.
 Settings and progress may be passed in for non-CLI callers; argument parsing lives outside."""
 
+import functools
 import logging
-import json
-import os
 from datetime import datetime, timezone
 
 from . import config, console
-from .collect import raw_capture
+from .collect.auth_guard import AuthGuard
 from .collect.regions import get_regions
 from .collect.collect import collect_all, total_collection_steps
 from .collect.session import authenticated_session
@@ -28,24 +27,12 @@ from .naming.group_names import (
 )
 from .naming.tagging import apply_group_tagging
 from .render import render_outputs
+from .scan_log import ScanLog
 from .settings import load_settings, output_paths
 from .snapshot import read_snapshot, write_snapshot
 from .console import say
 
 logger = logging.getLogger(__name__)
-
-
-def _write_debug_json(path, payload):
-    """A best-effort runtime/ debug dump: a failed write must never lose a finished
-    scan. default=str, since nothing reads it back."""
-    try:
-        with open(path, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2, default=str)
-    except (OSError, TypeError, ValueError) as e:               # noqa: BLE001
-        # console.warn already mirrors the message into logging; this adds the
-        # traceback, which only DEBUG wants.
-        logger.debug("writing %s failed", path, exc_info=True)
-        console.warn(f"could not write {os.path.basename(path)} ({e}); continuing")
 
 
 def _say_cost(billing, analysis):
@@ -87,7 +74,12 @@ def run(args, *, settings=None, progress=None, should_stop=None):
     # Read before authenticating, so a bad audit_config.json fails instantly.
     settings = settings if settings is not None else load_settings()
     paths = output_paths(settings)
+    with ScanLog(paths["scan_log"]):
+        return _scan(args, settings, paths, progress, should_stop)
 
+
+def _scan(args, settings, paths, progress, should_stop):
+    """run() inside its scan log."""
     # A failing progress callback is reported, never allowed to lose the scan.
     def _report(**event):
         if progress is None:
@@ -125,6 +117,9 @@ def run(args, *, settings=None, progress=None, should_stop=None):
     # Base profile, then - if settings.assume_role says so - a role assumed on
     # top of it. See collect/session.py; raises AuditError on either failure.
     session, ident = authenticated_session(args, settings)
+    # From here on, a credential AWS stops accepting ends the scan before anything is saved.
+    check_auth = functools.partial(AuthGuard().install(session).check,
+                                   getattr(args, "profile", None))
     # Before any row is built: identity includes account and partition (aws-cn, aws-us-gov).
     # A fresh ledger per scan, since the web app runs several in one process.
     coverage.reset()
@@ -137,6 +132,7 @@ def run(args, *, settings=None, progress=None, should_stop=None):
              else load_active_regions(paths["active_regions"], account))
     regions = get_regions(session, args.regions, args.all_regions,
                           saved=saved and saved["regions"])
+    check_auth()
     say(f"Regions: {', '.join(regions)}"
         + (f" - the saved list for this account, from {saved['updated_at'][:10]}"
            if saved else ""))
@@ -147,27 +143,19 @@ def run(args, *, settings=None, progress=None, should_stop=None):
     _report(phase="start", account=ident.get("Account"), regions=regions,
             step=0, total=total_steps)
 
-    # Collectors write one raw line per resource as they go, so a crash keeps what it had.
-    raw_capture.start(paths["raw_capture"])
-    try:
-        collection = collect_all(session, regions, no_cost=args.no_cost,
-                                 report=_report, step=step,
-                                 should_stop=should_stop)
-    finally:
-        raw_capture.close()
+    collection = collect_all(session, regions, no_cost=args.no_cost,
+                             report=_report, step=step,
+                             should_stop=should_stop, check_auth=check_auth)
+    check_auth()
 
     normalized_scan_results = collection.normalized_scan_results
-    _write_debug_json(paths["normalized_scan_results"], {
-        "captured_at": config.now().isoformat(),
-        "rows": normalized_scan_results,
-    })
 
     say()
     # Nothing past here talks to AWS; steps are reported by name.
     analysis = run_analysis(
         normalized_scan_results,
         default_vpc_ids=collection.default_vpc_ids,
-        default_vpcs_known=collection.default_vpcs_known,
+        default_vpcs_unknown=collection.default_vpcs_unknown,
         coverage=coverage.ledger(),
         name_rules=load_name_rules(paths["groups"]),
         billing=collection.billing, regions=regions,

@@ -13,7 +13,7 @@ be looked at first.
 
 ## Never share scan output
 
-Everything a scan writes (`Output/`, `aws_scan.json`, the reports, the raw capture)
+Everything a scan writes (`Output/`, `aws_scan.json`, the reports)
 is a map of your AWS account: account ids, ARNs, resource and role names. Do not
 attach it to issues or pull requests. If you need to show a problem, reproduce it
 with the synthetic test corpus in `tests/corpus.py` instead.

@@ -70,3 +70,12 @@ on it except whoever is reading the traceback.
 - `run()` no longer imports `sys`.
 - A failed AWS call is a different case: `safe_call` returns a structured
   failure (`CallFailed`) rather than raising.
+- The exception is a credential that AWS stops accepting mid-scan:
+  - an expired token;
+  - a renewal that failed;
+  - a clock error that persists after one retry.
+
+  `collect/auth_guard.py` sees it through botocore events, because many
+  collectors catch `ClientError` themselves. The scan raises `AuditError` at
+  its next checkpoint, before anything is written. Otherwise a scan whose
+  identity had lapsed would replace a good snapshot with an empty one.

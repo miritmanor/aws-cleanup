@@ -10,6 +10,10 @@ def compute_risk(flag, has_connections, extra_hint=None, has_dangling=False,
     if flag in ("ERROR", "UNKNOWN"):
         return "UNKNOWN - insufficient signal, verify manually"
     active = flag.startswith("ACTIVE")
+    # Account-level service: billed while on, no dependents to find; the advice lives here.
+    if extra_hint == "bills_while_enabled" and active:
+        return ("MEDIUM - bills while enabled; nothing in this scan depends on it, so "
+                "check whether anyone reads its findings or results before turning it off")
     if extra_hint == "unattached":
         return "LOW - unattached/unassociated, common cleanup candidate (still verify it's not a standby/DR resource)"
     if extra_hint == "attached_idle":

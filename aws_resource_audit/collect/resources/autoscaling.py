@@ -2,7 +2,6 @@
 the most common consumer of launch templates, which is what makes those readable."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, tags_to_dict
 from ...rows import add_edge, error_row, new_row
@@ -42,7 +41,6 @@ def collect_auto_scaling_groups(session, region, usage=None):
                 f"min {group.get('MinSize', '?')} / desired {desired} / max {group.get('MaxSize', '?')}",
                 "launch configuration (legacy)" if group.get("LaunchConfigurationName") else ""], ", "),
             arn=group.get("AutoScalingGroupARN", ""))
-        raw_capture.record("AutoScalingGroup", region, name, group)
         add_edge(row, template_id, "launches from template", "group LaunchTemplate",
                  conn_type="asg.launchtemplate.reference", target_service="LaunchTemplate")
         for instance_id in instances:

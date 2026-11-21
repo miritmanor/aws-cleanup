@@ -64,6 +64,13 @@ CE_SERVICE_MAP = {
     "SNSTopic": ("Amazon Simple Notification Service",),
     "EventBridgeRule": ("Amazon EventBridge",),
     "EventBridgeSchedule": ("Amazon EventBridge",),
+    "ConfigRecorder": ("AWS Config",),
+    "ConfigRule": ("AWS Config",),
+    "GuardDutyDetector": ("Amazon GuardDuty",),
+    "SecurityHubHub": ("AWS Security Hub",),
+    "InspectorAccount": ("Amazon Inspector",),
+    "MacieAccount": ("Amazon Macie",),
+    "DetectiveGraph": ("Amazon Detective",),
 }
 
 # Cost Explorer service -> (types this scan collects for it, types it bills that are
@@ -130,6 +137,12 @@ BILLING_COVERAGE = {
     "AWS X-Ray": (("XRayGroup", "XRaySamplingRule"), ()),
     "AWS Elastic Beanstalk": (("ElasticBeanstalkEnvironment",
                                "ElasticBeanstalkApplication"), ()),
+    "AWS Config": (("ConfigRecorder", "ConfigRule"), ()),
+    "Amazon GuardDuty": (("GuardDutyDetector",), ()),
+    "AWS Security Hub": (("SecurityHubHub",), ()),
+    "Amazon Inspector": (("InspectorAccount",), ()),
+    "Amazon Macie": (("MacieAccount",), ()),
+    "Amazon Detective": (("DetectiveGraph",), ()),
 }
 
 # Billed lines that are not resource types: reported as spend, not as coverage gaps.

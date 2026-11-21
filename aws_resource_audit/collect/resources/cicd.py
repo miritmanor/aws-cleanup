@@ -3,19 +3,17 @@ of the running application. The last build or execution is a genuine usage signa
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...rows import add_edge, error_row, new_row
 from ...staleness import days_ago, flag_stale
 
 
-def _usage_row(service, region, rid, created, last, notes, tags, description, arn, raw):
+def _usage_row(service, region, rid, created, last, notes, tags, description, arn):
     row = new_row(
         service, region, rid, rid, created, last, days_ago(last) if last else days_ago(created),
         last is None, flag_stale(days_ago(last) if last else None, days_ago(created), last is None),
         notes, tags=tags, description=description, arn=arn)
-    raw_capture.record(service, region, rid, raw)
     return row
 
 
@@ -43,7 +41,7 @@ def collect_codebuild_projects(session, region):
                 "CodeBuildProject", region, name, project.get("created"), _last_build(client, name),
                 "Billed per build minute; an unused project costs nothing. ",
                 tags_to_dict(project.get("tags", []), "key", "value"),
-                (project.get("source") or {}).get("type", ""), project.get("arn", ""), project)
+                (project.get("source") or {}).get("type", ""), project.get("arn", ""))
             role, _svc = probable_resource_id_from_arn(project.get("serviceRole") or "")
             add_edge(row, role, "runs as", "project serviceRole",
                      conn_type="codebuild.iamrole.service-role", target_service="IAMRole")
@@ -68,7 +66,7 @@ def collect_codepipelines(session, region):
         row = _usage_row(
             "CodePipeline", region, name, summary.get("created"), last,
             "V1 pipelines bill about $1/month while active; V2 per action minute. ", {},
-            summary.get("pipelineType", ""), "", pipeline or summary)
+            summary.get("pipelineType", ""), "")
         role, _svc = probable_resource_id_from_arn(pipeline.get("roleArn") or "")
         add_edge(row, role, "runs as", "pipeline roleArn",
                  conn_type="codepipeline.iamrole.role", target_service="IAMRole")

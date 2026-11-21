@@ -30,6 +30,7 @@ OUTPUT_FILENAMES = {
     "audit": "grouping_audit.md",
     "groups": "aws_project_groups.json",
     "active_regions": "aws_active_regions.json",
+    "scan_log": "aws_scan_log.txt",
 }
 
 def project_mermaid_filename(project_id):
@@ -50,16 +51,7 @@ def _project_filename(project_id, output):
     return f"{stem}-{safe or 'project'}.{ext}"
 
 
-# Debug dumps, never read back: what AWS returned per resource, and the rows as
-# collection finished with them.
-RUNTIME_FILENAMES = {
-    "raw_capture": "aws_raw_capture.jsonl",
-    "normalized_scan_results": "aws_normalized_scan_results.json",
-}
-
-# Finished outputs and the scan's working notes are kept in separate subdirectories.
 RESULTS_DIRNAME = "results"
-RUNTIME_DIRNAME = "runtime"
 
 
 # run()/render() accept one, as a server cannot chdir per request. No validation here:
@@ -82,7 +74,7 @@ class Settings:
     bubbles_in_html: bool = True
     # The overview's opening metric; validated at load. "cost" exists only By service.
     bubbles_default_metric: str = "resource_count"
-    # Where every output goes (results/ and runtime/), relative to this config's
+    # Where every output goes (under results/), relative to this config's
     # directory. One named directory, so one ignore line covers it.
     output_dir: str = "./Output"
     # The scan snapshot's filename inside output_dir, never a path.
@@ -180,16 +172,12 @@ def resolved_role_name(settings):
 
 
 def output_paths(settings):
-    """Path per output file, creating results/ and runtime/ under output_dir. Every file
+    """Path per output file, creating results/ under output_dir. Every file
     is written on every run; the dict stays flat (paths["csv"]), snapshot included."""
     output_dir = settings.output_dir or Settings.output_dir
     results_dir = os.path.join(output_dir, RESULTS_DIRNAME)
-    runtime_dir = os.path.join(output_dir, RUNTIME_DIRNAME)
     os.makedirs(results_dir, exist_ok=True)
-    os.makedirs(runtime_dir, exist_ok=True)
     paths = {kind: os.path.join(results_dir, name)
              for kind, name in OUTPUT_FILENAMES.items()}
     paths["snapshot"] = os.path.join(results_dir, settings.snapshot_file)
-    for kind, name in RUNTIME_FILENAMES.items():
-        paths[kind] = os.path.join(runtime_dir, name)
     return paths

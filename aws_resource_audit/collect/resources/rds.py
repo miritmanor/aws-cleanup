@@ -2,7 +2,6 @@
 snapshots - both invisible to describe_db_instances, both billed."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
 from ...rows import add_edge, error_row, new_row
@@ -74,7 +73,6 @@ def collect_rds_clusters(session, region):
             connections=f"subnet-group={cluster.get('DBSubnetGroup', '')}"
             if cluster.get("DBSubnetGroup") else "",
             arn=cluster.get("DBClusterArn", ""), activity=evidence)
-        raw_capture.record(cluster_type, region, cid, cluster)
         for member in members:
             add_edge(row, member, "has member instance", "DBClusterMembers",
                      conn_type="rdscluster.rdsinstance.member", target_service=instance_type)
@@ -98,7 +96,6 @@ def _snapshot_row(region, sid, snap, created, source_kind, source_id):
                                    f"{snap.get('AllocatedStorage', '?')}GiB"
                                    if snap.get("AllocatedStorage") else ""], " "),
         arn=snap.get("DBSnapshotArn") or snap.get("DBClusterSnapshotArn", ""))
-    raw_capture.record("RDSSnapshot", region, sid, snap)
     # The source is often deleted, which is normal for a backup, so never DANGLING.
     if source_kind == "instance":
         add_edge(row, source_id, "snapshot of instance", "snapshot DBInstanceIdentifier",

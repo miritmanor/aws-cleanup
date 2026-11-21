@@ -30,8 +30,8 @@ def documents_dir():
 
 
 def results_dir():
-    """The results/ subdirectory, mounted at /files. runtime/ (raw debug dumps) is
-    deliberately outside it, so never served over HTTP."""
+    """The results/ subdirectory, mounted at /files. The rest of the data directory
+    (config, documents, the pseudonym key) is outside it, so never served over HTTP."""
     return os.path.join(data_dir(), RESULTS_DIRNAME)
 
 

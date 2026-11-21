@@ -34,10 +34,10 @@ class AnalysisResult:
 
 
 def run_analysis(normalized_scan_results, *, default_vpc_ids=None,
-                 default_vpcs_known=True, coverage=None, name_rules=None,
+                 default_vpcs_unknown=(), coverage=None, name_rules=None,
                  billing=None, regions=(), report=None, step=0, total=0):
     """Resolve, tier, group, graph and attribute cost; rows are mutated in place.
-    default_vpcs_known=False suppresses VPC grouping; `billing` says whether it was queried."""
+    default_vpcs_unknown names regions whose default VPC lookup failed; `billing` says whether it was queried."""
     def _report(**event):
         if report is not None:
             report(**event)
@@ -46,7 +46,7 @@ def run_analysis(normalized_scan_results, *, default_vpc_ids=None,
     # First, so no later pass links, groups or prices a row that is not shown.
     hidden_default_networks = hide_untouched_default_networks(
         normalized_scan_results, default_vpc_ids, coverage_entries,
-        known=default_vpcs_known)
+        unknown_regions=default_vpcs_unknown)
 
     _report(phase="analyze", stage="references", step=step, total=total)
     edge_links = resolve_edges(normalized_scan_results, coverage=coverage)
@@ -57,10 +57,7 @@ def run_analysis(normalized_scan_results, *, default_vpc_ids=None,
 
     _report(phase="analyze", stage="grouping", step=step, total=total)
     grouping_notes = apply_project_grouping(
-        normalized_scan_results, edge_links=edge_links,
-        default_vpc_ids=default_vpc_ids,
-        default_vpcs_known=default_vpcs_known,
-        name_rules=name_rules)
+        normalized_scan_results, edge_links=edge_links, name_rules=name_rules)
 
     _report(phase="analyze", stage="graph", step=step, total=total)
     graph_data = build_graph_data(

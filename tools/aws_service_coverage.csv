@@ -164,7 +164,7 @@ Management & Governance,Amazon Managed Service for Prometheus,prometheus,no,0,,,
 Management & Governance,AWS Chatbot,chatbot,no,0,,,2020-04-22,https://aws.amazon.com/chatbot/
 Management & Governance,AWS CloudFormation,cloudformation,yes,1,CloudFormationStack,,2011-02-25,https://aws.amazon.com/cloudformation/
 Management & Governance,AWS CloudTrail,cloudtrail,yes,1,CloudTrailTrail,,2013-11-13,https://aws.amazon.com/cloudtrail/
-Management & Governance,AWS Config,config,no,0,,,2015-04-06,https://aws.amazon.com/config/
+Management & Governance,AWS Config,config,yes,2,ConfigRecorder;ConfigRule,,2015-04-06,https://aws.amazon.com/config/
 Management & Governance,AWS Control Tower,controltower,no,0,,,2019-06-24,https://aws.amazon.com/controltower/
 Management & Governance,AWS Distro for OpenTelemetry,otel,no,0,,,2020-10-21,https://aws.amazon.com/otel/
 Management & Governance,AWS Health,premiumsupport/technology/aws-health,no,0,,,2023-10-09,https://aws.amazon.com/premiumsupport/technology/aws-health/
@@ -221,10 +221,10 @@ Quantum Technologies,Amazon Braket,braket,no,0,,Free Trial,2020-08-13,https://aw
 Robotics,AWS RoboMaker,robomaker,no,0,,Free Trial,2018-11-26,https://aws.amazon.com/robomaker/
 Satellite,AWS Ground Station,ground-station,no,0,,,2019-05-22,https://aws.amazon.com/ground-station/
 "Security, Identity, & Compliance",Amazon Cognito,cognito,yes,1,CognitoUserPool,,2014-07-10,https://aws.amazon.com/cognito/
-"Security, Identity, & Compliance",Amazon Detective,detective,no,0,,Free Trial,2019-12-03,https://aws.amazon.com/detective/
-"Security, Identity, & Compliance",Amazon GuardDuty,guardduty,no,0,,Free Trial,2017-11-28,https://aws.amazon.com/guardduty/
-"Security, Identity, & Compliance",Amazon Inspector,inspector,no,0,,Free Trial,2021-11-29,https://aws.amazon.com/inspector/
-"Security, Identity, & Compliance",Amazon Macie,macie,no,0,,Free Trial,2017-08-14,https://aws.amazon.com/macie/
+"Security, Identity, & Compliance",Amazon Detective,detective,yes,1,DetectiveGraph,Free Trial,2019-12-03,https://aws.amazon.com/detective/
+"Security, Identity, & Compliance",Amazon GuardDuty,guardduty,yes,1,GuardDutyDetector,Free Trial,2017-11-28,https://aws.amazon.com/guardduty/
+"Security, Identity, & Compliance",Amazon Inspector,inspector,yes,1,InspectorAccount,Free Trial,2021-11-29,https://aws.amazon.com/inspector/
+"Security, Identity, & Compliance",Amazon Macie,macie,yes,1,MacieAccount,Free Trial,2017-08-14,https://aws.amazon.com/macie/
 "Security, Identity, & Compliance",Amazon Security Lake,security-lake,no,0,,,2022-11-29,https://aws.amazon.com/security-lake/
 "Security, Identity, & Compliance",Amazon Verified Permissions,verified-permissions,no,0,,,2022-11-28,https://aws.amazon.com/verified-permissions/
 "Security, Identity, & Compliance",AWS Artifact,artifact,no,0,,,2016-11-30,https://aws.amazon.com/artifact/
@@ -239,7 +239,7 @@ Satellite,AWS Ground Station,ground-station,no,0,,,2019-05-22,https://aws.amazon
 "Security, Identity, & Compliance",AWS Network Firewall,network-firewall,yes,1,NetworkFirewall,,2020-11-19,https://aws.amazon.com/network-firewall/
 "Security, Identity, & Compliance",AWS Resource Access Manager,ram,no,0,,,2018-12-06,https://aws.amazon.com/ram/
 "Security, Identity, & Compliance",AWS Secrets Manager,secrets-manager,yes,1,Secret,Free Trial,2018-04-04,https://aws.amazon.com/secrets-manager/
-"Security, Identity, & Compliance",AWS Security Hub,security-hub,no,0,,Free Trial,2019-06-24,https://aws.amazon.com/security-hub/
+"Security, Identity, & Compliance",AWS Security Hub,security-hub,yes,1,SecurityHubHub,Free Trial,2019-06-24,https://aws.amazon.com/security-hub/
 "Security, Identity, & Compliance",AWS Shield,shield,no,0,,,2016-12-01,https://aws.amazon.com/shield/
 "Security, Identity, & Compliance",AWS WAF,waf,yes,1,WAFWebACL,,2015-10-06,https://aws.amazon.com/waf/
 Serverless,AWS Application Composer,application-composer,no,0,,,2022-12-01,https://aws.amazon.com/application-composer/

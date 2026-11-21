@@ -5,7 +5,6 @@ import re
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
@@ -40,7 +39,6 @@ def collect_redshift_clusters(session, region):
                                        f"{cluster.get('NumberOfNodes', '?')} node(s)",
                                        cluster.get("ClusterStatus", "")], ", "),
             vpc_id=cluster.get("VpcId"), activity=evidence)
-        raw_capture.record("RedshiftCluster", region, cid, cluster)
         for group in cluster.get("VpcSecurityGroups", []):
             add_edge(row, group.get("VpcSecurityGroupId"), "uses security group", "VpcSecurityGroups",
                      conn_type="redshift.securitygroup.membership", target_service="SecurityGroup")
@@ -93,7 +91,6 @@ def collect_redshift_serverless_workgroups(session, region):
                                        f"{group.get('baseCapacity', '?')} RPU base",
                                        group.get("status", "")], ", "),
             arn=group.get("workgroupArn", ""), activity=evidence)
-        raw_capture.record("RedshiftServerlessWorkgroup", region, name, {"workgroup": group, "namespace": namespace})
         for subnet_id in group.get("subnetIds", []):
             add_edge(row, subnet_id, "runs in subnet", "workgroup subnetIds",
                      conn_type="redshiftserverless.subnet.placement", target_service="Subnet")

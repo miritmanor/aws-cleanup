@@ -142,6 +142,41 @@ class ScanControlTests(ApiTestCase):
         self.assertEqual(body["regions"], ["eu-west-1", "us-east-1"])
         self.assertTrue(body["updated_at"])
 
+    def test_the_status_names_the_scan_log_only_when_one_exists(self):
+        self.assertIsNone(self.client.get("/api/scans/status").json()["log_url"])
+        paths = audit.output_paths(audit.Settings(output_dir=self.data_dir))
+        with open(paths["scan_log"], "w", encoding="utf-8") as handle:
+            handle.write("Regions: us-east-1\n")
+        body = self.client.get("/api/scans/status").json()
+        self.assertEqual(body["log_url"], "/files/aws_scan_log.txt")
+        served = self.client.get(body["log_url"])
+        self.assertEqual(served.status_code, 200)
+        self.assertIn("Regions: us-east-1", served.text)
+
+    def _write_log(self):
+        paths = audit.output_paths(audit.Settings(output_dir=self.data_dir))
+        with open(paths["scan_log"], "w", encoding="utf-8") as handle:
+            handle.write("Regions: us-east-1\n")
+
+    def test_a_stop_response_names_the_scan_log(self):
+        self.assertIsNone(self.client.post("/api/scans/cancel").json()["log_url"])
+        self._write_log()
+        self.assertEqual(self.client.post("/api/scans/cancel").json()["log_url"],
+                         "/files/aws_scan_log.txt")
+
+    def test_a_start_response_names_the_scan_log(self):
+        from app import scan_runner
+        self._write_log()
+        original = scan_runner.run
+        scan_runner.run = lambda *args, **kwargs: None
+        try:
+            response = self.client.post("/api/scans", json={"regions": ["us-east-1"]})
+            self._wait_until_idle()
+        finally:
+            scan_runner.run = original
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["log_url"], "/files/aws_scan_log.txt")
+
     def test_a_stop_with_no_scan_running_is_not_an_error(self):
         response = self.client.post("/api/scans/cancel")
         self.assertEqual(response.status_code, 200)

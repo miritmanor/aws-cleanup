@@ -75,6 +75,14 @@ from .deployment import (
     collect_elastic_beanstalk_applications,
     collect_elastic_beanstalk_environments,
 )
+from .aws_config import collect_config_recorders, collect_config_rules
+from .security_services import (
+    collect_detective_graphs,
+    collect_guardduty_detectors,
+    collect_inspector,
+    collect_macie,
+    collect_security_hub,
+)
 from .identity import (
     collect_access_analyzer_unused_roles,
     collect_cognito_user_pools,
@@ -161,6 +169,13 @@ COLLECTORS_PER_REGION = [
     ("Elastic Beanstalk applications", collect_elastic_beanstalk_applications),
     ("Cognito user pools", collect_cognito_user_pools),
     ("IAM unused-role findings", collect_access_analyzer_unused_roles),
+    ("Config recorders", collect_config_recorders),
+    ("Config rules", collect_config_rules),
+    ("GuardDuty detectors", collect_guardduty_detectors),
+    ("Security Hub", collect_security_hub),
+    ("Inspector", collect_inspector),
+    ("Macie", collect_macie),
+    ("Detective behavior graphs", collect_detective_graphs),
 ]
 
 # Account-wide services with no extra arguments, run once after every region.

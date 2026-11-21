@@ -96,6 +96,8 @@ export interface ScanStatus {
   stopping: boolean;
   result: { rows?: number; stale?: number; errors?: number } | null;
   log: string[];
+  /** The whole log of the latest scan; null before the first scan. */
+  log_url: string | null;
 }
 
 /** The saved region list for the last scan's account. */

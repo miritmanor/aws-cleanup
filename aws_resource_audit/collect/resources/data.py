@@ -12,7 +12,6 @@ from ...staleness import days_ago, flag_from_activity
 from ...collect.calls import safe_call, tags_to_dict
 from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 from .rds import rds_family
 
 logger = logging.getLogger(__name__)
@@ -60,7 +59,6 @@ def collect_rds_instances(session, region):
                     tags=tags, description=description, connections=connections, vpc_id=vpc_id,
                     arn=db.get("DBInstanceArn", ""),
                 ))
-                raw_capture.record(instance_type, region, did, db)
                 for subnet in (db.get("DBSubnetGroup") or {}).get("Subnets") or []:
                     add_edge(rows[-1], subnet.get("SubnetIdentifier"), "can run in subnet",
                              "DBSubnetGroup.Subnets", conn_type="rdsinstance.subnet.placement",
@@ -113,7 +111,6 @@ def collect_dynamodb_tables(session, region):
             ))
             # describe_table's payload, not the list_tables envelope that only
             # carried the name.
-            raw_capture.record("DynamoDBTable", region, name, table)
     except (ClientError, BotoCoreError) as e:
         rows.append(error_row("DynamoDBTable", region, "ERROR", str(e)))
     return rows
@@ -146,7 +143,6 @@ def collect_s3_buckets(session):
                                     "events if you need real access history."),
             tags=tags, activity=evidence,
         ))
-        raw_capture.record("S3Bucket", region, name, b)
         _attach_bucket_notifications(s3, rows[-1], name)
     return rows
 

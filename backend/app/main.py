@@ -75,7 +75,7 @@ def health():
 
 def mount_files(application=app):
     """Mount results/ at /files (a directory, so the report's sibling links work).
-    Not the data directory: runtime/ holds raw account dumps."""
+    Not the data directory: it also holds config, documents and the pseudonym key."""
     directory = deps.results_dir()
     os.makedirs(directory, exist_ok=True)
     application.mount("/files", StaticFiles(directory=directory), name="files")

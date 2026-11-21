@@ -3,7 +3,6 @@ silently. The newest pull (or push) across a repository's images is its usage.""
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...rows import error_row, new_row
 from ...staleness import days_ago, flag_stale
@@ -46,6 +45,5 @@ def collect_ecr_repositories(session, region):
             notes, tags=tags,
             description=join_nonempty([f"{len(images)} image(s)", f"{size:.2f}GiB"], ", "),
             arn=repo.get("repositoryArn", ""))
-        raw_capture.record("ECRRepository", region, name, repo)
         rows.append(row)
     return rows

@@ -23,7 +23,6 @@ from ...collect.calls import safe_call
 from ...text import join_nonempty
 from ...registry import detection_enabled
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +54,6 @@ def collect_cognito_user_pools(session, region):
                 )
                 # The describe payload when it was readable, else the listing
                 # entry - pool_detail is what the triggers below are read from.
-                raw_capture.record("CognitoUserPool", region, pool_id,
-                                   pool_detail or pool)
                 for trigger, value in sorted((pool_detail.get("LambdaConfig") or {}).items()):
                     # Most triggers map to a bare ARN string; the custom
                     # sender ones nest it under a dict with a key version.
@@ -116,7 +113,6 @@ def collect_access_analyzer_unused_roles(session, region, unused_access_role_nam
                         f"IAM Access Analyzer 'Unused access' finding via analyzer '{analyzer['name']}' - "
                         "AWS's own cross-service unused-role check (authoritative, not a heuristic)",
                     ))
-                    raw_capture.record("IAMRoleUnusedAccessFinding", region, role_arn, f)
     except (ClientError, BotoCoreError) as e:
         rows.append(error_row("IAMRoleUnusedAccessFinding", region, "ERROR", str(e)))
     return rows
@@ -163,7 +159,6 @@ def collect_iam(session, used_role_names=None, unused_access_role_names=None):
                 "Based on password-last-used + access-key-last-used (native, reliable, long-window IAM data)",
                 arn=user.get("Arn", ""),
             ))
-            raw_capture.record("IAMUser", "global", uname, user)
 
     # Groups
     for page in _pages(iam, "list_groups", "IAMGroup", rows):
@@ -179,7 +174,6 @@ def collect_iam(session, used_role_names=None, unused_access_role_names=None):
                 "IAM groups have no native last-used signal; flag is based on member count / creation date only",
                 arn=group.get("Arn", ""),
             ))
-            raw_capture.record("IAMGroup", "global", gname, group)
 
     # Customer-managed policies (AWS-managed policies excluded via Scope='Local')
     for page in _pages(iam, "list_policies", "IAMPolicy", rows, Scope="Local"):
@@ -199,7 +193,6 @@ def collect_iam(session, used_role_names=None, unused_access_role_names=None):
                 notes,
                 arn=policy.get("Arn", ""),
             )
-            raw_capture.record("IAMPolicy", "global", policy.get("Arn", pname), policy)
 
             # Name what the policy is attached to, not just a count.
             if attachment_count and policy.get("Arn"):
@@ -333,7 +326,6 @@ def collect_iam(session, used_role_names=None, unused_access_role_names=None):
                 iam_role=rname,
                 arn=role.get("Arn", ""),
             )
-            raw_capture.record("IAMRole", "global", rname, role)
             for arn in sorted(resource_grants):
                 rid, grant_service = probable_resource_id_from_arn(arn)
                 if rid:

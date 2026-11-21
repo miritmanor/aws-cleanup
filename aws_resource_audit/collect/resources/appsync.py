@@ -2,7 +2,6 @@
 is free - but often left behind after a prototype, still wired to its tables."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged
 from ...collect.cloudwatch import activity_note, cw_activity
@@ -56,7 +55,6 @@ def collect_appsync_apis(session, region):
             description=join_nonempty([api.get("apiType", "GRAPHQL").lower(),
                                        api.get("authenticationType", "")], ", "),
             arn=api.get("arn", ""), activity=evidence)
-        raw_capture.record("AppSyncApi", region, api_id, api)
         _link_data_sources(client, row, api_id)
         _link_authorizers(row, api)
         rows.append(row)

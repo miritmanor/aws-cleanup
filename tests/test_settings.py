@@ -229,21 +229,17 @@ class OutputPathTests(unittest.TestCase):
     def _results(self, *parts):
         return os.path.join(self.tmpdir.name, audit.RESULTS_DIRNAME, *parts)
 
-    def _runtime(self, *parts):
-        return os.path.join(self.tmpdir.name, audit.RUNTIME_DIRNAME, *parts)
-
     def test_every_output_the_run_writes_has_a_path(self):
         """Every key run.py and render.py index paths[...] by is present."""
         self.assertEqual(
             set(self._paths(self.tmpdir.name)),
             {"csv", "json", "html", "mermaid", "drawio", "audit", "groups", "snapshot",
-             "active_regions", "raw_capture", "normalized_scan_results"})
+             "active_regions", "scan_log"})
 
-    def test_it_creates_both_directories_that_do_not_exist_yet(self):
+    def test_it_creates_the_results_directory_that_does_not_exist_yet(self):
         target = os.path.join(self.tmpdir.name, "new", "nested")
         paths = self._paths(target)
         self.assertTrue(os.path.isdir(os.path.join(target, audit.RESULTS_DIRNAME)))
-        self.assertTrue(os.path.isdir(os.path.join(target, audit.RUNTIME_DIRNAME)))
         self.assertEqual(os.path.dirname(paths["csv"]),
                          os.path.join(target, audit.RESULTS_DIRNAME))
 
@@ -257,13 +253,10 @@ class OutputPathTests(unittest.TestCase):
         self.assertEqual(os.path.basename(paths["mermaid"]), "aws_resource_graph.mmd")
         self.assertEqual(os.path.basename(paths["drawio"]), "aws_architecture.drawio")
 
-    def test_finished_outputs_and_working_notes_are_kept_apart(self):
-        """Outputs go to results/, debug dumps to runtime/."""
+    def test_every_output_goes_to_results(self):
         paths = self._paths(self.tmpdir.name)
-        for kind in ("csv", "json", "html", "mermaid", "audit", "groups", "snapshot"):
-            self.assertEqual(os.path.dirname(paths[kind]), self._results(), kind)
-        for kind in ("raw_capture", "normalized_scan_results"):
-            self.assertEqual(os.path.dirname(paths[kind]), self._runtime(), kind)
+        for kind, path in paths.items():
+            self.assertEqual(os.path.dirname(path), self._results(), kind)
 
     def test_the_snapshot_name_is_the_configured_one(self):
         """The one output whose name is not fixed. Nothing links to it, because
@@ -321,15 +314,6 @@ class GitignoreCoverageTests(unittest.TestCase):
         self.assertEqual(
             missing, [],
             f"these outputs are not gitignored and would be committed: {missing}")
-
-    def test_every_runtime_filename_is_gitignored(self):
-        """The debug dumps are not lesser data. raw_capture is the rawest form
-        of the account there is - whatever each AWS API returned, verbatim."""
-        names = sorted(audit.RUNTIME_FILENAMES.values())
-        missing = [n for n in names if n not in self._ignored(names)]
-        self.assertEqual(
-            missing, [],
-            f"these debug dumps are not gitignored and would be committed: {missing}")
 
     def test_the_default_output_directory_is_gitignored(self):
         """Anything a default scan writes under output_dir is ignored."""

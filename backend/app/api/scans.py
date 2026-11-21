@@ -1,9 +1,12 @@
 """Starting, cancelling and polling a scan. Cancel stops before the next AWS step and
 saves nothing. No "scan and wait": a 202 plus polling is the interface."""
 
+import os
+
 from fastapi import APIRouter, status
 
 from aws_resource_audit.region_store import load_active_regions
+from aws_resource_audit.settings import OUTPUT_FILENAMES
 
 from .. import deps, stores
 from ..schemas import DefaultRegions, ScanRequest, ScanStatus
@@ -11,6 +14,15 @@ from ..scan_runner import runner
 from ..store import SnapshotMissing, SnapshotStore
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
+
+
+def _with_log_url(current):
+    """The runner's status plus where the full scan log is served, if one exists.
+    Read from results/, the directory /files serves, so polling never reads the config."""
+    name = OUTPUT_FILENAMES["scan_log"]
+    exists = os.path.exists(os.path.join(deps.results_dir(), name))
+    current["log_url"] = f"/files/{name}" if exists else None
+    return current
 
 
 @router.post(
@@ -26,7 +38,8 @@ def start_scan(request: ScanRequest):
     settings = deps.get_settings()
     paths = deps.get_paths(settings)
     store = SnapshotStore(paths["snapshot"])
-    return runner.start(request.to_options(), settings, on_finish=store.invalidate)
+    return _with_log_url(
+        runner.start(request.to_options(), settings, on_finish=store.invalidate))
 
 
 @router.post(
@@ -36,7 +49,7 @@ def start_scan(request: ScanRequest):
 )
 def cancel_scan():
     """Ask the running scan to stop; returns the current status (200 even if none runs)."""
-    return runner.cancel()
+    return _with_log_url(runner.cancel())
 
 
 @router.get(
@@ -47,7 +60,7 @@ def cancel_scan():
 def scan_status():
     """Polled about every 1.5s. Server-side state, so a reloaded page rejoins the scan;
     "done"/"failed" persist after it ends."""
-    return runner.status()
+    return _with_log_url(runner.status())
 
 
 @router.get(

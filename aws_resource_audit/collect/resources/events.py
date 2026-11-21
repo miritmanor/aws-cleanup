@@ -7,7 +7,6 @@ import logging
 from ..arns import arn_scope, probable_resource_id_from_arn
 from ..calls import paged, safe_call
 from ... import coverage
-from ...collect import raw_capture
 from ...config import RETRY_CONFIG
 from ...rows import add_edge, error_row, new_row
 from ...staleness import days_ago
@@ -46,7 +45,6 @@ def collect_eventbridge_rules(session, region):
                 "UNKNOWN", "Events published to a custom bus bill per million; an idle bus costs "
                 "nothing. Whether it is used shows on its rules' targets.",
                 description=(bus.get("Description") or "")[:70], arn=bus.get("Arn", "")))
-            raw_capture.record("EventBridgeBus", region, bus_name, bus)
         rules, rule_error = paged(events, "list_rules", "Rules",
                                   service="EventBridgeRule",
                                   EventBusName=bus_name)
@@ -82,7 +80,6 @@ def collect_eventbridge_rules(session, region):
                 description=description, activity=evidence,
                 arn=rule.get("Arn", ""),
             ))
-            raw_capture.record("EventBridgeRule", region, name, rule)
             if bus_name != "default":
                 add_edge(rows[-1], bus_name, "listens on bus", "rule EventBusName",
                          conn_type="eventbridgerule.eventbridgebus.membership",
@@ -165,7 +162,6 @@ def collect_scheduler_schedules(session, region):
                 f"group {group}", expression, timezone, state]),
             activity=evidence, arn=detail.get("Arn", ""),
         ))
-        raw_capture.record("EventBridgeSchedule", region, name, detail)
 
         scope = _target_scope(target.get("Arn") or "")
         if scope:

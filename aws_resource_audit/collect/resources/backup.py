@@ -3,7 +3,6 @@ expire or are deleted; a vault summarises them rather than listing each one."""
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call
 from ...rows import add_edge, error_row, new_row
@@ -39,7 +38,6 @@ def collect_backup_vaults(session, region):
             tags=_tags(client, vault.get("BackupVaultArn")),
             description=join_nonempty([f"{len(points)} recovery point(s)", f"{size:.2f}GiB"], ", "),
             arn=vault.get("BackupVaultArn", ""))
-        raw_capture.record("BackupVault", region, name, vault)
         key_id, _svc = probable_resource_id_from_arn(vault.get("EncryptionKeyArn") or "")
         add_edge(row, key_id, "is encrypted with key", "vault EncryptionKeyArn",
                  conn_type="backupvault.kmskey.encryption", target_service="KMSKey")
@@ -71,7 +69,6 @@ def collect_backup_plans(session, region):
             "A plan is free; the recovery points it creates are what bill. ",
             tags=_tags(client, plan.get("BackupPlanArn")), description=f"{len(rules)} rule(s)",
             arn=plan.get("BackupPlanArn", ""))
-        raw_capture.record("BackupPlan", region, pid, plan)
         for vault in sorted({r.get("TargetBackupVaultName") for r in rules} - {None}):
             add_edge(row, vault, "writes to vault", "plan Rules.TargetBackupVaultName",
                      conn_type="backupplan.backupvault.target", target_service="BackupVault")

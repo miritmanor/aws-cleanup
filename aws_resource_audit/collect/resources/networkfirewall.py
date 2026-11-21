@@ -3,7 +3,6 @@ while it exists, plus per GB. Each endpoint sits in a subnet of the firewall's V
 
 from ... import activity
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...collect.cloudwatch import activity_note, cw_activity
 from ...rows import add_edge, error_row, new_row
@@ -47,7 +46,6 @@ def collect_network_firewalls(session, region):
             tags=tags_to_dict(firewall.get("Tags", [])),
             description=join_nonempty([status.get("Status", ""), f"{len(subnets)} endpoint(s)"], ", "),
             vpc_id=firewall.get("VpcId"), arn=firewall.get("FirewallArn", ""), activity=evidence)
-        raw_capture.record("NetworkFirewall", region, name, resp)
         for subnet_id in subnets:
             add_edge(row, subnet_id, "has an endpoint in subnet", "Firewall SubnetMappings",
                      conn_type="networkfirewall.subnet.placement", target_service="Subnet")

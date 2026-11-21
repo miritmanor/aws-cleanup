@@ -5,7 +5,6 @@ import json
 
 from ... import coverage
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.arns import probable_resource_id_from_arn
 from ...collect.calls import paged, safe_call, tags_to_dict
 from ...rows import add_edge, error_row, new_row
@@ -104,7 +103,6 @@ def collect_state_machines(session, region):
             days_ago(latest) if latest else days_ago(created), latest is None,
             flag_stale(days_ago(latest) if latest else None, days_ago(created), latest is None),
             notes, tags=tags, description=machine.get("type", ""), arn=arn)
-        raw_capture.record("StepFunctionsStateMachine", region, name, detail or machine)
         role, _svc = probable_resource_id_from_arn(detail.get("roleArn") or "")
         add_edge(row, role, "runs as", "state machine roleArn",
                  conn_type="statemachine.iamrole.execution-role", target_service="IAMRole")

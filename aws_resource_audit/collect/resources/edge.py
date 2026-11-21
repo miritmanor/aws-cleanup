@@ -19,7 +19,6 @@ from ...staleness import days_ago, flag_from_activity
 from ...collect.calls import safe_call, tags_to_dict
 from ...text import join_nonempty
 from ...rows import add_edge, error_row, new_row
-from ...collect import raw_capture
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,6 @@ def collect_load_balancers(session, region):
                     tags=tags, description=lb.get("DNSName", ""), connections=connections, vpc_id=vpc_id,
                     arn=arn,
                 ))
-                raw_capture.record("LoadBalancer", region, name, lb)
                 for zone in lb.get("AvailabilityZones") or []:
                     add_edge(rows[-1], zone.get("SubnetId"), "listens in subnet",
                              "load balancer AvailabilityZones.SubnetId",
@@ -102,7 +100,6 @@ def collect_classic_load_balancers(session, region):
             + " Classic Load Balancer: AWS recommends migrating to an Application or Network Load Balancer. ",
             tags=tags, description=lb.get("DNSName", ""),
             connections=f"VPC={vpc_id}" if vpc_id else "", vpc_id=vpc_id)
-        raw_capture.record("LoadBalancer", region, name, lb)
         for instance in lb.get("Instances", []):
             add_edge(row, instance.get("InstanceId"), "routes to", "classic ELB Instances",
                      conn_type="loadbalancer.any.target", target_service="EC2Instance")
@@ -257,7 +254,6 @@ def collect_api_gateway_rest_apis(session, region):
                     flag_from_activity(evidence, days_ago(created)),
                     notes, tags=tags, description=api.get("description", ""),
                 )
-                raw_capture.record("APIGatewayRestApi", region, api_id, api)
                 for lname, qualifier in sorted(lambda_names):
                     add_edge(row, lname, "invokes",
                              "API Gateway method integration URI (get_integration)"
@@ -320,7 +316,6 @@ def collect_api_gateway_v2_apis(session, region):
                     flag_from_activity(evidence, days_ago(created)),
                     notes, tags=tags,
                 )
-                raw_capture.record("APIGatewayV2Api", region, api_id, api)
                 for lname, qualifier in sorted(lambda_names):
                     add_edge(row, lname, "invokes",
                              "HTTP/WebSocket API integration IntegrationUri (get_integrations)"
@@ -373,7 +368,6 @@ def collect_api_gateway_domain_names(session, region):
             description=join_nonempty(["/".join(types),
                                        domain.get("regionalDomainName") or domain.get("distributionDomainName")], " "),
             arn=f"arn:aws:apigateway:{region}::/domainnames/{name}")
-        raw_capture.record("APIGatewayDomainName", region, name, domain)
         for mapping in rest:
             add_edge(row, mapping["restApiId"], "routes to API", f"base path {mapping.get('basePath', '(none)')}",
                      conn_type="apidomain.apigateway.mapping", target_service="APIGatewayRestApi")

@@ -2,7 +2,6 @@
 Load balancer -> target links are drawn by edge.py; these rows add the orphans."""
 
 from ...config import RETRY_CONFIG
-from ...collect import raw_capture
 from ...collect.calls import paged
 from ...rows import add_edge, error_row, new_row
 from ...text import join_nonempty
@@ -31,7 +30,6 @@ def collect_target_groups(session, region):
             description=join_nonempty([group.get("TargetType", ""), group.get("Protocol", ""),
                                        str(group.get("Port", "") or "")], " "),
             vpc_id=group.get("VpcId"), arn=group.get("TargetGroupArn", ""))
-        raw_capture.record("TargetGroup", region, name, group)
         for lb in filter(None, lbs):
             add_edge(row, lb, "receives traffic from", "target group LoadBalancerArns",
                      conn_type="targetgroup.loadbalancer.attachment", target_service="LoadBalancer")
