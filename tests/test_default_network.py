@@ -28,8 +28,9 @@ def default_network(region=REGION, vpc=VPC):
     ]
 
 
-def hide(rows, coverage=None, known=True, vpcs=(VPC,)):
-    return hide_untouched_default_networks(rows, set(vpcs), coverage, known=known)
+def hide(rows, coverage=None, unknown=(), vpcs=(VPC,)):
+    return hide_untouched_default_networks(rows, set(vpcs), coverage,
+                                           unknown_regions=unknown)
 
 
 class UntouchedDefaultNetworkTests(unittest.TestCase):
@@ -84,8 +85,15 @@ class UntouchedDefaultNetworkTests(unittest.TestCase):
                    "status": "denied", "scope": REGION}]
         self.assertEqual(hide(default_network(), coverage=metric), [REGION])
 
-    def test_nothing_is_hidden_when_the_default_vpcs_are_not_known(self):
-        self.assertEqual(hide(default_network(), known=False), [])
+    def test_nothing_is_hidden_where_the_default_vpcs_are_not_known(self):
+        self.assertEqual(hide(default_network(), unknown={REGION}), [])
+
+    def test_a_region_with_an_unknown_default_vpc_does_not_stop_hiding_elsewhere(self):
+        """The bug: one region's failed lookup showed default VPCs in every region."""
+        rows = default_network() + default_network("us-east-1", "vpc-other")
+        self.assertEqual(hide(rows, unknown={"us-east-1"}, vpcs=(VPC, "vpc-other")),
+                         [REGION])
+        self.assertEqual({r["region"] for r in rows}, {"us-east-1"})
 
     def test_a_vpc_someone_created_is_never_hidden(self):
         rows = default_network()
@@ -99,6 +107,14 @@ class WiringTests(unittest.TestCase):
         result = run_analysis(rows, default_vpc_ids={VPC})
         self.assertEqual(result.hidden_default_networks, [REGION])
         self.assertEqual([r["service"] for r in rows], ["LambdaFunction"])
+
+    def test_an_unknown_region_keeps_its_network_and_the_other_region_loses_its_own(self):
+        rows = default_network("eu-west-1", "vpc-eu") + default_network("us-east-1", "vpc-us")
+        result = run_analysis(rows, default_vpc_ids={"vpc-eu", "vpc-us"},
+                              default_vpcs_unknown={"eu-west-1"})
+        self.assertEqual(result.hidden_default_networks, ["us-east-1"])
+        self.assertEqual({r["region"] for r in rows}, {"eu-west-1"})
+        self.assertEqual(len(rows), 6)
 
     def test_the_collectors_mark_what_aws_created(self):
         session = FakeSession({"ec2": {

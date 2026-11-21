@@ -237,7 +237,7 @@ class OutputPathTests(unittest.TestCase):
         self.assertEqual(
             set(self._paths(self.tmpdir.name)),
             {"csv", "json", "html", "mermaid", "drawio", "audit", "groups", "snapshot",
-             "active_regions", "raw_capture", "normalized_scan_results"})
+             "active_regions", "scan_log", "raw_capture", "normalized_scan_results"})
 
     def test_it_creates_both_directories_that_do_not_exist_yet(self):
         target = os.path.join(self.tmpdir.name, "new", "nested")

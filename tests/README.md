@@ -132,6 +132,19 @@ because the failure it catches is invisible at runtime.
   seam that broke when collection and analysis moved into their own modules. It
   patches authentication and region discovery and uses a permissive fake client, so
   an unstubbed operation returns an empty result rather than raising.
+- `test_run_auth.py` — `run()` when AWS stops accepting the scan's credentials: it
+  raises, saves nothing (snapshot, outputs, the saved region list), and the scan log
+  ends with the reason. One case drives the real `AuthGuard` through botocore events,
+  and `collect_all` is checked to run the auth check before a stop request.
+- `test_auth_guard.py` / `test_auth_guard_botocore.py` — the guard's handlers as a
+  table (retry a clock or expired-token error once, record the second, leave every
+  other error to botocore), and the same on a real boto3 client with only the HTTP
+  send replaced, including the assumed role's session signing with the assumed key.
+- `test_role_credentials.py` — the audit role's credentials renewing themselves, and a
+  failed or already-ended renewal becoming `RoleRefreshFailed` rather than a crash.
+- `test_scan_log.py` — `ScanLog` tees the console to a file: the previous sink gets
+  every message unchanged and is restored on any exit, and a file that cannot be
+  opened, written or closed costs a warning, never the scan.
 - `test_seams.py` — the three seams a non-terminal caller drives the package
   through: `console.set_sink`, `settings=` and `progress=`. Each is additive, so
   "the CLI still passes" would stay true of a seam that quietly did nothing. Its

@@ -172,10 +172,9 @@ def _consumers_of(supporting, assigned, anchors):
     return consumers
 
 
-def apply_project_grouping(all_rows, edge_links=None, default_vpc_ids=None,
-                           default_vpcs_known=True, name_rules=None):
+def apply_project_grouping(all_rows, edge_links=None, name_rules=None):
     """Assign each row a project, or say why it has none (project_id, label, membership,
-    method, why, shared_with, ...). default_vpc_* are accepted and ignored."""
+    method, why, shared_with, ...). A shared VPC is never a grouping signal."""
     projects = Projects()
     notes = {"conflicts": [], "tag_conflicts": [], "candidate_words": [],
              "grouping_links": [], "shared": []}

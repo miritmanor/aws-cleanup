@@ -173,6 +173,31 @@ class ReportEntryPointTests(unittest.TestCase):
             self.assertIn("Run aws_cleanup.py first", combined)
 
 
+class CliOutputListingTests(unittest.TestCase):
+    """The file list printed after a scan names the scan log; a report-only run does not."""
+
+    def _printed(self, after_scan):
+        lines = []
+        previous = audit.console.set_sink(
+            lambda message, stream, end, flush: lines.append(message))
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                settings = audit.Settings(output_dir=tmp)
+                paths = audit.output_paths(settings)
+                _load_entry_point("cli_output.py").print_outputs(paths, settings, after_scan)
+        finally:
+            audit.console.set_sink(previous)
+        return "\n".join(lines)
+
+    def test_a_scan_lists_its_log(self):
+        text = self._printed(after_scan=True)
+        self.assertIn("aws_scan_log.txt", text)
+        self.assertIn("everything this scan printed", text)
+
+    def test_a_regenerate_does_not_list_a_log_it_did_not_write(self):
+        self.assertNotIn("aws_scan_log.txt", self._printed(after_scan=False))
+
+
 class LibraryRaisesCliExitsTests(unittest.TestCase):
     """The library raises AuditError (catchable as Exception); only the CLI exits, with
     the same sentence and no traceback."""

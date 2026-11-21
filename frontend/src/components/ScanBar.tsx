@@ -309,6 +309,12 @@ export function ScanBar({ onFinished, scannedAt, account, rowCount }: Props) {
             <button className="linkish" onClick={() => setShowLog((s) => !s)}>
               {showLog ? "hide log" : "show log"}
             </button>
+            {/* The on-screen log keeps only the last lines; the file has all of them. */}
+            {status.log_url && (
+              <a className="linkish" href={status.log_url} target="_blank" rel="noopener">
+                full log
+              </a>
+            )}
             {/* The log prints facts only; what to do about them is here. */}
             <a className="linkish" href="/scan-messages.html" target="_blank" rel="noopener">
               what these messages mean

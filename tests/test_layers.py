@@ -33,7 +33,7 @@ MODEL_MODULES = {"rows", "snapshot", "staleness"}
 LAYER_PACKAGES = {"collect", "analyze", "present"}
 
 # The orchestrators. run.py imports render.py; NoAwsFromTheRendererTests guards the reverse.
-APP_MODULES = {"run", "render"}
+APP_MODULES = {"run", "render", "scan_log"}
 
 # naming/ spans all three layers, so it sits above them and only entry points may use it.
 FEATURE_PACKAGES = {"naming"}

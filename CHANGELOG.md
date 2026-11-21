@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A scan no longer fails partway through when it runs longer than an hour with `assume_role` on. The role's credentials now renew themselves before they expire.
+- If AWS stops accepting the scan's credentials partway through, the scan now stops and saves nothing, and the previous results stay. This covers expired credentials, and a computer clock still behind AWS's after a retry. Before, the scan saved a result that was mostly failed lookups, replacing the good one.
+- A request refused because the computer's clock was briefly behind AWS's, as happens just after waking from sleep, is retried once after 15 seconds instead of failing.
+- A failed lookup in one region no longer makes untouched default VPCs show up in every region, where they made quiet regions count as having resources.
+- Each scan's full console output is saved as `aws_scan_log.txt` in the results folder. The web app's scan bar has a "full log" link to it, because the on-screen log keeps only the last 800 lines.
+
 - Every resource type's ID now links to its page in the AWS console, in the web app and the HTML report. Before, about 60 types added after the first release (Route 53 hosted zones, VPCs, SQS queues, ECS services and others) showed the ID as plain text. A few types with no addressable detail page (ElastiCache, Network Firewall, Route 53 Resolver endpoints, X-Ray) link to their service's list page. Rows for failed lookups no longer link to a resource named "ERROR". Regenerate or reload to see it; no re-scan needed.
 - The web app can be deployed to AWS (ECS Fargate) in your own account, from a release's files with no clone or build, or from source with `deploy/ecs/ecs-up.sh`. It is reached through an encrypted tunnel at `http://127.0.0.1:8080` and has no public address. Every resource is tagged `Project=aws-cleanup`. See `deploy/ecs/README.md`.
 - The web app's agent is now off by default. To use it, set `AUDIT_AGENT_PROVIDER` (`openai`, `anthropic` or `bedrock`) in `.env`, then `docker compose up --build`.

@@ -30,6 +30,9 @@ reading its own snapshot back from disk.
 The two scripts are the argparse layer and the only entry points. `run.py`
 (`run(args)`) is the scan end to end; `render.py` (`render_outputs()`,
 `render(args)`) turns a snapshot into the seven files and never talks to AWS.
+`scan_log.py`, used only by `run()`, copies a scan's console output to
+`aws_scan_log.txt`. It does this by sitting in front of whatever console sink is
+already set.
 `cli_output.py` beside them prints what only a CLI user needs: the file list
 and the pointer to `help/cli-messages.md`. Library console lines are facts only
 (`console.py`).
@@ -75,6 +78,10 @@ Modules at the package root that every layer speaks:
   parsing, ARN resolution, references found in strings.
 - `session.py` and `credentials.py` build the authenticated session (profile,
   optional AssumeRole) and turn an auth failure into advice.
+  `role_credentials.py` makes the role's credentials renew themselves.
+- `auth_guard.py` watches every AWS call through botocore events. It retries a
+  clock error once, and records a credential that AWS stopped accepting so
+  that `run()` stops before saving anything.
 - `stacks.py` walks CloudFormation stacks, nested ones included — AWS's own
   record of what owns what. `amplify.py` does the same for Amplify.
 - `cost.py` makes the Cost Explorer request and caches it: one request, plus a

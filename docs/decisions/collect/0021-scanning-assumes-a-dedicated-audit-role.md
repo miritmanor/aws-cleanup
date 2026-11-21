@@ -34,7 +34,10 @@ tuning).
 settings)` builds the base session from `--profile` exactly as before, and -
 only when `assume_role` is on - trades it for a session built from
 `sts:AssumeRole` credentials against `arn:aws:iam::<account>:role/<role_name>`
-in the same account before returning. Everything downstream (every collector,
+in the same account before returning. Those credentials are botocore
+refreshable credentials (`collect/role_credentials.py`). They are assumed again
+from the base identity before they expire, so a scan can outlast the role's
+one-hour session. Everything downstream (every collector,
 the cost lookup, `--tag-groups`) already just takes a `session`, so this one
 seam is the whole change; `run.py` shrinks by the logic it moves out. It is
 its own module rather than staying inline in `run.py` specifically so it can

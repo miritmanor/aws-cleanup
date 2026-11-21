@@ -46,6 +46,7 @@ aws_raw_capture.jsonl
 aws_normalized_scan_results.json
 aws_project_groups.json
 aws_active_regions.json
+aws_scan_log.txt
 Output/
 out/
 reports/

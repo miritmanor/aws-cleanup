@@ -1,16 +1,15 @@
 """Authenticating to AWS: GetCallerIdentity on the profile, and optionally AssumeRole
-into settings.role_name in the same account."""
+into settings.role_name in the same account, with credentials that renew themselves."""
 
 import boto3
 from botocore.exceptions import BotoCoreError
 
 from .calls import safe_call
 from .credentials import credentials_help
+from .role_credentials import assumed_role_session
 from ..config import RETRY_CONFIG
 from ..errors import AuditError
 from ..settings import resolved_role_name
-
-ROLE_SESSION_NAME = "aws-resource-audit"
 
 
 def _auth_failed(message, profile):
@@ -53,17 +52,5 @@ def authenticated_session(args, settings):
 
     role_name = resolved_role_name(settings)
     role_arn = f"arn:aws:iam::{base_ident['Account']}:role/{role_name}"
-    assumed = safe_call(_sts(base_session).assume_role,
-                        RoleArn=role_arn, RoleSessionName=ROLE_SESSION_NAME)
-    if "__error__" in assumed:
-        raise AuditError(f"Could not assume role {role_arn}: {assumed['__error__']}")
-
-    creds = assumed["Credentials"]
-    session = _session(
-        profile,
-        aws_access_key_id=creds["AccessKeyId"],
-        aws_secret_access_key=creds["SecretAccessKey"],
-        aws_session_token=creds["SessionToken"],
-        region_name=base_session.region_name,
-    )
+    session = assumed_role_session(base_session, role_arn)
     return session, _caller_identity(session, profile)

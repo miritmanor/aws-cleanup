@@ -4,6 +4,7 @@ timestamps are relative to the pinned clock (recent()/ancient())."""
 from datetime import timedelta
 
 from botocore.exceptions import ClientError
+from botocore.hooks import HierarchicalEmitter
 
 from . import _PARENT  # noqa: F401  (import for the sys.path fixup side effect)
 
@@ -109,6 +110,8 @@ class FakeSession:
 
     def __init__(self, clients=None, region_name="us-east-1"):
         self.region_name = region_name
+        # Where run() registers its AWS-call hooks; fake clients never emit to it.
+        self.events = HierarchicalEmitter()
         self._clients = {}
         for name, spec in (clients or {}).items():
             self._clients[name] = spec if isinstance(spec, FakeClient) else FakeClient(name, spec)

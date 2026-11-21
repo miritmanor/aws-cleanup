@@ -84,6 +84,8 @@ class ScanStatus(BaseModel):
     stopping: bool = False
     result: Optional[dict[str, Any]] = None
     log: list[str] = Field(default_factory=list)
+    # The whole log of the latest scan, as a /files URL; null before the first scan.
+    log_url: Optional[str] = None
 
 
 class DefaultRegions(BaseModel):

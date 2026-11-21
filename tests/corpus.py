@@ -344,8 +344,7 @@ def build():
     # After resolve_edges (the runtime rule reads resolved incoming links) and
     # independent of grouping in both directions - the same order run() uses.
     audit.apply_tiers(rows)
-    notes = quiet(audit.apply_project_grouping, rows, edge_links=edge_links,
-                   default_vpc_ids={"vpc-0default00001"})
+    notes = quiet(audit.apply_project_grouping, rows, edge_links=edge_links)
     full = audit.build_graph_data(rows, notes.get("grouping_links"))
     # Last, as in run(): it reads membership, so it cannot run before grouping.
     audit.attribute_costs(rows, billing(), coverage_entries=coverage_entries())

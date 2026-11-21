@@ -19,6 +19,7 @@ _SCAN_FILES = [
     ("groups", "project-group names you have assigned - edit to name a group"),
     ("snapshot", "this scan, saved - run aws_regenerate_report.py to redraw "
                  "everything above from it without touching AWS"),
+    ("scan_log", "everything this scan printed"),
 ]
 
 

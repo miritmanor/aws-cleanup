@@ -30,6 +30,7 @@ OUTPUT_FILENAMES = {
     "audit": "grouping_audit.md",
     "groups": "aws_project_groups.json",
     "active_regions": "aws_active_regions.json",
+    "scan_log": "aws_scan_log.txt",
 }
 
 def project_mermaid_filename(project_id):

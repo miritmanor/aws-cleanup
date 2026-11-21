@@ -26,12 +26,12 @@ def _regions_with_gaps(coverage_entries):
 # Not done in the collectors: a VPC is known to be empty only after all of them ran.
 # No flag shows these rows again; an untouched default VPC needs no action.
 def hide_untouched_default_networks(rows, default_vpc_ids, coverage_entries=None,
-                                    known=True):
+                                    unknown_regions=()):
     """Remove untouched default VPCs and their pieces from `rows` in place; return the
-    regions affected, sorted."""
-    if not known or not default_vpc_ids:
+    regions affected, sorted. Regions in `unknown_regions` are left alone."""
+    if not default_vpc_ids:
         return []
-    gaps = _regions_with_gaps(coverage_entries)
+    gaps = _regions_with_gaps(coverage_entries) | set(unknown_regions)
     members = {}
     for row in rows:
         if row.get("_vpc") in default_vpc_ids:

@@ -300,17 +300,17 @@ class DefaultVpcTests(unittest.TestCase):
         self.assertEqual(ids, {"vpc-default"})
         self.assertTrue(known)
 
-    def test_unknown_defaults_suppress_vpc_grouping(self):
+    def test_a_shared_vpc_never_merges_two_resources(self):
         import contextlib
         import io
 
         rows = [make_row("EC2Instance", "i-1", vpc_id="vpc-shared"),
                 make_row("RDSInstance", "db-1", vpc_id="vpc-shared")]
         with contextlib.redirect_stdout(io.StringIO()):
-            audit.apply_project_grouping(rows, default_vpcs_known=False)
+            audit.apply_project_grouping(rows)
 
         self.assertEqual([r["project_group"] for r in rows], ["", ""],
-                         "an unknown default VPC must not merge two resources")
+                         "a shared VPC must not merge two resources")
 
 
 class ReportTests(unittest.TestCase):

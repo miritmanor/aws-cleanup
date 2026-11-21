@@ -41,6 +41,7 @@ is in `aws_resource_graph.mmd` (Mermaid) and `aws_architecture.drawio` (opens in
 draw.io, fully editable), plus one of each per project. `grouping_audit.md`
 explains how resources were grouped and lists anything the scan could not read.
 `aws_scan.json` is the saved scan that `aws_regenerate_report.py` renders from.
+`aws_scan_log.txt` is the full console output of the latest scan, kept even when the scan failed or was stopped.
 
 Run `python3 aws_cleanup.py --help` to see the flags.
 

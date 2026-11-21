@@ -69,9 +69,9 @@ class CollectionResult:
 
     normalized_scan_results: list = field(default_factory=list)
     default_vpc_ids: set = field(default_factory=set)
-    # False when DescribeVpcs failed anywhere, so the set above is not the
-    # whole truth. analyze/ reads this before trusting "not a default VPC".
-    default_vpcs_known: bool = True
+    # Regions where DescribeVpcs failed, so the set above is not the whole truth
+    # there. Per region: one failed region must not change how the others read.
+    default_vpcs_unknown: set = field(default_factory=set)
     # Every capability this scan tried, and how it went. The half of the
     # story the rows cannot carry - see coverage.py.
     coverage: list = field(default_factory=list)
@@ -86,9 +86,9 @@ def total_collection_steps(regions):
 
 
 def collect_all(session, regions, *, no_cost=False, report=None, step=0,
-                should_stop=None):
+                should_stop=None, check_auth=None):
     """Scan every region, then global services, then the two late AWS calls. no_cost
-    skips the chargeable request; should_stop raises ScanCancelled before the next step."""
+    skips the chargeable request; should_stop and check_auth raise before the next step."""
     total = total_collection_steps(regions)
 
     def _report(**event):
@@ -96,6 +96,8 @@ def collect_all(session, regions, *, no_cost=False, report=None, step=0,
             report(**event)
 
     def _stop_if_asked():
+        if check_auth is not None:
+            check_auth()
         if should_stop is not None and should_stop():
             raise ScanCancelled("The scan was stopped before it finished. "
                                 "Nothing was saved.")
@@ -146,7 +148,7 @@ def collect_all(session, regions, *, no_cost=False, report=None, step=0,
 
     normalized_scan_results = []
     default_vpc_ids = set()
-    default_vpcs_known = True
+    default_vpcs_unknown = set()
     for region in regions:
         say(f"\n{region}")
         # Per-region, since AMI/SG/key-pair references never cross regions.
@@ -154,7 +156,8 @@ def collect_all(session, regions, *, no_cost=False, report=None, step=0,
         with coverage.collecting("default VPCs", region):
             region_defaults, known = collect_default_vpc_ids(session, region)
         default_vpc_ids |= region_defaults
-        default_vpcs_known = default_vpcs_known and known
+        if not known:
+            default_vpcs_unknown.add(region)
         for label, collector in COLLECTORS_PER_REGION:
             kwargs = {}
             if collector in ROLE_USAGE_COLLECTORS:
@@ -213,7 +216,7 @@ def collect_all(session, regions, *, no_cost=False, report=None, step=0,
     return CollectionResult(
         normalized_scan_results=normalized_scan_results,
         default_vpc_ids=default_vpc_ids,
-        default_vpcs_known=default_vpcs_known,
+        default_vpcs_unknown=default_vpcs_unknown,
         coverage=coverage.ledger().entries,
         billing=billing,
         failed_lookups=failed_lookups,
