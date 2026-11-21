@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+
+
+## 0.2.0
+
 - `--debug` no longer prints the values of Lambda environment variables, which can be passwords or API keys. It shows each variable's name and how each resource link was found in it. Before, the values went to the screen, the web app's log and `aws_scan_log.txt`. Delete any `aws_scan_log.txt` saved by a scan run with `--debug`.
 - A scan no longer writes `aws_raw_capture.jsonl` or `aws_normalized_scan_results.json`, and no longer creates the `runtime/` folder that held them. Nothing read them, and both could hold secrets: the first every resource's full AWS response, the second Lambda environment variable values. Delete your output folder's `runtime/` folder.
 - A scan now reports AWS Config (recorders and rules), GuardDuty, Security Hub, Inspector, Macie and Detective in each region where they are turned on. They bill from the moment they are enabled. An enabled one shows as active, and its risk column says to check whether anyone reads its findings. A suspended or paused one shows as unused. A region where a service was never turned on gets no row. The deployed audit role needs the new read permissions: redeploy `iam/aws-audit-role.yaml`, then re-scan.

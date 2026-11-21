@@ -21,8 +21,10 @@ including `CHANGELOG.md`.
    templates, and attaches `aws-cleanup-base.yaml`, `aws-cleanup-app.yaml`,
    `ecs-connect.sh` and `SHA256SUMS` to the release. If you left the release's
    notes empty, it fills them with the `## Unreleased` entries.
-5. Commits to `main`: those entries moved from `## Unreleased` into a new
-   `## X.Y.Z` section. An entry merged after the tag stays under Unreleased.
+5. Opens a pull request from branch `changelog-X.Y.Z` that moves those
+   entries from `## Unreleased` into a new `## X.Y.Z` section. An entry merged
+   after the tag stays under Unreleased. Merge it yourself; it starts no other
+   workflows, so if `main` requires status checks, merge it as admin.
 
 The workflow uses only the built-in `GITHUB_TOKEN`. No secrets to set up.
 
@@ -31,8 +33,8 @@ The workflow uses only the built-in `GITHUB_TOKEN`. No secrets to set up.
 1. **Workflow permissions:** Settings → Actions → General → Workflow
    permissions. Leave the default, "Read repository contents and packages
    permissions". The release workflow asks for what it needs itself.
-   If a branch rule protects `main`, add GitHub Actions to its bypass list:
-   the last step commits the `CHANGELOG.md` update there.
+   Tick "Allow GitHub Actions to create and approve pull requests": the last
+   step opens a pull request with the `CHANGELOG.md` update.
 
 2. **Protect version tags:** Settings → Rules → Rulesets → New ruleset → New
    tag ruleset.
